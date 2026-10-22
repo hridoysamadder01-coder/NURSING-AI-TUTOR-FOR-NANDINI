@@ -1,0 +1,23 @@
+name: Nursing Study Checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-grounding unit tests
+        run: npm test
+      - name: Syntax checks
+        run: |
+          node --check src/lesson-data.js
+          node --check src/answer-core.js
+          node --check sw.js
+          node --check server.mjs
