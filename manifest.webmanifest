@@ -1,0 +1,19 @@
+{
+  "name": "Nandini Nursing Study",
+  "short_name": "Nandini",
+  "description": "বাংলায় নার্সিং প্রথম বর্ষের পড়াশোনার সহায়ক",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f0f8f6",
+  "theme_color": "#0b746b",
+  "lang": "bn",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
