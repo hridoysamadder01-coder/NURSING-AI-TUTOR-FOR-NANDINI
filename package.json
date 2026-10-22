@@ -1,0 +1,14 @@
+{
+  "name": "nursing-ai-tutor-for-nandini",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Grounded Bengali nursing study companion",
+  "scripts": {
+    "test": "node --test",
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
