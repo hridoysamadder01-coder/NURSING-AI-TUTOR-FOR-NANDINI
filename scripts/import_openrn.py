@@ -5,6 +5,7 @@ Deliberately strips images, captions, interactive embeds and third-party media.
 Preserves publisher attribution, chapter headings and section links. No user uploads.
 """
 import json, re, time, urllib.request
+from html.entities import name2codepoint
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -92,7 +93,16 @@ def sections_for(node,title):
     return sections
 
 def parse(xhtml,linkmap,base,bid):
-    doc=ET.fromstring(xhtml)
+    # Pressbooks XHTML contains HTML named entities not declared to stdlib XML.
+    # Convert known HTML entities to their numeric XML equivalents.
+    raw=xhtml.decode("utf-8-sig")
+    def named_entity(m):
+        name=m.group(1)
+        if name in ("amp","lt","gt","quot","apos"):return m.group(0)
+        code=name2codepoint.get(name)
+        return ("&#"+str(code)+";") if code is not None else " "
+    raw=re.sub(r"&([A-Za-z][A-Za-z0-9]+);",named_entity,raw)
+    doc=ET.fromstring(raw)
     chapters=[]
     missing_links=[]
     for el in doc.iter():
