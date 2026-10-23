@@ -28,3 +28,7 @@ Owner wants **real Android access for Nandini**, a first-year Bangladesh Diploma
 IMPORTANT: The imported textbooks are **international reference books**, not Nandini's actual seven Bangladeshi college-prescribed textbooks. Do not silently claim otherwise. Any college-specific textbook requires its legal source/edition and consent. No patient-specific prescriptions or invasive procedure guidance.
 
 Do not ask Hridoy to manually upload any of the three Open RN books. No Vercel, no paid API, no new server purchase without owner's explicit approval. Keep Claude token spend minimal.
+
+## Updated owner-first path (no Claude required yet)
+
+ChatGPT added `coach.html` (seven subjects, 41 tasks, spaced revision), four source-linked Open RN reference books (**632 chapters**), server-side trusted-evidence retrieval, opt-in localhost Ollama path, and GitHub Actions Android APK build. Real mobile-browser E2E passed. `settings.html` lets APK store future HTTPS AI server URL; no provider API key needed for Ollama. See `ANDROID.md`, `LOCAL_AI.md`, and latest Actions runs. If Claude is ever used, ONLY inspect VPS read-only first, safely deploy the prebuilt service, and verify real AI/Android usage. Avoid reimplementing, buying APIs or touching unrelated VPS workloads.
