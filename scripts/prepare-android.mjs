@@ -14,6 +14,11 @@ const catalog=JSON.parse(await readFile('www/data/books/catalog.json','utf8'));
 if(catalog.books.length!==4)throw Error('Missing four verified source books in APK');
 let chapters=0;for(const b of catalog.books){const data=JSON.parse(await readFile(join('www/data/books',b.id+'.json'),'utf8'));chapters+=data.chapters.length}
 if(chapters<620)throw Error('Textbooks incomplete in Android package');
+const structure=await JSON.parse(await readFile('www/data/books/skills.json','utf8'));
+const steps=structure.chapters.flatMap(ch=>ch.sections).flatMap(s=>s.blocks||[]).filter(b=>b.type==='numbered').length;
+if(steps<1)throw Error('Missing publisher ordered nursing procedure steps');
+console.log('Publisher numbered procedure steps:',steps);
+
 const reader=await readFile('www/library.html','utf8');
 if(!reader.includes('native-translation.bundle.js')||!reader.includes('source-list'))throw Error('Missing bilingual textbook reader controls');
 if(!sources.includes('src/translation-cache.js'))throw Error('Missing offline translation cache');
