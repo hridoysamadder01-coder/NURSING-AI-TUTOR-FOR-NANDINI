@@ -18,3 +18,9 @@ for (const [name,url] of books) {
     }
   }catch(e){console.log('BOOK_ERROR',name,e.message)}
 }
+for (const name of ['nursingfundamentals','nursingskills','medterm']) {
+ for (const type of ['wxr','xhtml']) {
+   const url='https://wtcs.pressbooks.pub/'+name+'/open/download?type='+type;
+   try {const r=await fetch(url,{method:'HEAD',signal:AbortSignal.timeout(10000)});console.log('EXPORT',name,type,'status',r.status,'length',r.headers.get('content-length'),'type',r.headers.get('content-type'))} catch(e){console.log('EXPORT_ERR',name,type,e.message)}
+ }
+}
