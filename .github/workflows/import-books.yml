@@ -1,0 +1,31 @@
+name: Import Open RN Textbooks
+on:
+  push:
+    paths:
+      - scripts/import_openrn.py
+      - .github/workflows/import-books.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Import publisher EPUB (text only)
+        run: python scripts/import_openrn.py
+      - name: Commit normalized licensed text index
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add data/books
+          if ! git diff --cached --quiet; then
+            git commit -m "Sync Open RN licensed EPUB text into Nandini shelf"
+            git push
+          fi
