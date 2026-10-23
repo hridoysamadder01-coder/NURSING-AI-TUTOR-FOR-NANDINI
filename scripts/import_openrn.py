@@ -65,9 +65,11 @@ def sections_for(node,title):
     text=[]
     def flush():
         if text:
-            body="\n\n".join(text)
+            body="\n\n".join(value for _,value in text)
             if len(body)>35:
-                sections.append({"heading":head[:180],"text":body})
+                sections.append({"heading":head[:180],"text":body,
+                    "blocks":[{"type":"bullet" if tag=="li" else "paragraph","text":value}
+                              for tag,value in text]})
     def visit(x):
         nonlocal head,text
         tag=local(x)
@@ -83,7 +85,7 @@ def sections_for(node,title):
         if tag in ("p","li","td","dt","dd"):
             t=fulltext(x)
             if len(t)>15 and not t.lower().startswith(("figure ","image:","video:","copyright ©")):
-                text.append(t[:5000])
+                text.append((tag,t[:5000]))
             return
         for child in x:
             visit(child)
