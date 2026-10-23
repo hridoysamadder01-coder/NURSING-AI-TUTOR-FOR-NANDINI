@@ -1,6 +1,6 @@
 // Recommended owner-curated study roadmap, not a verbatim college-prescribed chapter list.
 export const SUBJECTS = [
- {code:'D111',name:'Behavioral Science',bn:'আচরণবিজ্ঞান',emoji:'🧠',references:['terminology','fundamentals'],extras:[{title:'মন ও আচরণ (reference)',url:'https://openstax.org/books/psychology-2e/pages/1-introduction'}],
+ {code:'D111',name:'Behavioral Science',bn:'আচরণবিজ্ঞান',emoji:'🧠',references:['mentalhealth','terminology','fundamentals'],extras:[{title:'মন ও আচরণ (reference)',url:'https://openstax.org/books/psychology-2e/pages/1-introduction'}],
  topics:[
   ['মনোবিজ্ঞানের পরিচয়','behavior communication patient'],
   ['মানুষের আচরণ ও প্রতিক্রিয়া','behavior patient response'],
@@ -69,5 +69,6 @@ export function taskId(code,index){return code+':'+index}
 export const SOURCE_LINKS={
  fundamentals:'./library.html?book=fundamentals',
  skills:'./library.html?book=skills',
- terminology:'./library.html?book=terminology'
+ terminology:'./library.html?book=terminology',
+ mentalhealth:'./library.html?book=mentalhealth'
 };
