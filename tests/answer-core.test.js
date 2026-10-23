@@ -8,3 +8,5 @@ test('no source page matches means no invented result',()=>{assert.deepEqual(exc
 test('invalid PDF page records ignored',()=>{assert.deepEqual(excerptFromPages('hand',[{page:-1,text:'hand'}, {page:2.7,text:'hand'},{page:0,text:'hand'}]),[])});
 test('all MCQs map to a known chapter subsection with valid answers',()=>{assert.equal(mcqs.length,5);for(const q of mcqs){assert.equal(q.options.length,4);assert.ok(Number.isInteger(q.answer)&&q.answer>=0&&q.answer<4);assert.ok(lessons.some(l=>l.id===q.lesson));assert.ok(q.why.length>20)}});
 test('keyword parsing normalizes punctuation',()=>{assert.deepEqual(terms('Hand, hand! Hygiene.'),['hand','hygiene'])});
+
+test('Bengali query matches English terminology in a real PDF page',()=>{const hits=excerptFromPages('হাত পরিষ্কার',[{page:8,text:'Hand hygiene should be performed before touching a patient.'}]);assert.equal(hits[0]?.page,8);assert.match(hits[0].excerpt,/Hand hygiene/)});
