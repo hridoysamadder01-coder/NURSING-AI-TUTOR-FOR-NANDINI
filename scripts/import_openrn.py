@@ -14,7 +14,6 @@ BOOKS=[
  ("skills","Nursing Skills 2e","https://wtcs.pressbooks.pub/nursingskills/",2023),
  ("terminology","Medical Terminology 2e","https://wtcs.pressbooks.pub/medterm/",2024),
  ("mentalhealth","Nursing Mental Health and Community Concepts 2e","https://wtcs.pressbooks.pub/nursingmhcc/",2025),
- ("anatomy","General Anatomy & Physiology","https://wtcs.pressbooks.pub/anatphys/",2026),
 ]
 OUT=Path("data/books")
 WP="{http://wordpress.org/export/1.2/}"
@@ -140,9 +139,9 @@ def main():
         links=official_links(wxr,base)
         chapters,missing=parse(xhtml,links,base,bid)
         data={"id":bid,"title":title,"publisher":"WisTech Open / Open Resources for Nursing (Open RN)",
-          "authors":"Julia Brown, editor" if bid=="anatomy" else "Ernstmeyer & Christman","year":year,
-          "license":"CC BY-NC-SA 4.0, except where otherwise noted; modified text-only extract" if bid=="anatomy" else "CC BY 4.0, except where otherwise noted; modified text-only extract",
-          "license_url":"https://creativecommons.org/licenses/by-nc-sa/4.0/" if bid=="anatomy" else "https://creativecommons.org/licenses/by/4.0/",
+          "authors":"Ernstmeyer & Christman","year":year,
+          "license":"CC BY 4.0, except where otherwise noted; modified text-only extract",
+          "license_url":"https://creativecommons.org/licenses/by/4.0/",
           "source_url":base,"official_pdf":base+"open/download?type=pdf",
           "official_epub":base+"open/download?type=epub",
           "modifications":"Publisher XHTML transformed into searchable plain-text chapters. Images, embedded media, captions, layout and interactive activities omitted. Third-party rights are not granted by the general book license.",
