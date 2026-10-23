@@ -39,6 +39,15 @@ try{
  await page.selectOption('#chapters',String(listChapter));
  await page.waitForFunction(()=>document.querySelectorAll('#article .source-list li').length>0);
  assert.ok((await page.locator('#article .source-list li').count())>=1);
+ const orderedChapter=await page.evaluate(async()=>{const data=await (await fetch('./data/books/skills.json')).json();return data.chapters.findIndex(ch=>ch.sections.some(s=>s.blocks?.some(b=>b.type==='numbered')))});
+ if(orderedChapter>=0){
+   await page.goto(base+'/library.html?book=skills&chapter='+orderedChapter,{waitUntil:'networkidle'});
+   await page.waitForFunction(()=>document.querySelectorAll('#article ol.source-list>li').length>0,{timeout:10000});
+   assert.ok((await page.locator('#article ol.source-list>li').count())>0);
+   await page.goto(base+'/library.html?book=fundamentals',{waitUntil:'networkidle'});
+   await page.waitForFunction(()=>document.querySelector('#chapters')?.options.length>=130);
+ }
+
 
  await page.locator('[data-mode="both"]').click();
  assert.equal(await page.locator('#article').getAttribute('class'),'mode-both');
