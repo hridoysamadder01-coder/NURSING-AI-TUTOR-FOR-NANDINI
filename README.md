@@ -9,7 +9,7 @@
 - `index.html`: Bengali-friendly mobile home, 7 first-year course placeholders, student-uploaded PDF reader, sample general MCQs, local personal notes.
 - `tutor.html`: one **real Open RN Nursing Fundamentals 2e** chapter (9.6 Preventing Infection), 6 Bengali explanation sections with precise **chapter/subheading links**, five chapter-based MCQs with explanations, and question-to-lesson retrieval.
 - User PDFs: local, client-side PDF.js text extraction (first 100 pages, max 20MB); relevant **actual PDF page numbers** and verbatim excerpts, NOT fabricated page citations or generated translations. Scanned-image-only PDFs require OCR, which is not yet built.
-- `server.mjs`: dependency-free HTTPS-reverse-proxy-ready Node backend with optional authenticated OpenAI Responses API. When configured, can provide Bengali explanations from up to four submitted cited passages. Citations are checked for valid passage IDs, but citation validity does not itself prove every factual claim correct. Student must check the original material.
+- `server.mjs`: dependency-free HTTPS-reverse-proxy-ready Node backend with optional authenticated **local Ollama** (no paid API) or OpenAI Responses API. When configured, can provide Bengali explanations from up to four submitted cited passages. Citations are checked for valid passage IDs, but citation validity does not itself prove every factual claim correct. Student must check the original material.
 - PWA shell cache; notes and quiz sessions stored locally.
 - `npm test`: source-match refusals, no invented pages, quizzes, static server safety.
 
@@ -33,16 +33,17 @@ npm start
 
 Open `http://127.0.0.1:8787` on the same device.
 
-The AI button stays hidden unless **both** `OPENAI_API_KEY` and `NANDINI_STUDENT_CODE` are configured **on the server**. Never place either value in HTML, GitHub source or a public environment file.
+## AI choices
 
-```sh
-HOST=127.0.0.1 PORT=8787 OPENAI_MODEL=gpt-5-mini \
-OPENAI_API_KEY=your_secret_key NANDINI_STUDENT_CODE=your_private_access_code npm start
-```
+**No paid API is required** for the local inference route. Configure `NANDINI_AI_PROVIDER=ollama` and a private `NANDINI_STUDENT_CODE` on the Node server. Ollama must separately be installed with `qwen3:1.7b` on the SAME machine and be listening only on `127.0.0.1:11434`. The app does not automatically install/start/download a model on shared production VPS; memory preflight and independent test are mandatory.
 
-The example above is for illustration only; for deployment load secrets from a protected file (not shell history). The server limits requests per IP and request size; keep the private tutor behind HTTPS and, ideally, additional network/app protections. The app does not store the access code. **Uploading a PDF in the reader never uploads that PDF to this server.** When the student deliberately checks consent and uses AI on their own PDF, up to three selected short excerpts are sent to the server and onward to the AI provider.
+Server-only settings (never commit secrets): `NANDINI_AI_PROVIDER=ollama`, `OLLAMA_MODEL=qwen3:1.7b`, `NANDINI_STUDENT_CODE=long_random_code`. No OpenAI key.
 
-The real AI feature requires a paid external API key and live tests; **do not call the app fully operational AI until that is verified**.
+The existing OpenAI provider is an **optional fallback**, not the default recommendation and not a requirement for this project. It still needs `OPENAI_API_KEY` if used.
+
+The browser AI button is hidden unless backend is configured. `NANDINI_STUDENT_CODE` protects the endpoint and is not persisted. All live deployment must use HTTPS, app/process isolation and a reverse proxy. A source ID in a generated answer is only a pointer, **not proof that the model faithfully summarized its evidence**. Actual nurse-education QA is required before trusting the result.
+
+For exact safe operating constraints and hardware inspection see [LOCAL_AI.md](./LOCAL_AI.md).
 
 ## Deploy safely
 
