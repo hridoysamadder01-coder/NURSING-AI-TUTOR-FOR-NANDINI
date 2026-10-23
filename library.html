@@ -34,7 +34,7 @@ main{max-width:960px;margin:0 auto;padding:18px 16px 88px}
 .selected-book{font-size:21px;line-height:1.3;letter-spacing:-.025em;margin:5px 0 8px}
 .readerbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px;margin:17px 0 9px}
 label{display:block;color:#60776d;font-size:12px;font-weight:650;margin:0 0 6px}
-select,input[type=search]{width:100%;background:#fff;border:1px solid #bed8cd;border-radius:10px;padding:11px 12px;color:#17443b;min-width:0}
+select,input[type=search],input[type=password]{width:100%;background:#fff;border:1px solid #bed8cd;border-radius:10px;padding:11px 12px;color:#17443b;min-width:0}
 .reader-controls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:13px 0}
 .switch{display:inline-flex;gap:3px;padding:3px;border:1px solid #d5e5dd;border-radius:12px;background:#f0f6f2}
 .switch button{border:0;background:transparent;border-radius:9px;padding:8px 13px;color:#55716a;font-size:12px;font-weight:650}
@@ -190,7 +190,7 @@ async function showChapter(i,scroll=true){
    const value=ps[pi],key=paragraphKey(book.id,i,si,pi,value),wrapper=E('div',undefined,'paragraph');
    wrapper.append(E('p',value,'original'));
    const translated=E('div',undefined,'bn translation-unready');
-   translated.lang='bn';
+   translated.lang='bn';translated.textContent='বাংলা অনুবাদ বাকি…';
    wrapper.append(translated);section.append(wrapper);
    all.push({key,text:value,node:translated});
  }
