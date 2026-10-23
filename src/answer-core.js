@@ -2,8 +2,18 @@ import {lessons,source} from './lesson-data.js';
 const clean=s=>String(s??'').toLowerCase().normalize('NFKC').replace(/[^\p{L}\p{M}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
 export function terms(text){return [...new Set(clean(text).split(' ').filter(x=>x.length>1))]}
 const stop=new Set(['কি','কী','কেন','কিভাবে','কিভাবে','এর','এবং','একটি','আমাকে','বলো','হবে','করে','করতে','is','the','what','why','how','please','about','does','can','are','for','with']);
+const englishTerms={
+ 'হাত':['hand'], 'হাতের':['hand'],'হাতধোয়া':['hand hygiene'],'পরিষ্কার':['hygiene','clean'],
+ 'গ্লাভস':['gloves'],'মাস্ক':['mask'],'সংক্রমণ':['infection'],'জীবাণু':['microorganism','germ','bacteria'],
+ 'শ্বাস':['respiration','breathing'],'শ্বাসপ্রশ্বাস':['respiration','breathing'],'রক্ত':['blood'],
+ 'হৃৎস্পন্দন':['pulse','heart rate'],'পালস':['pulse'],'রক্তচাপ':['blood pressure'],
+ 'তাপমাত্রা':['temperature'],'নার্সিং':['nursing'],'শরীর':['body'],'হৃদপিণ্ড':['heart'],
+ 'জীবাণুমুক্ত':['sterilization'],'নির্বীজকরণ':['sterilization'],'সতর্কতা':['precautions'],
+ 'রোগী':['patient'],'ইনফেকশন':['infection'],'কিডনি':['kidney'],'ফুসফুস':['lung']
+};
 export function rank(query,documents,limit=3){
- const queryTerms=terms(query).filter(t=>!stop.has(t));if(!queryTerms.length)return[];
+ const base=terms(query).filter(t=>!stop.has(t));
+ const queryTerms=[...new Set(base.flatMap(t=>[t,...(englishTerms[t]||[])]))];if(!queryTerms.length)return[];
  return documents.map((doc,i)=>{
   const title=clean(doc.title||'');const body=clean(doc.text||'');const keys=(doc.keywords||[]).map(clean);
   let score=0;
