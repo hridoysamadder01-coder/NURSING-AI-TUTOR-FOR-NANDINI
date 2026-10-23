@@ -1,9 +1,67 @@
 <!doctype html>
 <html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b746b"><meta name="description" content="নন্দিনীর প্রথম বর্ষের নার্সিং স্টাডি কম্প্যানিয়ন"><link rel="manifest" href="./manifest.webmanifest"><title>Nandini | Nursing Study</title>
 <style>
-:root{font-family:system-ui,"Noto Sans Bengali",sans-serif;color:#173b39;background:#f0f8f6}*{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}button{cursor:pointer}header{background:#0b746b;color:white;padding:18px 20px 24px;border-radius:0 0 26px 26px}header small{opacity:.85}h1{font-size:24px;margin:8px 0}h2{font-size:19px;margin:8px 0 14px}h3{font-size:16px;margin:2px 0 8px}p{line-height:1.7}main{max-width:760px;margin:auto;padding:18px 14px 100px}.sub{color:#66807e;font-size:13px}.lead{margin-top:0}.panel,.subject{background:white;border:1px solid #dcece7;border-radius:18px;padding:17px;margin-bottom:14px;box-shadow:0 2px 10px #114f4810}.subject{display:flex;align-items:center;justify-content:space-between;gap:8px}.subject span{font-size:13px;color:#607b78}.btn{display:inline-flex;justify-content:center;align-items:center;border:0;background:#0b746b;color:white;border-radius:12px;padding:11px 16px;text-decoration:none;font-weight:650}.btn.secondary{background:#e0f2ed;color:#075e55}.btn.small{padding:8px 11px;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:white;border-radius:16px;padding:15px;border:1px solid #dcece7}.stat strong{display:block;font-size:23px;color:#0b746b}.tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;background:#fff;border-top:1px solid #dcece7;padding:9px 6px max(9px,env(safe-area-inset-bottom));z-index:10}.tabs{display:flex;width:min(760px,100%)}.tabs button{border:none;background:transparent;flex:1;font-size:12px;color:#718b88;padding:7px 2px}.tabs button.active{color:#0b746b;font-weight:800}.tabs b{display:block;font-size:19px;margin-bottom:3px}.view{display:none}.view.active{display:block}input,textarea,select{width:100%;border:1px solid #bfdad2;border-radius:11px;padding:13px;background:#fff;color:#173b39}textarea{min-height:140px;resize:vertical}.option{width:100%;display:block;background:#fff;border:1px solid #cde4dd;color:#183c39;text-align:left;border-radius:12px;padding:13px;margin:9px 0}.option.correct{background:#def6e9;border-color:#20a66a}.option.wrong{background:#ffebeb;border-color:#dd6565}.hint{padding:12px;border-left:4px solid #e9b44c;background:#fff8e7;border-radius:8px;font-size:14px}.link{color:#006a61;overflow-wrap:anywhere}a{color:#006a61}ul{padding-left:24px;line-height:1.9}#readerFrame{width:100%;height:55vh;border:1px solid #cde4dd;border-radius:12px}#bookFile{margin-top:12px}.pill{display:inline-block;background:#e0f2ed;border-radius:99px;padding:5px 11px;font-size:12px} .muted{color:#68817d} @media(max-width:410px){.subject{align-items:flex-start;flex-direction:column}.subject .btn{width:100%}} </style></head>
+:root{font-family:system-ui,"Noto Sans Bengali",sans-serif;color:#183c35;background:#f2f8f5;font-size:15px;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}button,input,textarea,select{font:inherit}button{cursor:pointer}
+header{background:#096e62;color:white;padding:calc(28px + env(safe-area-inset-top)) 18px 19px;border-radius:0 0 18px 18px}
+header small{font-size:10px;letter-spacing:.05em;color:#c8ede4;opacity:1}
+h1{font-size:22px;margin:8px 0 4px;font-weight:730;line-height:1.4}
+header>div{font-size:12px;color:#d3ece5;line-height:1.6}
+h2{font-size:19px;line-height:1.45;margin:8px 0 13px}
+h3{font-size:16px;line-height:1.55;margin:4px 0 7px}
+p{line-height:1.65;font-size:14px}
+main{max-width:760px;margin:auto;padding:15px 13px calc(90px + env(safe-area-inset-bottom))}
+.sub{color:#69837a;font-size:12px}.lead{margin-top:0}
+.panel,.subject{background:white;border:1px solid #dce9e2;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px #114f480a}
+.subject{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.subject span{font-size:12px;color:#68827a}
+.btn{display:inline-flex;justify-content:center;align-items:center;border:0;background:#0b7569;color:white;border-radius:10px;padding:10px 14px;text-decoration:none;font-size:13px;line-height:1.45;font-weight:670}
+.btn.secondary{background:#e6f3ed;color:#075e55}
+.btn.small{padding:8px 10px;font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
+.stat{background:white;border-radius:13px;padding:13px;border:1px solid #dce9e2;font-size:12px;color:#607b71}
+.stat strong{display:block;font-size:23px;color:#08756a;line-height:1.25;margin-bottom:4px}
+.tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;background:#fff;border-top:1px solid #dae9e2;padding:7px 6px max(7px,env(safe-area-inset-bottom));z-index:10}
+.tabs{display:flex;width:min(760px,100%)}.tabs button{border:none;background:transparent;flex:1;font-size:11px;color:#6d8880;padding:5px 2px}
+.tabs button.active{color:#0a7468;font-weight:800}
+.tabs b{display:block;font-size:19px;line-height:1.6;margin-bottom:0}
+.view{display:none}.view.active{display:block}
+input,textarea,select{width:100%;border:1px solid #bfdad2;border-radius:10px;padding:12px;background:#fff;color:#173b39}
+textarea{min-height:120px;resize:vertical}
+.option{width:100%;display:block;background:#fff;border:1px solid #cde4dd;color:#183c39;text-align:left;border-radius:12px;padding:13px;margin:9px 0}
+.option.correct{background:#def6e9;border-color:#20a66a}.option.wrong{background:#ffebeb;border-color:#dd6565}
+.hint{padding:12px;border-left:3px solid #dfb454;background:#fff9eb;border-radius:8px;font-size:12px;line-height:1.65}
+.link{color:#006a61;overflow-wrap:anywhere}a{color:#006a61}
+ul{padding-left:23px;line-height:1.8}
+#readerFrame{width:100%;height:55vh;border:1px solid #cde4dd;border-radius:12px}
+#bookFile{margin-top:12px}
+.pill{display:inline-block;background:#e2f4ed;color:#116b60;border-radius:99px;padding:5px 10px;font-size:11px;font-weight:650}
+.muted{color:#68817d}
+.quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:14px}
+.quick a{border:1px solid #d5e7dc;background:white;border-radius:13px;padding:12px 8px;color:#19554a;text-decoration:none;font-size:12px;text-align:center;font-weight:650}
+.quick a b{display:block;font-size:20px;font-weight:500;margin-bottom:5px}
+.feature{border:1px solid #c7e0d3;background:linear-gradient(135deg,#fcfefb,#ebf7f0)}
+.feature h3{font-size:17px;margin:10px 0}.feature p{margin:0 0 13px}
+.sec-title{font-size:14px;margin:18px 0 10px;color:#496c61;font-weight:720}
+.details-note{font-size:12px;color:#6f847b;line-height:1.65;margin:12px 0}
+@media(max-width:360px){.subject{flex-direction:column;align-items:flex-start}.subject .btn{width:100%}}
+</style></head>
 <body><header><small>Diploma in Nursing Science & Midwifery · 1st Year</small><h1>🌿 নন্দিনীর Nursing Study</h1><div>তোমার পড়াশোনা, তোমার গতিতে। বাংলা ভাষায়।</div></header><main>
-<section class="view active" id="home"><h2>শুভ সকাল, নন্দিনী! 💚</h2><div class="panel"><span class="pill">নতুন: Study Coach</span><h3>📅 ৭ বিষয়ের নিজের পড়ার পরিকল্পনা</h3><p>৪১টি শেখার লক্ষ্য, রিভিশনের তালিকা, নোট, আর সব বইয়ে একসঙ্গে প্রশ্নের সূত্র খোঁজা।</p><a class="btn" href="./coach.html">আমার Study Coach খুলে পড়ি →</a></div><p class="lead">আজ একটি বিষয় বেছে নাও, পড়ো, তারপর নিজেকে যাচাই করো।</p><div class="grid"><div class="stat"><strong>৭</strong>প্রথম বর্ষের বিষয়</div><div class="stat"><strong id="doneCount">০</strong>সম্পন্ন কুইজ সেশন</div></div><div class="panel"><span class="pill">নতুন: উৎসসহ বাংলা পাঠ</span><h3>📗 বই পড়ে নিজেকে যাচাই করো</h3><p>Open RN-এর আসল <b>Infection Prevention</b> অধ্যায়: সহজ বাংলা ব্যাখ্যা, উৎসের লিংক, নিজের PDF পৃষ্ঠা অনুসন্ধান এবং ৫টি অধ্যায়ভিত্তিক MCQ।</p><p><a class="btn" href="./tutor.html">বইভিত্তিক পাঠ শুরু করো →</a></p></div><div class="panel"><h3>আজকের ছোট্ট লক্ষ্য</h3><p>প্রথমে <b>Fundamentals of Nursing</b>-এর পাঠ্যবই খুলে একটি অধ্যায় পড়ো। তারপর নিজের নোট লিখো।</p><button class="btn" data-nav="books">বই খুলে পড়ো →</button></div><div class="hint">এটি প্রাথমিক কার্যকর প্রোটোটাইপ। AI শিক্ষক বা বইয়ের পাতাভিত্তিক উত্তর এখনও চালু নয়। প্রশ্নোত্তর কেবল উদাহরণমূলক অনুশীলন, কোনো কলেজ-বই থেকে উদ্ধৃত নয়।</div></section>
+<section class="view active" id="home">
+<h2>শুভ সকাল, নন্দিনী 🌿</h2>
+<p class="lead sub">আজ একটু একটু করে পড়া এগিয়ে নাও।</p>
+<div class="panel feature"><span class="pill">English + বাংলা</span><h3>📖 তোমার নিজের বইয়ের তাক</h3><p>৪টি আসল Open RN নার্সিং বই। অধ্যায় ও অনুচ্ছেদ ধরে পড়ো, প্রয়োজনে ফোনেই বাংলায় অনুবাদ করো।</p><a class="btn" href="./library.html">বই খুলে পড়ি →</a></div>
+<div class="quick">
+<a href="./coach.html"><b>🗓️</b>Study Coach</a>
+<a href="./library.html?book=fundamentals"><b>📘</b>Fundamentals</a>
+<a href="./tutor.html"><b>🧠</b>MCQ ও পাঠ</a>
+</div>
+<div class="grid"><div class="stat"><strong>৭</strong>প্রথম বর্ষের বিষয়</div><div class="stat"><strong id="doneCount">০</strong>সম্পন্ন কুইজ সেশন</div></div>
+<h3 class="sec-title">আজকের পড়া</h3>
+<div class="panel"><h3>৪১টি শেখার লক্ষ্য, নিজের পরিকল্পনা</h3><p>কোন বিষয় পড়া শেষ, কোনটা রিভিশন বাকি, সব নোট এক জায়গায়।</p><a class="btn secondary" href="./coach.html">পড়ার পরিকল্পনা খুলে দেখি →</a></div>
+<div class="panel"><h3>ছোট বাংলা পাঠ: Infection Prevention</h3><p>সহজ বাংলা ব্যাখ্যা, মূল উৎস, বইয়ের তথ্য খোঁজা ও ৫টি অধ্যায়ভিত্তিক MCQ।</p><a class="btn secondary" href="./tutor.html">এই পাঠটা শুরু করি →</a></div>
+<details class="details-note"><summary>বই ও AI সম্পর্কে জানো</summary><p>বইগুলো Open RN-এর প্রকাশিত রেফারেন্স, কলেজের নির্দিষ্ট প্রকাশনার সেট নয়। ফোনের বাংলা অনুবাদ স্বয়ংক্রিয়, তাই চিকিৎসার গুরুত্বপূর্ণ শব্দ মূল ইংরেজির সঙ্গে মিলিয়ে পড়বে। আলাদা AI Teacher সার্ভার চালু হলে প্রশ্নোত্তর পাওয়া যাবে।</p></details>
+</section>
 <section class="view" id="subjects"><h2>📚 প্রথম বর্ষের বিষয়</h2><div class="panel"><h3>সব বিষয়ের পড়া ও রিভিশন</h3><a class="btn" href="./coach.html">আমার ৭ বিষয়ের Study Coach →</a></div><div id="subjectList"></div><p class="sub">বিষয়ের তালিকা কলেজের বর্তমান সিলেবাসের সঙ্গে মিলিয়ে নিতে হবে। বইয়ের সুনির্দিষ্ট সংস্করণ এখনও সংযুক্ত নয়।</p></section>
 <section class="view" id="books"><h2>📖 বই ও রিডার</h2><div class="panel"><span class="pill">ফরিদপুর · ১ম বর্ষ</span><h3>📚 ৭টি বিষয়ের সব বই এক জায়গায়</h3><p>BNMC-এর সিলেবাস, প্রকাশকের বই, নার্সিং রেফারেন্স, এবং ২০২৬ সালের সম্পূর্ণ বইয়ের সেট কেনার যাচাইকৃত লিংক।</p><a class="btn" href="./faridpur-first-year.html">নন্দিনীর পুরো বইয়ের তালিকা →</a></div><div class="panel"><span class="pill">৪টি আসল Open RN বই</span><h3>📚 নন্দিনীর বইয়ের তাক</h3><p>অধ্যায়ভিত্তিক পড়া ও বইয়ের মধ্যে খোঁজা। PDF নিজে খুঁজে আপলোড করার প্রয়োজন নেই।</p><a class="btn" href="./library.html">বইয়ের তাক খুলে পড়ো →</a></div><div class="panel"><h3>তোমার নিজের PDF বই</h3><p>ফোনের কোনো PDF নির্বাচন করো। ফাইলটি তোমার ডিভাইসেই খোলা হবে, সার্ভারে আপলোড হবে না।</p><input type="file" id="bookFile" accept="application/pdf"><p id="readerMsg" class="sub">কোনো PDF নির্বাচিত নেই।</p><iframe id="readerFrame" title="PDF book reader"></iframe></div><div class="panel"><h3>বিনামূল্যে প্রকাশিত রেফারেন্স বই</h3><p class="sub">এগুলো বাংলাদেশের কলেজের নির্ধারিত বইয়ের বিকল্প হিসেবে দাবি করা হচ্ছে না।</p><p><a target="_blank" rel="noopener" href="https://wtcs.pressbooks.pub/nursingfundamentals/">Open RN: Nursing Fundamentals ↗</a></p><p><a target="_blank" rel="noopener" href="https://wtcs.pressbooks.pub/nursingskills/">Open RN: Nursing Skills ↗</a></p><p><a target="_blank" rel="noopener" href="https://wtcs.pressbooks.pub/medterm/">Open RN: Medical Terminology ↗</a></p></div></section>
 <section class="view" id="quiz"><h2>🧠 অনুশীলন MCQ</h2><div class="hint">নিচের প্রশ্নগুলো মৌলিক জ্ঞান যাচাইয়ের জন্য নিজস্ব নমুনা। এগুলো বই-উদ্ধৃত, পরীক্ষার প্রশ্নব্যাংক বা চিকিৎসাগত সিদ্ধান্তের নির্দেশনা নয়।</div><div id="quizArea" class="panel"></div></section>
