@@ -192,7 +192,7 @@ async function showChapter(i,scroll=true){
  for(let pi=0;pi<ps.length;pi++){
    const {text:value,type}=ps[pi];
    const key=paragraphKey(book.id,i,si,pi,value);
-   const wrapper=E(type==='bullet'?'li':'div',undefined,'paragraph');
+   const wrapper=E(type==='bullet'||type==='numbered'?'li':'div',undefined,'paragraph');
    wrapper.append(E('p',value,'original'));
    const translated=E('div',undefined,'bn translation-unready');
    translated.lang='bn';translated.textContent='বাংলা অনুবাদ বাকি…';
