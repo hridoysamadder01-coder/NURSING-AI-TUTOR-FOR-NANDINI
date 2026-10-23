@@ -68,11 +68,13 @@ def sections_for(node,title):
             body="\n\n".join(value for _,value in text)
             if len(body)>35:
                 sections.append({"heading":head[:180],"text":body,
-                    "blocks":[{"type":"bullet" if tag=="li" else "paragraph","text":value}
+                    "blocks":[{"type":tag if tag in ("bullet","numbered") else "paragraph","text":value}
                               for tag,value in text]})
-    def visit(x):
+    def visit(x,list_type=None):
         nonlocal head,text
         tag=local(x)
+        if tag=="ol":list_type="numbered"
+        elif tag=="ul":list_type="bullet"
         if tag in BANNED or any(b in x.attrib.get("class","") for b in BANNED_CLASSES):
             return
         if tag in ("h1","h2","h3","h4"):
@@ -85,10 +87,11 @@ def sections_for(node,title):
         if tag in ("p","li","td","dt","dd"):
             t=fulltext(x)
             if len(t)>15 and not t.lower().startswith(("figure ","image:","video:","copyright ©")):
-                text.append((tag,t[:5000]))
+                block_type=list_type if tag=="li" and list_type else ("bullet" if tag=="li" else "paragraph")
+                text.append((block_type,t[:5000]))
             return
         for child in x:
-            visit(child)
+            visit(child,list_type)
     # Only use actual chapter body, not nav or copyright/contents.
     ugc=next((x for x in node.iter() if "chapter-ugc" in x.attrib.get("class","")),node)
     visit(ugc)
