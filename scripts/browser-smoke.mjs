@@ -41,8 +41,10 @@ try{
  assert.ok((await page.locator('#article .source-list li').count())>=1);
  const orderedChapter=await page.evaluate(async()=>{const data=await (await fetch('./data/books/skills.json')).json();return data.chapters.findIndex(ch=>ch.sections.some(s=>s.blocks?.some(b=>b.type==='numbered')))});
  if(orderedChapter>=0){
-   await page.goto(base+'/library.html?book=skills&chapter='+orderedChapter,{waitUntil:'networkidle'});
-   await page.waitForFunction(()=>document.querySelectorAll('#article ol.source-list>li').length>0,{timeout:10000});
+   await page.goto(base+'/library.html?book=skills',{waitUntil:'networkidle'});
+   await page.waitForFunction(()=>document.querySelector('#chapters')?.options.length>=200,null,{timeout:20000});
+   await page.selectOption('#chapters',String(orderedChapter));
+   await page.waitForFunction(()=>document.querySelectorAll('#article ol.source-list>li').length>0,null,{timeout:20000});
    assert.ok((await page.locator('#article ol.source-list>li').count())>0);
    await page.goto(base+'/library.html?book=fundamentals',{waitUntil:'networkidle'});
    await page.waitForFunction(()=>document.querySelector('#chapters')?.options.length>=130);
