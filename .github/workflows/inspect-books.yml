@@ -1,0 +1,20 @@
+name: Verify Open RN Public Download Links
+on:
+  push:
+    paths:
+      - scripts/inspect-pressbooks.mjs
+      - .github/workflows/inspect-books.yml
+  workflow_dispatch:
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inspect official public book links only
+        run: node scripts/inspect-pressbooks.mjs
