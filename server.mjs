@@ -15,7 +15,7 @@ const localModel=process.env.OLLAMA_MODEL||'qwen3:1.7b';
 const enabled=Boolean(process.env.NANDINI_STUDENT_CODE&&(provider==='ollama'||process.env.OPENAI_API_KEY));
 let localBusy=false;
 const allowed=new Map([
- ['/','index.html'],['/index.html','index.html'],['/tutor.html','tutor.html'],
+ ['/','index.html'],['/index.html','index.html'],['/tutor.html','tutor.html'],['/coach.html','coach.html'],['/src/study-plan.js','src/study-plan.js'],
  ['/manifest.webmanifest','manifest.webmanifest'],['/sw.js','sw.js'],
  ['/icon.svg','icon.svg'],['/faridpur-first-year.html','faridpur-first-year.html'],['/library.html','library.html'],['/data/books/catalog.json','data/books/catalog.json'],['/data/books/fundamentals.json','data/books/fundamentals.json'],['/data/books/skills.json','data/books/skills.json'],['/data/books/terminology.json','data/books/terminology.json'],['/src/lesson-data.js','src/lesson-data.js'],
  ['/src/answer-core.js','src/answer-core.js']
