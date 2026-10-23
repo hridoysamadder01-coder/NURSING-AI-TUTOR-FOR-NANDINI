@@ -65,3 +65,9 @@ This is a text-only transformation of CC BY 4.0 published books (except where ot
 
 The source is refreshed by running `python scripts/import_openrn.py` on a machine with internet or by GitHub's `Import Open RN Textbooks` workflow. No manual book upload needed for these four.
 
+
+## Android APK, no VPS required for book reading
+
+A working GitHub Actions build pipeline compiles a personal debug APK with all **four** text-only Open RN books (632 source chapters). See [ANDROID.md](./ANDROID.md) for how to download the latest successful artifact and install it. Verified Chrome mobile-screen automated journey tests cover notes/reload, book search, and chapter reading; real-phone validation remains pending.
+
+The offline APK contains an **AI Server Settings** page where a future owner-managed HTTPS Ollama server URL can be saved without rebuilding the app. Only the URL is stored; student access codes are not. Server deployment is optional for static reading, notes and sample MCQs. This is not yet verified live AI on the VPS.
