@@ -39,6 +39,7 @@ try{
  assert.ok((await page.locator('#article .paragraph').count())>5);
  assert.ok((await page.locator('#article .readsection').count())>=1);
  assert.ok((await page.locator('#article .original').first().innerText()).length>15);
+ await page.waitForFunction(()=>document.querySelector('#translateStatus')?.textContent.includes('অনুচ্ছেদের বাংলা'),null,{timeout:10000});
  await page.locator('#translateChapter').click();
  assert.match(await page.locator('#translateStatus').innerText(),/Android APK/);
   await page.locator('#searchText').fill('hand hygiene');
