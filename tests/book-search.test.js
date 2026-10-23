@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {bookIds,libraryIndex,findEvidence,trustedSources} from '../src/book-search.mjs';
 test('all three reference books are searchable without remote API or cloud inference',async()=>{
  const data=await libraryIndex();
- assert.deepEqual(bookIds,['fundamentals','skills','terminology']);
+ assert.deepEqual(bookIds,['fundamentals','skills','terminology','mentalhealth']);
  assert.ok(data.entries.length>2000,'books contain surprisingly little searchable content');
- assert.equal(data.books.length,3);
+ assert.equal(data.books.length,4);
 });
 test('hand hygiene returns real citations from the book, never a PDF page invented',async()=>{
  const result=await findEvidence('hand hygiene','fundamentals');
