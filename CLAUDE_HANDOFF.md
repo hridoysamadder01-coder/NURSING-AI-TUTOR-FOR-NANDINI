@@ -15,16 +15,16 @@ Owner wants **real Android access for Nandini**, a first-year Bangladesh Diploma
 - `library.html` has in-app reading/search, publisher PDF buttons, and a guarded optional Bengali AI feature.
 - `scripts/import_openrn.py` reimports source books, preserving links. No separate Nandini file upload required for those three books.
 - Source license: WisTech Open, CC BY 4.0 except where otherwise noted. Imported output strips embedded images/media, footnote media and layouts, and attributes transformation. Nine chapters lacked exact matching URLs, so their source link falls back to the book homepage. Do NOT claim verified PDF page numbers.
-- `server.mjs` can serve the app and optionally call source-cited OpenAI API when `OPENAI_API_KEY` and `NANDINI_STUDENT_CODE` are set securely server-side.
+- `server.mjs` supports **local Ollama** (`NANDINI_AI_PROVIDER=ollama`, `OLLAMA_MODEL=qwen3:1.7b` and private `NANDINI_STUDENT_CODE`) without OpenAI API. Fixed loopback backend, bounded 2 CPU threads, max 1 concurrent local generation. Current GitHub CI tests cover the adapter; actual model quality/RAM/latency remains UNTESTED.
 - GitHub Actions checks the source integrity, browser JS syntax, and server routes. CHECK latest workflow status before reporting.
 
 ## ONLY engineering remaining (few steps)
 1. Run `npm test`, inspect the latest GitHub Action and smoke-test library.html on actual Chrome. Fix only real defects.
 2. With existing authorized VPS/PC access, inspect current production services first and **deploy separately** on mama-core-01 over HTTPS. Do not disturb existing apps. Follow DEPLOYMENT.md.
-3. If an already authorized paid API key exists, provision it securely without logging or committing secrets. Test real Bengali AI answer against one automatically imported original chapter with source attribution. If no key is available, leave AI disabled and state exact blocker.
+3. **Prefer FREE local AI first.** Read `LOCAL_AI.md`, inspect VPS free RAM and running critical services BEFORE attempting Ollama. Test qwen3:1.7b on the same host only if spare memory and isolation make it safe. Check Bengali nursing quality and citation truth against chapters. If insufficient RAM or quality, STOP and report; do not buy paid API or disrupt other apps.
 4. Have owner/Nandini install PWA on Android and verify 1 book chapter, English/Bengali term search, MCQ and notes.
 5. Report working URL, exact tested commit, actual passes/failures and only true blockers. STOP.
 
 IMPORTANT: The imported textbooks are **international reference books**, not Nandini's actual seven Bangladeshi college-prescribed textbooks. Do not silently claim otherwise. Any college-specific textbook requires its legal source/edition and consent. No patient-specific prescriptions or invasive procedure guidance.
 
-Do not ask Hridoy to manually upload any of the three Open RN books. No Vercel required.
+Do not ask Hridoy to manually upload any of the three Open RN books. No Vercel, no paid API, no new server purchase without owner's explicit approval. Keep Claude token spend minimal.
