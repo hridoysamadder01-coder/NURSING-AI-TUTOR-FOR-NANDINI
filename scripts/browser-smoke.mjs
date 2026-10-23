@@ -24,7 +24,13 @@ try{
  await page.waitForFunction(()=>document.querySelectorAll('#sources .source').length>0,null,{timeout:20000});
  const src=await page.locator('#sources .source a').first().getAttribute('href');
  assert.match(src,/https:\/\/wtcs\.pressbooks\.pub\//);
+ await page.goto(base+'/settings.html',{waitUntil:'networkidle'});
+ await page.locator('#apiBase').fill('http://invalid.example');
+ await page.locator('#save').click();
+ assert.match(await page.locator('#result').innerText(),/HTTPS/);
+ await page.locator('#clear').click();
  await page.goto(base+'/library.html',{waitUntil:'networkidle'});
+ await page.waitForFunction(()=>document.querySelectorAll('#shelf .book').length===4);
  await page.locator('#shelf .book button').first().click();
  await page.waitForFunction(()=>document.querySelector('#chapters')?.options?.length>0);
  assert.ok((await page.locator('#chapters option').count())>=130);
@@ -32,5 +38,5 @@ try{
  await page.locator('#searchBtn').click();
  assert.ok((await page.locator('#results').innerText()).length>40);
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> sourced cross-book search -> 141+ chapter reader -> book search');
+ console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}
