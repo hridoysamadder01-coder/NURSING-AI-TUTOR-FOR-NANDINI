@@ -10,9 +10,9 @@ test('UI labels do not misrepresent search as verified generative AI',async()=>{
 test('publisher-imported bookshelf has substantial, source-linked complete source text',async()=>{
  const base=new URL('../data/books/',import.meta.url);
  const catalog=JSON.parse(await readFile(new URL('catalog.json',base),'utf8'));
- assert.equal(catalog.books.length,3);
+ assert.equal(catalog.books.length,4);
  let count=0;
- for(const [id,min] of [['fundamentals',130],['skills',200],['terminology',140]]){
+ for(const [id,min] of [['fundamentals',130],['skills',200],['terminology',140],['mentalhealth',120]]){
   const book=JSON.parse(await readFile(new URL(id+'.json',base),'utf8'));
   assert.ok(book.chapters.length>=min,id+' chapter count too small');
   assert.match(book.license,/CC BY 4.0/);assert.match(book.official_pdf,/open\/download\?type=pdf/);
@@ -20,7 +20,7 @@ test('publisher-imported bookshelf has substantial, source-linked complete sourc
   assert.ok(book.chapters.some(ch=>ch.sections.some(s=>s.text.length>300)),id+' lacks substantial textbook passage');
   count+=book.chapters.length;
  }
- assert.ok(count>=470);
+ assert.ok(count>=620);
 });
 test('PWA caches verified learning module, without server-side secrets',async()=>{
  const sw=await file('sw.js');assert.match(sw,/tutor\.html/);assert.match(sw,/src\/lesson-data\.js/);
