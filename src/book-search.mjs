@@ -3,7 +3,7 @@
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {rank} from './answer-core.js';
-const BOOKS=['fundamentals','skills','terminology'];
+const BOOKS=['fundamentals','skills','terminology','mentalhealth'];
 const docsRoot=new URL('../data/books/',import.meta.url);
 let cache;
 let pending;
