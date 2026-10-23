@@ -13,13 +13,14 @@
 <script type="module">
 import {source,lessons,mcqs} from './src/lesson-data.js';
 import {answerFromLesson,excerptFromPages} from './src/answer-core.js';
+import {apiUrl} from './src/api-config.js';
 const el=id=>document.getElementById(id);const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const link=section=>'<a href="'+source.url+'" target="_blank" rel="noopener noreferrer">'+escape(source.chapter)+' · '+escape(section)+' ↗</a>';
 el('lessonList').innerHTML=lessons.map(item=>'<div class="lesson" id="lesson-'+item.id+'"><b>'+escape(item.title)+'</b><p>'+escape(item.text)+'</p><div class="ref">উৎস: '+link(item.section)+'</div></div>').join('');
 el('exampleBtn').onclick=()=>{el('question').value='গ্লাভস পরলেও কি হাত পরিষ্কার করা লাগে?';el('question').focus()};
 el('askBtn').onclick=()=>{const q=el('question').value.trim();if(q.length<2){el('answer').innerHTML='<p class="nos">আগে একটি প্রশ্ন লেখো।</p>';return}const r=answerFromLesson(q);if(!r.hits.length){el('answer').innerHTML='<p class="nos">এই সংক্ষিপ্ত পাঠে তোমার প্রশ্নের নির্ভরযোগ্য উত্তর পাওয়া যায়নি। মূল বই বা শিক্ষককে জিজ্ঞেস করো।</p>';return}el('answer').innerHTML='<p class="mutedline">পাঠে পাওয়া প্রাসঙ্গিক অংশ (স্বয়ংক্রিয় উত্তর নয়):</p>'+r.hits.map(h=>'<div class="hit"><b>'+escape(h.title)+'</b><p>'+escape(h.text)+'</p><div class="ref">উৎস: '+link(h.section)+'</div></div>').join('')};
 // AI is optional and disabled on static hosting / without server-side secrets.
-fetch('./api/status',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{if(s?.ai_enabled)el('aiBox').hidden=false}).catch(()=>{});
+fetch(apiUrl('/api/status'),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{if(s?.ai_enabled)el('aiBox').hidden=false}).catch(()=>{});
 el('askAi').onclick=async()=>{
  const q=el('aiQuestion').value.trim();const accessCode=el('accessCode').value;
  if(q.length<3){el('aiReply').textContent='আগে প্রশ্ন লেখো।';return}
@@ -33,7 +34,7 @@ el('askAi').onclick=async()=>{
  if(!sources.length){el('aiReply').textContent='প্রশ্নের সঙ্গে মিলে এমন উৎস পাওয়া যায়নি। অনুমান করে AI উত্তর দেব না।';return}
  el('askAi').disabled=true;el('aiReply').textContent='উৎস মিলিয়ে ব্যাখ্যা প্রস্তুত হচ্ছে…';
  try{
-  const r=await fetch('./api/ask',{method:'POST',headers:{'Content-Type':'application/json','X-Student-Code':accessCode},body:JSON.stringify({query:q,sources})});
+  const r=await fetch(apiUrl('/api/ask'),{method:'POST',headers:{'Content-Type':'application/json','X-Student-Code':accessCode},body:JSON.stringify({query:q,sources})});
   const data=await r.json();if(!r.ok||!data.answer){el('aiReply').textContent='নির্ভরযোগ্য উৎসসহ AI উত্তর পাওয়া যায়নি ('+(data.error||r.status)+')।';return}
   el('aiReply').textContent=data.answer;
   const p=document.createElement('p');p.className='mutedline';p.textContent='ব্যবহৃত উৎস: ';el('aiReply').appendChild(p);
