@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {server} from '../server.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';process.env.NODE_ENV='test'; const {server}=await import('../server.mjs');
 test('static app and health endpoints do not need an API key',async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const address=server.address();const origin='http://127.0.0.1:'+address.port;
  try{
