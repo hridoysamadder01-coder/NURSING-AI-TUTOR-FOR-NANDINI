@@ -16,7 +16,7 @@ let localBusy=false;
 const allowed=new Map([
  ['/','index.html'],['/index.html','index.html'],['/tutor.html','tutor.html'],
  ['/manifest.webmanifest','manifest.webmanifest'],['/sw.js','sw.js'],
- ['/icon.svg','icon.svg'],['/library.html','library.html'],['/data/books/catalog.json','data/books/catalog.json'],['/data/books/fundamentals.json','data/books/fundamentals.json'],['/data/books/skills.json','data/books/skills.json'],['/data/books/terminology.json','data/books/terminology.json'],['/src/lesson-data.js','src/lesson-data.js'],
+ ['/icon.svg','icon.svg'],['/faridpur-first-year.html','faridpur-first-year.html'],['/library.html','library.html'],['/data/books/catalog.json','data/books/catalog.json'],['/data/books/fundamentals.json','data/books/fundamentals.json'],['/data/books/skills.json','data/books/skills.json'],['/data/books/terminology.json','data/books/terminology.json'],['/src/lesson-data.js','src/lesson-data.js'],
  ['/src/answer-core.js','src/answer-core.js']
 ]);
 const mime={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',webmanifest:'application/manifest+json',svg:'image/svg+xml',json:'application/json; charset=utf-8'};
