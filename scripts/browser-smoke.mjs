@@ -34,6 +34,12 @@ try{
  await page.locator('#shelf .bookrow button').first().click();
  await page.waitForFunction(()=>document.querySelector('#chapters')?.options?.length>0);
  assert.ok((await page.locator('#chapters option').count())>=130);
+ const listChapter=await page.evaluate(async()=>{const data=await (await fetch('./data/books/fundamentals.json')).json();return data.chapters.findIndex(ch=>ch.sections.some(s=>s.blocks?.some(b=>b.type==='bullet')))});
+ assert.ok(listChapter>=0,'Publisher bullet formatting not found');
+ await page.selectOption('#chapters',String(listChapter));
+ await page.waitForFunction(()=>document.querySelectorAll('#article .source-list li').length>0);
+ assert.ok((await page.locator('#article .source-list li').count())>=1);
+
  await page.locator('[data-mode="both"]').click();
  assert.equal(await page.locator('#article').getAttribute('class'),'mode-both');
  assert.ok((await page.locator('#article .paragraph').count())>5);
