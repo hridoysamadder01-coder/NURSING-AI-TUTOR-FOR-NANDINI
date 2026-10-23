@@ -41,7 +41,7 @@ try{
  assert.ok((await page.locator('#article .original').first().innerText()).length>15);
  await page.waitForFunction(()=>document.querySelector('#translateStatus')?.textContent.includes('অনুচ্ছেদের বাংলা'),null,{timeout:10000});
  await page.locator('#translateChapter').click();
- assert.match(await page.locator('#translateStatus').innerText(),/Android APK/);
+ await page.waitForFunction(()=>document.querySelector('#translateStatus')?.textContent.includes('Android APK'),null,{timeout:10000});
   await page.locator('#searchText').fill('hand hygiene');
  await page.locator('#searchBtn').click();
  assert.ok((await page.locator('#results').innerText()).length>40);
