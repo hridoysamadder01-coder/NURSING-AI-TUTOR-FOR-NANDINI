@@ -12,6 +12,14 @@ test('static app and health endpoints do not need an API key',async()=>{
   const found=await fetch(origin+'/api/books/search?q='+encodeURIComponent('hand hygiene')+'&book=fundamentals');assert.equal(found.status,200);const res=await found.json();assert.ok(res.matches.length>0);assert.equal(res.citation_type,'publisher_chapter_not_pdf_page');assert.ok(res.matches.every(x=>x.sourceUrl.startsWith('https://wtcs.pressbooks.pub/nursingfundamentals/')));
   const badId=await fetch(origin+'/api/books/search?q=hand&book=../../.env');assert.equal(badId.status,400);
   const noAi=await fetch(origin+'/api/books/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:'hand hygiene',bookId:'fundamentals'})});assert.equal(noAi.status,503);
+  process.env.NANDINI_ALLOW_ANDROID_ORIGIN='true';
+  try{
+   const options=await fetch(origin+'/api/books/ask',{method:'OPTIONS',headers:{Origin:'https://localhost','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'Content-Type,X-Student-Code'}});
+   assert.equal(options.status,204);assert.equal(options.headers.get('access-control-allow-origin'),'https://localhost');
+   const reject=await fetch(origin+'/api/books/ask',{method:'OPTIONS',headers:{Origin:'https://evil.example'}});
+   assert.equal(reject.status,405);
+  }finally{delete process.env.NANDINI_ALLOW_ANDROID_ORIGIN}
+
 
  }finally{await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}
 });
