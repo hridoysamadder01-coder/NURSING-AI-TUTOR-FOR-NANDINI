@@ -8,6 +8,7 @@
 <section class="panel"><h2>আজ কোন বিষয় পড়বে?</h2><div id="subjectTabs" class="pills" role="group" aria-label="বিষয় বেছে নাও"></div><h2 id="chosenSubject"></h2><p id="chosenDesc" class="muted"></p><div id="topics"></div></section>
 <section class="panel"><h2>🔎 বইয়ের মধ্যে প্রশ্ন খোঁজো</h2><p class="muted">প্রকাশকের তিনটি Open RN বই থেকে প্রাসঙ্গিক মূল লেখা ও অধ্যায়ের লিংক দেখাবে। ভুল উত্তর তৈরি করবে না। ইংরেজি শব্দ লিখলে সাধারণত ভালো ফল পাওয়া যায়।</p><label for="search">প্রশ্ন বা ইংরেজি শব্দ</label><input id="search" type="search" placeholder="যেমন: hand hygiene, vital signs, lung" maxlength="300"><p class="actions"><button class="btn" id="searchBtn">সব বইয়ে খুঁজো</button><button class="btn secondary" id="clearBtn">মুছে দাও</button></p><div id="searchState" class="small" aria-live="polite"></div><div id="sources"></div></section>
 <section class="panel hidden" id="aiPanel"><h2>✨ বই থেকে বাংলায় বুঝে নাও</h2><p class="muted">সার্ভারে লোকাল AI চালু থাকলেই ব্যবহার করা যাবে। AI শুধু সার্ভার নিজে খুঁজে পাওয়া বইয়ের অংশ পাবে। উত্তর ও উৎস মিলিয়ে পড়বে।</p><label for="accessCode">ব্যক্তিগত অ্যাক্সেস কোড</label><input id="accessCode" type="password" autocomplete="off" placeholder="Nandini Access Code"><p><button class="btn" id="askAI">বাংলায় বুঝিয়ে বলো</button></p><div id="aiReply" aria-live="polite"></div></section>
+<section class="panel"><h2>🤖 নিজের AI Server</h2><p class="muted">VPS-এ লোকাল মডেল চালু হলে তার HTTPS ঠিকানা এখানে সংযুক্ত করো। বই ও নোট এর আগেও কাজ করবে।</p><a class="btn secondary" href="./settings.html">AI Server সেটিংস →</a></section>
 <section class="panel"><h2>📚 তোমার রিসোর্স</h2><div class="actions"><a class="btn secondary" href="./library.html">৩টি বই পড়ো</a><a class="btn secondary" href="./tutor.html">বাংলা পাঠ ও MCQ</a><a class="btn secondary" href="./faridpur-first-year.html">৭ বিষয়ের উৎস</a></div></section>
 <div class="warning">শুধু শিক্ষার জন্য। বাস্তব রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে এই অ্যাপ ব্যবহার করবে না। অফলাইন প্রগ্রেস/নোট এই ফোনেই থাকে। ব্রাউজার ডেটা মুছলে হারাতে পারে।</div>
 <footer>Made for Nandini · Bangladesh Diploma Nursing, 1st Year</footer>
@@ -15,6 +16,7 @@
 <script type="module">
 import {SUBJECTS,TOTAL_TOPICS,taskId,SOURCE_LINKS,subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
+import {apiUrl} from './src/api-config.js';
 const $=id=>document.getElementById(id);
 const e=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
 const key='nandini-coach-v1';
@@ -59,7 +61,7 @@ function render(){
  for(const x of subject.extras){const a=e('a',x.title+' ↗','btn secondary');a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';ref.append(a)}
  if(ref.childNodes.length){list.append(e('h3','সহায়ক পড়ার উৎস'),ref)}
 }
-async function serverSearch(query){const r=await fetch('./api/books/search?q='+encodeURIComponent(query)+'&book=all');if(!r.ok)throw Error('no_server_search');const j=await r.json();return j.matches||[]}
+async function serverSearch(query){const r=await fetch(apiUrl('/api/books/search')+'?q='+encodeURIComponent(query)+'&book=all');if(!r.ok)throw Error('no_server_search');const j=await r.json();return j.matches||[]}
 let offlineIndex;
 async function fallbackSearch(query){
  if(!offlineIndex){const data=await Promise.all(['fundamentals','skills','terminology'].map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}));offlineIndex=data.flatMap(b=>b.chapters.flatMap(ch=>ch.sections.map(s=>({title:ch.title+' · '+s.heading,text:s.text,bookTitle:b.title,chapter:ch.title,heading:s.heading,sourceUrl:ch.url||b.source_url}))));}
@@ -76,12 +78,12 @@ async function searchBooks(){const query=$('search').value.trim();if(query.lengt
 $('searchBtn').onclick=searchBooks;
 $('search').addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();searchBooks()}});
 $('clearBtn').onclick=()=>{$('search').value='';$('sources').replaceChildren();$('searchState').textContent=''};
-fetch('./api/status').then(r=>r.ok?r.json():null).then(r=>{if(r?.ai_enabled)$('aiPanel').classList.remove('hidden')}).catch(()=>{});
+fetch(apiUrl('/api/status')).then(r=>r.ok?r.json():null).then(r=>{if(r?.ai_enabled)$('aiPanel').classList.remove('hidden')}).catch(()=>{});
 $('askAI').onclick=async()=>{
  const query=$('search').value.trim(),code=$('accessCode').value;
  if(query.length<3||!code){$('aiReply').textContent='প্রশ্ন লিখে ব্যক্তিগত কোড দাও।';return}
  $('askAI').disabled=true;$('aiReply').textContent='বইয়ের সূত্র থেকে বাংলা ব্যাখ্যা প্রস্তুত হচ্ছে…';
- try{const r=await fetch('./api/books/ask',{method:'POST',headers:{'Content-Type':'application/json','X-Student-Code':code},body:JSON.stringify({query,bookId:'all'})});const j=await r.json();if(!r.ok||!j.answer){$('aiReply').textContent=j.error==='not_found_in_books'?'বইয়ে নির্ভরযোগ্য তথ্য খুঁজে পাওয়া যায়নি।':('AI উত্তর দিতে পারেনি: '+(j.error||r.status));return}
+ try{const r=await fetch(apiUrl('/api/books/ask'),{method:'POST',headers:{'Content-Type':'application/json','X-Student-Code':code},body:JSON.stringify({query,bookId:'all'})});const j=await r.json();if(!r.ok||!j.answer){$('aiReply').textContent=j.error==='not_found_in_books'?'বইয়ে নির্ভরযোগ্য তথ্য খুঁজে পাওয়া যায়নি।':('AI উত্তর দিতে পারেনি: '+(j.error||r.status));return}
  $('aiReply').replaceChildren();$('aiReply').append(e('p',j.answer));
  for(const s of j.sources||[]){const box=e('div',undefined,'source');box.append(e('strong','['+s.id+'] '+s.label));if(s.url){const a=e('a','মূল অধ্যায় ↗');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';box.append(a)}$('aiReply').append(box)}
  }catch{$('aiReply').textContent='AI সার্ভারে যোগাযোগ করা যাচ্ছে না।'}finally{$('askAI').disabled=false}
