@@ -35,14 +35,14 @@ async function loadBook(m){
 function showChapter(i){if(!book)return;const ch=book.chapters[i];if(!ch)return;
  $('chapters').value=String(i);$('reading').replaceChildren();const h=e('h2',ch.title);$('reading').append(h);
  for(const s of ch.sections){const block=e('section',null,'sec');block.append(e('h3',s.heading));for(const p of s.text.split(/\n\n/)){if(p.trim())block.append(e('p',p))}$('reading').append(block)}
- const note=e('p','উৎস: '+book.title+' · '+ch.title+' · '+book.publisher+' · EPUB অধ্যায় (PDF পৃষ্ঠা নয়)','muted');$('reading').append(note);
- const link=e('a','প্রকাশকের মূল ওয়েববই ↗');link.href=book.source_url;link.target='_blank';link.rel='noopener noreferrer';$('reading').append(link);
+ const note=e('p','উৎস: '+book.title+' · '+ch.title+' · '+book.publisher+' · প্রকাশকের XHTML অধ্যায় (PDF পৃষ্ঠা নয়)','muted');$('reading').append(note);
+ const link=e('a','প্রকাশকের মূল ওয়েববই ↗');link.href=ch.url||book.source_url;link.target='_blank';link.rel='noopener noreferrer';$('reading').append(link);
 }
 $('searchBtn').onclick=()=>{if(!book){$('results').textContent='আগে বই খোলো।';return}const q=$('searchText').value.trim();if(q.length<2){$('results').textContent='অন্তত দুই অক্ষর দিয়ে খোঁজো।';return}
 const hits=rank(q,sections,8);$('results').replaceChildren();
 if(!hits.length){$('results').append(e('p','বইয়ের লেখায় বিষয়টি পাওয়া যায়নি। অনুমান করে উত্তর দিচ্ছি না।','muted'));return}
 $('results').append(e('h3','বইয়ে পাওয়া অংশ ('+hits.length+'টি)'));
-for(const hit of hits){const box=e('div',null,'result');box.append(e('strong',hit.title));const snippet=hit.text.slice(0,320);box.append(e('p',snippet+(hit.text.length>320?'…':'')));const btn=e('button','এই অধ্যায় পড়ো','link');btn.onclick=()=>{showChapter(hit.ci);$('reading').scrollIntoView({behavior:'smooth'})};box.append(btn);box.append(e('p','উৎস: '+book.title+' · '+hit.title+' · EPUB section, PDF page not claimed','muted'));$('results').append(box)}
+for(const hit of hits){const box=e('div',null,'result');box.append(e('strong',hit.title));const snippet=hit.text.slice(0,320);box.append(e('p',snippet+(hit.text.length>320?'…':'')));const btn=e('button','এই অধ্যায় পড়ো','link');btn.onclick=()=>{showChapter(hit.ci);$('reading').scrollIntoView({behavior:'smooth'})};box.append(btn);box.append(e('p','উৎস: '+book.title+' · '+hit.title+' · প্রকাশকের XHTML, PDF পৃষ্ঠা দাবি করা হচ্ছে না','muted'));$('results').append(box)}
 };
 init();
 </script></body></html>
