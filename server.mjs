@@ -12,10 +12,10 @@ const enabled=Boolean(process.env.OPENAI_API_KEY&&process.env.NANDINI_STUDENT_CO
 const allowed=new Map([
  ['/','index.html'],['/index.html','index.html'],['/tutor.html','tutor.html'],
  ['/manifest.webmanifest','manifest.webmanifest'],['/sw.js','sw.js'],
- ['/icon.svg','icon.svg'],['/src/lesson-data.js','src/lesson-data.js'],
+ ['/icon.svg','icon.svg'],['/library.html','library.html'],['/data/books/catalog.json','data/books/catalog.json'],['/data/books/fundamentals.json','data/books/fundamentals.json'],['/data/books/skills.json','data/books/skills.json'],['/data/books/terminology.json','data/books/terminology.json'],['/src/lesson-data.js','src/lesson-data.js'],
  ['/src/answer-core.js','src/answer-core.js']
 ]);
-const mime={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',webmanifest:'application/manifest+json',svg:'image/svg+xml'};
+const mime={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',webmanifest:'application/manifest+json',svg:'image/svg+xml',json:'application/json; charset=utf-8'};
 const counts=new Map();
 function json(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value))}
 function equal(a,b){const x=Buffer.from(String(a||'')),y=Buffer.from(String(b||''));return x.length===y.length&&timingSafeEqual(x,y)}
