@@ -188,7 +188,7 @@ async function showChapter(i,scroll=true){
  const ps=Array.isArray(sec.blocks)&&sec.blocks.length
     ?sec.blocks.filter(b=>b&&typeof b.text==='string'&&b.text.trim().length>10)
     :paragraphs(sec.text).map(text=>({text,type:'paragraph'}));
- let listNode=null;
+ let listNode=null,listType=null;
  for(let pi=0;pi<ps.length;pi++){
    const {text:value,type}=ps[pi];
    const key=paragraphKey(book.id,i,si,pi,value);
@@ -197,10 +197,10 @@ async function showChapter(i,scroll=true){
    const translated=E('div',undefined,'bn translation-unready');
    translated.lang='bn';translated.textContent='বাংলা অনুবাদ বাকি…';
    wrapper.append(translated);
-   if(type==='bullet'){
-     if(!listNode){listNode=E('ul',undefined,'source-list');section.append(listNode)}
+   if(type==='bullet'||type==='numbered'){
+     if(!listNode||listType!==type){listNode=E(type==='numbered'?'ol':'ul',undefined,'source-list');section.append(listNode);listType=type}
      listNode.append(wrapper);
-   }else{listNode=null;section.append(wrapper)}
+   }else{listNode=null;listType=null;section.append(wrapper)}
    all.push({key,text:value,node:translated});
  }
  root.append(section);
