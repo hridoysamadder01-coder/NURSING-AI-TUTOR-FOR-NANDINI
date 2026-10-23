@@ -18,6 +18,8 @@ test('publisher-imported bookshelf has substantial, source-linked complete sourc
   assert.match(book.license,/CC BY 4.0/);assert.match(book.official_pdf,/open\/download\?type=pdf/);
   assert.ok(book.chapters.every(ch=>ch.title&&ch.url?.startsWith('https://wtcs.pressbooks.pub/')&&ch.sections?.some(s=>s.text.length>35)));
   assert.ok(book.chapters.some(ch=>ch.sections.some(s=>s.text.length>300)),id+' lacks substantial textbook passage');
+  assert.ok(book.chapters.some(ch=>ch.sections.some(s=>Array.isArray(s.blocks)&&s.blocks.length>0)),id+' lacks structured paragraph blocks');
+  assert.ok(book.chapters.some(ch=>ch.sections.some(s=>s.blocks?.some(b=>b.type==='bullet'))),id+' lacks bullet lists');
   count+=book.chapters.length;
  }
  assert.ok(count>=620);
