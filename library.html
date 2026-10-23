@@ -49,7 +49,7 @@ select,input[type=search],input[type=password]{width:100%;background:#fff;border
 .readsection{padding:0 0 15px;break-inside:avoid-page}
 .readsection h3{font-family:Georgia,"Noto Serif Bengali",serif;color:#1b423b;font-size:19px;line-height:1.45;letter-spacing:-.01em;margin:26px 0 12px}
 .readsection h3::before{content:"";display:block;width:28px;height:3px;background:#d1b56e;border-radius:6px;margin-bottom:10px}
-.paragraph{margin:0 0 20px}
+.paragraph{margin:0 0 20px}.source-list{padding-left:22px;margin:0 0 18px;list-style:disc}.source-list .paragraph{margin-bottom:11px;padding-left:4px}.source-list .paragraph::marker{color:#168574}.source-list .original{margin:0}.paragraph p.original{margin:0}
 .original{font-family:Georgia,"Noto Serif",serif;line-height:1.8;font-size:var(--reader-size,16px);color:#213a36;white-space:normal;overflow-wrap:anywhere}
 .bn{font-family:"Noto Serif Bengali",serif;line-height:1.85;font-size:var(--reader-size,16px);color:#0f4f45;margin-top:9px;padding:11px 14px;background:#f4faf7;border-left:2px solid #8cbfae;border-radius:0 9px 9px 0;overflow-wrap:anywhere}
 .translation-unready{display:none}.translation-note{font:12px system-ui,sans-serif;color:#69857a;margin:8px 0}
@@ -185,13 +185,22 @@ async function showChapter(i,scroll=true){
  for(let si=0;si<ch.sections.length;si++){
  const sec=ch.sections[si],section=E('section',undefined,'readsection');
  if(sec.heading&&sec.heading!==ch.title)section.append(E('h3',sec.heading));
- const ps=paragraphs(sec.text);
+ const ps=Array.isArray(sec.blocks)&&sec.blocks.length
+    ?sec.blocks.filter(b=>b&&typeof b.text==='string'&&b.text.trim().length>10)
+    :paragraphs(sec.text).map(text=>({text,type:'paragraph'}));
+ let listNode=null;
  for(let pi=0;pi<ps.length;pi++){
-   const value=ps[pi],key=paragraphKey(book.id,i,si,pi,value),wrapper=E('div',undefined,'paragraph');
+   const {text:value,type}=ps[pi];
+   const key=paragraphKey(book.id,i,si,pi,value);
+   const wrapper=E(type==='bullet'?'li':'div',undefined,'paragraph');
    wrapper.append(E('p',value,'original'));
    const translated=E('div',undefined,'bn translation-unready');
    translated.lang='bn';translated.textContent='বাংলা অনুবাদ বাকি…';
-   wrapper.append(translated);section.append(wrapper);
+   wrapper.append(translated);
+   if(type==='bullet'){
+     if(!listNode){listNode=E('ul',undefined,'source-list');section.append(listNode)}
+     listNode.append(wrapper);
+   }else{listNode=null;section.append(wrapper)}
    all.push({key,text:value,node:translated});
  }
  root.append(section);
