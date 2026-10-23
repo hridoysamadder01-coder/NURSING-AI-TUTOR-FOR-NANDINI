@@ -13,12 +13,13 @@ import {apiUrl} from './src/api-config.js';
 const meta=[
 {id:'fundamentals',title:'Nursing Fundamentals 2e',home:'https://wtcs.pressbooks.pub/nursingfundamentals/',year:2024},
 {id:'skills',title:'Nursing Skills 2e',home:'https://wtcs.pressbooks.pub/nursingskills/',year:2023},
-{id:'terminology',title:'Medical Terminology 2e',home:'https://wtcs.pressbooks.pub/medterm/',year:2024}
+{id:'terminology',title:'Medical Terminology 2e',home:'https://wtcs.pressbooks.pub/medterm/',year:2024},
+{id:'mentalhealth',title:'Nursing Mental Health and Community Concepts 2e',home:'https://wtcs.pressbooks.pub/nursingmhcc/',year:2025}
 ];
 const $=id=>document.getElementById(id);let book=null;let catalog=null;let sections=[];let lastId=null;
 function e(tag,text,cl){const el=document.createElement(tag);if(text!=null)el.textContent=text;if(cl)el.className=cl;return el}
-async function init(){try{const r=await fetch('./data/books/catalog.json');if(!r.ok)throw Error('missing catalog');const j=await r.json();if(!Array.isArray(j.books)||j.books.length!==3)throw Error('incomplete catalog');catalog=j;$('state').textContent='৩টি বই স্বয়ংক্রিয়ভাবে যুক্ত করা হয়েছে। অ্যাপ থেকেই অধ্যায় পড়ো অথবা প্রকাশকের মূল PDF ডাউনলোড করো।';}catch{$('state').textContent='প্রকাশকের মূল বইগুলো এখনই পড়া বা ডাউনলোড করা যাবে। অ্যাপের ভেতরের অধ্যায়ভিত্তিক সংস্করণ সার্ভারে এখনও প্রস্তুত হয়নি।'}
-for(const m of meta){const info=catalog?.books?.find(x=>x.id===m.id);const card=e('div',null,'book');const cover=e('div','Open RN\n'+(m.id==='terminology'?'Terms':m.id==='fundamentals'?'Nursing':'Skills'),'cover');const right=e('div');right.append(e('h3',m.title),e('p',info?'✓ '+info.chapters+'টি পাঠ/অধ্যায় · Text-only edition':'প্রকাশকের বই · '+m.year,'muted'));const actions=e('div',null,'actions');
+async function init(){try{const r=await fetch('./data/books/catalog.json');if(!r.ok)throw Error('missing catalog');const j=await r.json();if(!Array.isArray(j.books)||j.books.length!==4)throw Error('incomplete catalog');catalog=j;$('state').textContent='৪টি বই স্বয়ংক্রিয়ভাবে যুক্ত করা হয়েছে। অ্যাপ থেকেই অধ্যায় পড়ো অথবা প্রকাশকের মূল PDF ডাউনলোড করো।';}catch{$('state').textContent='প্রকাশকের মূল বইগুলো এখনই পড়া বা ডাউনলোড করা যাবে। অ্যাপের ভেতরের অধ্যায়ভিত্তিক সংস্করণ সার্ভারে এখনও প্রস্তুত হয়নি।'}
+for(const m of meta){const info=catalog?.books?.find(x=>x.id===m.id);const card=e('div',null,'book');const cover=e('div','Open RN\n'+(m.id==='terminology'?'Terms':m.id==='fundamentals'?'Nursing':m.id==='mentalhealth'?'Mental Health':'Skills'),'cover');const right=e('div');right.append(e('h3',m.title),e('p',info?'✓ '+info.chapters+'টি পাঠ/অধ্যায় · Text-only edition':'প্রকাশকের বই · '+m.year,'muted'));const actions=e('div',null,'actions');
 if(info){const open=e('button','📖 অ্যাপে পড়ো','btn');open.onclick=()=>loadBook(m);actions.append(open)}
 for(const [label,url] of [['মূল PDF ↗',m.home+'open/download?type=pdf'],['মূল বই ↗',m.home]]){const a=e('a',label,'btn alt');a.href=url;a.target='_blank';a.rel='noopener noreferrer';actions.append(a)}
 right.append(actions);card.append(cover,right);$('shelf').append(card)}
