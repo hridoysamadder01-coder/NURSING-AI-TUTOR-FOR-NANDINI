@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {dirname,join} from 'node:path';
 import {timingSafeEqual} from 'node:crypto';
 import {ollamaChat} from './src/local-ai.mjs';
+import {findEvidence,trustedSources,bookIds} from './src/book-search.mjs';
 const root=dirname(fileURLToPath(import.meta.url));
 const host=process.env.HOST||'127.0.0.1';
 const port=Number(process.env.PORT||8787);
@@ -47,7 +48,37 @@ export const server=http.createServer(async(req,res)=>{
 res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');
 const path=new URL(req.url||'/', 'http://localhost').pathname;
 if(path==='/healthz'){json(res,200,{status:'ok',service:'nandini-study',ai_enabled:enabled});return}
-if(path==='/api/status'){json(res,200,{ai_enabled:enabled,requires_access_code:enabled});return}
+if(path==='/api/status'){json(res,200,{ai_enabled:enabled,requires_access_code:enabled,provider:enabled?provider:null});return}
+if(path==='/api/books/search'){
+ if(req.method!=='GET'){json(res,405,{error:'method_not_allowed'});return}
+ const parsed=new URL(req.url||'/','http://localhost');const query=parsed.searchParams.get('q')||'';
+ const bookId=parsed.searchParams.get('book')||'all';
+ if(query.length<2||query.length>300||!['all',...bookIds].includes(bookId)){json(res,400,{error:'invalid_search'});return}
+ try{const matches=await findEvidence(query,bookId,6);json(res,200,{query,bookId,citation_type:'publisher_chapter_not_pdf_page',matches})}
+ catch{json(res,503,{error:'book_index_not_ready'})}
+ return
+}
+if(path==='/api/books/ask'){
+ if(req.method!=='POST'){json(res,405,{error:'method_not_allowed'});return}
+ if(!enabled){json(res,503,{error:'ai_not_configured'});return}
+ const origin=req.headers.origin;const forwardedHost=req.headers['x-forwarded-host']||req.headers.host;
+ if(origin){try{if(new URL(origin).host!==forwardedHost){json(res,403,{error:'origin_not_allowed'});return}}catch{json(res,403,{error:'origin_not_allowed'});return}}
+ if(!equal(req.headers['x-student-code'],process.env.NANDINI_STUDENT_CODE)){json(res,401,{error:'access_code_required'});return}
+ if(limited(req.socket.remoteAddress||'unknown')){json(res,429,{error:'rate_limit'});return}
+ try{
+  const data=await bodyOf(req);const query=String(data.query||'').trim(),bookId=String(data.bookId||'all');
+  if(query.length<3||query.length>300||!['all',...bookIds].includes(bookId)||Object.hasOwn(data,'sources')){
+   json(res,400,{error:'invalid_question_or_book'});return
+  }
+  const matches=await findEvidence(query,bookId,3);
+  if(!matches.length){json(res,200,{answer:null,error:'not_found_in_books',sources:[]});return}
+  const result=await llmAnswer(query,trustedSources(matches));
+  if(!result.answer){json(res,422,{error:'answer_lacks_valid_source_citation',sources:matches.map(m=>({label:m.bookTitle+' · '+m.chapter,url:m.sourceUrl}))});return}
+  json(res,200,{...result,verified_source_selection:true,citation_type:'publisher_chapter_not_pdf_page'});
+ }catch(error){json(res,error.message==='invalid_json'?400:error.message==='payload_too_large'?413:502,
+  {error:error.message==='invalid_json'?'invalid_json':error.message==='payload_too_large'?'payload_too_large':'ai_temporarily_unavailable'})}
+ return
+}
 if(path==='/api/ask'){
  if(req.method!=='POST'){json(res,405,{error:'method_not_allowed'});return}
  if(!enabled){json(res,503,{error:'ai_not_configured'});return}
