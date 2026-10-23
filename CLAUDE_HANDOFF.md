@@ -1,21 +1,30 @@
-# Claude: narrow last-mile handoff, minimize weekly tokens
+# LAST MILE FOR CLAUDE (October 23, 2026)
 
-**User's priority:** Give Nandini (Bangladesh Diploma Nursing 1st year) a real usable Bengali book-based tutor on Android; preserve honesty about textbook citations, source rights and medical safety. **Do not rebuild from scratch**, expand scope, redesign the app or repeat already-completed research.
+**Don't rebuild, research or manually upload textbooks. Save weekly tokens.**
 
-## Work completed by ChatGPT, Oct 23, 2026
-- Private GitHub repo main now contains `index.html`, `tutor.html`, `src/lesson-data.js`, `src/answer-core.js`, `server.mjs`, PWA files, tests and CI.
-- `tutor.html`: six Bengali learning sections explicitly derived from Open RN Nursing Fundamentals 2e §9.6 Preventing Infection, with citation links, five verified-to-section MCQ explanations, guarded retrieval questions, optional student PDF **local** text search with actual PDF page numbers.
-- `server.mjs`: optional secure authenticated source-cited LLM endpoint (requires server-side OPENAI_API_KEY + NANDINI_STUDENT_CODE). On bare static host AI stays disabled. No secret keys committed.
-- GitHub Actions test suite: see latest run before claiming green. One Unicode Bengali-mark false match was fixed and the next run passed.
-- Book provenance: Open RN CC BY 4.0 except exceptions. No imported copyrighted publisher books. No claim that the 2018 BNMC curriculum is the student's complete current books.
-- Vercel connection blocked by 403 team scope, and Remote Desktop Commander was quota-blocked. Existing DigitalOcean droplet `mama-core-01` is active.
+GitHub: `hridoysamadder01-coder/NURSING-AI-TUTOR-FOR-NANDINI` (private).
+Owner wants **real Android access for Nandini**, a first-year Bangladesh Diploma Nursing student. Claimed existing authorized PC/VPS access. The remote Desktop Commander connected through ChatGPT was quota-blocked; Claude's own access may work.
 
-## ONLY do remaining last mile
-1. Verify current repo CI, syntax and the main mobile UI; repair real failures, not cosmetic rewrites.
-2. Inspect existing VPS services first (READ ONLY). Safely deploy a separate service on the existing VPS over HTTPS, following `DEPLOYMENT.md`, without modifying existing apps. If an SSH credential or domain is absent, report exact blocker and avoid reckless changes.
-3. If API key/access code already authorized and available, configure privately and live-test source-cited Bengali AI; otherwise leave it disabled and state exactly what's missing. Never invent a key or put it in frontend.
-4. Test Nandini's actual Android phone/PWA and her actual college book (edition, page alignment). Scanned-image PDFs need OCR, not currently implemented.
-5. Deliver the working HTTPS URL, test evidence, and concise remaining issues. **STOP** when done. Don't consume remaining weekly tokens on broad research, unneeded features, or new architecture.
+## Already built and verified by ChatGPT
+- Mobile Bengali PWA frontend: home, 7 subjects (verify against college), notes, MCQ, PDF local reader, chapter tutor.
+- **All three official Open RN publisher books pulled automatically by GitHub Actions using the lightweight publisher XML/XHTML exports**. Book data on main under `data/books/`:
+  - `fundamentals.json`: 141 extracted source chapters
+  - `skills.json`: 214 extracted source chapters
+  - `terminology.json`: 148 extracted source chapters
+  - total **503** text-only chapters with headings and source metadata.
+- `library.html` has in-app reading/search, publisher PDF buttons, and a guarded optional Bengali AI feature.
+- `scripts/import_openrn.py` reimports source books, preserving links. No separate Nandini file upload required for those three books.
+- Source license: WisTech Open, CC BY 4.0 except where otherwise noted. Imported output strips embedded images/media, footnote media and layouts, and attributes transformation. Nine chapters lacked exact matching URLs, so their source link falls back to the book homepage. Do NOT claim verified PDF page numbers.
+- `server.mjs` can serve the app and optionally call source-cited OpenAI API when `OPENAI_API_KEY` and `NANDINI_STUDENT_CODE` are set securely server-side.
+- GitHub Actions checks the source integrity, browser JS syntax, and server routes. CHECK latest workflow status before reporting.
 
-## Acceptance proof
-A first-year learner must read an attributed lesson, search a real personal book and see real page references, complete grounded MCQs, retain notes, and if AI enabled, get Bengali explanations supported by selected book excerpts. Do not call search-only retrieval a working generative AI tutor.
+## ONLY engineering remaining (few steps)
+1. Run `npm test`, inspect the latest GitHub Action and smoke-test library.html on actual Chrome. Fix only real defects.
+2. With existing authorized VPS/PC access, inspect current production services first and **deploy separately** on mama-core-01 over HTTPS. Do not disturb existing apps. Follow DEPLOYMENT.md.
+3. If an already authorized paid API key exists, provision it securely without logging or committing secrets. Test real Bengali AI answer against one automatically imported original chapter with source attribution. If no key is available, leave AI disabled and state exact blocker.
+4. Have owner/Nandini install PWA on Android and verify 1 book chapter, English/Bengali term search, MCQ and notes.
+5. Report working URL, exact tested commit, actual passes/failures and only true blockers. STOP.
+
+IMPORTANT: The imported textbooks are **international reference books**, not Nandini's actual seven Bangladeshi college-prescribed textbooks. Do not silently claim otherwise. Any college-specific textbook requires its legal source/edition and consent. No patient-specific prescriptions or invasive procedure guidance.
+
+Do not ask Hridoy to manually upload any of the three Open RN books. No Vercel required.
