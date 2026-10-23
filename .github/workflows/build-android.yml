@@ -34,6 +34,15 @@ jobs:
         run: npm test
       - name: Prepare full offline Android study assets
         run: node scripts/prepare-android.mjs
+      - name: Verify four complete books and personal VPS settings in APK
+        run: |
+          test -s www/data/books/catalog.json
+          test -s www/data/books/fundamentals.json
+          test -s www/data/books/skills.json
+          test -s www/data/books/terminology.json
+          test -s www/data/books/mentalhealth.json
+          test -s www/settings.html
+          test -s www/src/api-config.js
       - name: Install Capacitor 8
         run: npm install --no-save --no-audit --no-fund @capacitor/core@8 @capacitor/cli@8 @capacitor/android@8
       - name: Generate Android project
