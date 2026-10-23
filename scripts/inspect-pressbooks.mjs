@@ -29,3 +29,5 @@ for (const type of ['wxr','xhtml']){
  const u='https://wtcs.pressbooks.pub/nursingskills/open/download?type='+type;
  try {const r=await fetch(u,{signal:AbortSignal.timeout(12000)});const str=await r.text();console.log('SAMPLE',type,'prefix',JSON.stringify(str.slice(0,1200)),'post_type_count',(str.match(/post_type/g)||[]).length,'h1_count',(str.match(/<h1/g)||[]).length,'chapter_class_count',(str.match(/class="[^"]*chapter/g)||[]).length)}catch(e){console.log('SAMPLE_ERROR',type,e.message)}
 }
+
+{ const r=await fetch('https://wtcs.pressbooks.pub/nursingskills/open/download?type=xhtml');const s=await r.text();for(const [label,re] of [['BODY',/<body[^>]*>/i],['CHAPTER',/class="[^"]*chapter[^"]*"/i],['TITLE',/<h1[^>]*>/i],['SECTION',/<section[^>]*>/i]]){const x=re.exec(s);console.log('STRUCT',label,x?JSON.stringify(s.slice(Math.max(0,x.index-300),x.index+1100)):'absent')}}
