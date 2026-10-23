@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {spawnSync} from 'node:child_process';
 const file=async name=>readFile(new URL('../'+name,import.meta.url),'utf8');
 test('browser inline script passes Node syntax check',async()=>{
- for(const path of ['index.html','tutor.html','library.html']){const html=await file(path);const m=html.match(/<script(?: type="module")?>([\s\S]*?)<\/script>/);assert.ok(m,'missing script in '+path);const parsed=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(parsed.status,0,path+' JavaScript syntax error: '+parsed.stderr)}
+ for(const path of ['index.html','tutor.html','library.html','faridpur-first-year.html']){const html=await file(path);const m=html.match(/<script(?: type="module")?>([\s\S]*?)<\/script>/);assert.ok(m,'missing script in '+path);const parsed=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(parsed.status,0,path+' JavaScript syntax error: '+parsed.stderr)}
 });
 test('UI labels do not misrepresent search as verified generative AI',async()=>{
  const html=await file('tutor.html');
@@ -27,3 +27,5 @@ test('PWA caches verified learning module, without server-side secrets',async()=
  const manifest=JSON.parse(await file('manifest.webmanifest'));assert.equal(manifest.display,'standalone');
  for(const path of ['index.html','tutor.html','src/answer-core.js','src/lesson-data.js'])assert.doesNotMatch(await file(path),/sk-[a-zA-Z0-9]{25,}/);
 });
+
+test('Faridpur seven-subject list is attributed and commercial full texts are not bundled', async()=>{const page=await file('faridpur-first-year.html');for(const code of ['D111','D112','D123','D124','D135','D116','D117'])assert.match(page,new RegExp(code));assert.match(page,/BNMC/);assert.match(page,/কলেজের/);assert.match(page,/OpenStax/);assert.match(page,/শুধু পড়া/);assert.match(page,/eboighar/);assert.match(await file('index.html'),/faridpur-first-year\.html/)});
