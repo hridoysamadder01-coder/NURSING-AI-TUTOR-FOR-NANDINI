@@ -31,3 +31,5 @@ for (const type of ['wxr','xhtml']){
 }
 
 { const r=await fetch('https://wtcs.pressbooks.pub/nursingskills/open/download?type=xhtml');const s=await r.text();for(const [label,re] of [['BODY',/<body[^>]*>/i],['CHAPTER',/class="[^"]*chapter[^"]*"/i],['TITLE',/<h1[^>]*>/i],['SECTION',/<section[^>]*>/i]]){const x=re.exec(s);console.log('STRUCT',label,x?JSON.stringify(s.slice(Math.max(0,x.index-300),x.index+1100)):'absent')}}
+
+{const r=await fetch('https://wtcs.pressbooks.pub/nursingskills/open/download?type=xhtml');const s=await r.text();for(const re of [/<div[^>]+id=["']chapter-slug[^"']*["'][^>]*>/i,/<div[^>]+class=["'][^"']*chapter[^"']*["'][^>]*>/i]){const m=re.exec(s);console.log('DIV_CHAPTER',m?JSON.stringify(s.slice(m.index,m.index+1900)):'absent')} }
