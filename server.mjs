@@ -15,7 +15,7 @@ const localModel=process.env.OLLAMA_MODEL||'qwen3:1.7b';
 const enabled=Boolean(process.env.NANDINI_STUDENT_CODE&&(provider==='ollama'||process.env.OPENAI_API_KEY));
 let localBusy=false;
 const allowed=new Map([
- ['/','index.html'],['/index.html','index.html'],['/tutor.html','tutor.html'],['/coach.html','coach.html'],['/src/study-plan.js','src/study-plan.js'],
+ ['/','index.html'],['/index.html','index.html'],['/tutor.html','tutor.html'],['/coach.html','coach.html'],['/settings.html','settings.html'],['/src/api-config.js','src/api-config.js'],['/src/study-plan.js','src/study-plan.js'],
  ['/manifest.webmanifest','manifest.webmanifest'],['/sw.js','sw.js'],
  ['/icon.svg','icon.svg'],['/faridpur-first-year.html','faridpur-first-year.html'],['/library.html','library.html'],['/data/books/catalog.json','data/books/catalog.json'],['/data/books/fundamentals.json','data/books/fundamentals.json'],['/data/books/skills.json','data/books/skills.json'],['/data/books/terminology.json','data/books/terminology.json'],['/src/lesson-data.js','src/lesson-data.js'],
  ['/src/answer-core.js','src/answer-core.js']
@@ -47,6 +47,15 @@ return {answer:message,sources:sources.map((s,i)=>({id:'S'+(i+1),label:s.label,u
 export const server=http.createServer(async(req,res)=>{
 res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');
 const path=new URL(req.url||'/', 'http://localhost').pathname;
+const nativeAndroid=process.env.NANDINI_ALLOW_ANDROID_ORIGIN==='true'&&req.headers.origin==='https://localhost';
+const corsPath=path==='/healthz'||path.startsWith('/api/');
+if(nativeAndroid&&corsPath){
+ res.setHeader('Access-Control-Allow-Origin','https://localhost');
+ res.setHeader('Vary','Origin');
+ res.setHeader('Access-Control-Allow-Headers','Content-Type, X-Student-Code');
+ res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
+ if(req.method==='OPTIONS'){res.writeHead(204);res.end();return}
+}
 if(path==='/healthz'){json(res,200,{status:'ok',service:'nandini-study',ai_enabled:enabled});return}
 if(path==='/api/status'){json(res,200,{ai_enabled:enabled,requires_access_code:enabled,provider:enabled?provider:null});return}
 if(path==='/api/books/search'){
@@ -83,7 +92,7 @@ if(path==='/api/ask'){
  if(req.method!=='POST'){json(res,405,{error:'method_not_allowed'});return}
  if(!enabled){json(res,503,{error:'ai_not_configured'});return}
  const origin=req.headers.origin;const forwardedHost=req.headers['x-forwarded-host']||req.headers.host;
- if(origin&&new URL(origin).host!==forwardedHost){json(res,403,{error:'origin_not_allowed'});return}
+ if(origin&&!nativeAndroid&&new URL(origin).host!==forwardedHost){json(res,403,{error:'origin_not_allowed'});return}
  if(!equal(req.headers['x-student-code'],process.env.NANDINI_STUDENT_CODE)){json(res,401,{error:'access_code_required'});return}
  if(limited(req.socket.remoteAddress||'unknown')){json(res,429,{error:'rate_limit'});return}
  try{
