@@ -1,5 +1,5 @@
 import {lessons,source} from './lesson-data.js';
-const clean=s=>String(s??'').toLowerCase().normalize('NFKC').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+const clean=s=>String(s??'').toLowerCase().normalize('NFKC').replace(/[^\p{L}\p{M}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
 export function terms(text){return [...new Set(clean(text).split(' ').filter(x=>x.length>1))]}
 const stop=new Set(['কি','কী','কেন','কিভাবে','কিভাবে','এর','এবং','একটি','আমাকে','বলো','হবে','করে','করতে','is','the','what','why','how','please','about','does','can','are','for','with']);
 export function rank(query,documents,limit=3){
