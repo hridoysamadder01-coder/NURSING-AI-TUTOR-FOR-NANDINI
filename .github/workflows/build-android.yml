@@ -4,8 +4,16 @@ on:
   push:
     paths:
       - scripts/prepare-android.mjs
+      - scripts/import_openrn.py
       - capacitor.config.json
       - .github/workflows/build-android.yml
+      - index.html
+      - library.html
+      - tutor.html
+      - coach.html
+      - settings.html
+      - src/**
+      - data/books/**
 permissions:
   contents: read
 jobs:
