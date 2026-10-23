@@ -24,3 +24,8 @@ for (const name of ['nursingfundamentals','nursingskills','medterm']) {
    try {const r=await fetch(url,{method:'HEAD',signal:AbortSignal.timeout(10000)});console.log('EXPORT',name,type,'status',r.status,'length',r.headers.get('content-length'),'type',r.headers.get('content-type'))} catch(e){console.log('EXPORT_ERR',name,type,e.message)}
  }
 }
+
+for (const type of ['wxr','xhtml']){
+ const u='https://wtcs.pressbooks.pub/nursingskills/open/download?type='+type;
+ try {const r=await fetch(u,{signal:AbortSignal.timeout(12000)});const str=await r.text();console.log('SAMPLE',type,'prefix',JSON.stringify(str.slice(0,1200)),'post_type_count',(str.match(/post_type/g)||[]).length,'h1_count',(str.match(/<h1/g)||[]).length,'chapter_class_count',(str.match(/class="[^"]*chapter/g)||[]).length)}catch(e){console.log('SAMPLE_ERROR',type,e.message)}
+}
