@@ -39,6 +39,19 @@
       "year": 2024,
       "license": "CC BY 4.0, except where otherwise noted; modified text-only extract",
       "ready": true
+    },
+    {
+      "id": "mentalhealth",
+      "title": "Nursing Mental Health and Community Concepts 2e",
+      "chapters": 129,
+      "size_bytes": 1470833,
+      "source_url": "https://wtcs.pressbooks.pub/nursingmhcc/",
+      "official_pdf": "https://wtcs.pressbooks.pub/nursingmhcc/open/download?type=pdf",
+      "official_epub": "https://wtcs.pressbooks.pub/nursingmhcc/open/download?type=epub",
+      "publisher": "WisTech Open / Open Resources for Nursing (Open RN)",
+      "year": 2025,
+      "license": "CC BY 4.0, except where otherwise noted; modified text-only extract",
+      "ready": true
     }
   ]
 }
