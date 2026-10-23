@@ -33,3 +33,13 @@ GitHub-এর private repository থেকে তৈরি পরীক্ষা
 GitHub-এর green CI ও browser smoke test কোড ও মোবাইল viewport যাচাই করে। নন্দিনীর নিজের Android ফোনে ইনস্টল, স্ক্রল, নোট, বই, ডাউনলোড ও AI পরীক্ষা না হওয়া পর্যন্ত **field verified** বলব না।
 
 অ্যাপটি পড়াশোনার সহায়ক, রোগীর চিকিৎসার নির্দেশ নয়।
+
+## New bilingual textbook mode (English + বাংলা)
+
+Use **বই** → **পড়া শুরু** → choose **অধ্যায়**. The reader now preserves original English subheadings, separately styled paragraphs and publisher list items. Choose English / দুটোই / বাংলা and adjust font with A− / A+.
+
+In the newest Android APK, press **এই অধ্যায় বাংলায় আনো**. The app downloads Google ML Kit English and Bengali language models to the phone once (initial network and storage required). Then translation runs on-device, not through an external paid AI API. The first 28 paragraphs of the chapter are translated per tap; press again to continue. Finished translations are saved on this phone with IndexedDB for subsequent offline reading. Original English stays intact and visible in bilingual mode.
+
+**Accuracy boundary:** This is automatic translation, not a human-reviewed complete Bengali textbook; clinical terms and medicine instructions must be checked against the original English and a qualified teacher. All 632 source chapters are eligible for paragraph translation, but they are NOT pre-translated inside the distributed APK. Google ML Kit is separate from the optional future VPS AI Teacher.
+
+Older APKs do NOT include this on-device bilingual translator. Download the latest green APK artifact after the relevant build commit. Android debug signing across runs can change, so protect your notes before replacing the app.
