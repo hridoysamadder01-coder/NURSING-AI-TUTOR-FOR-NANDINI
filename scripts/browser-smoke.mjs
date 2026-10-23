@@ -47,7 +47,7 @@ try{
    await page.waitForFunction(()=>document.querySelectorAll('#article ol.source-list>li').length>0,null,{timeout:20000});
    assert.ok((await page.locator('#article ol.source-list>li').count())>0);
    const style=await page.locator('#article ol.source-list').first().evaluate(el=>getComputedStyle(el).listStyleType);
-   assert.notEqual(style,'none','Numbered steps must retain visible list numbering');
+   assert.equal(style,'decimal','Numbered source procedures must render visible 1, 2, 3 numbering');
    await page.goto(base+'/library.html?book=fundamentals',{waitUntil:'networkidle'});
    await page.waitForFunction(()=>document.querySelector('#chapters')?.options.length>=130);
  }
