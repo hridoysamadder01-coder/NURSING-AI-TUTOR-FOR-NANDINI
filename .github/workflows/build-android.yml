@@ -44,7 +44,11 @@ jobs:
           test -s www/settings.html
           test -s www/src/api-config.js
       - name: Install Capacitor 8
-        run: npm install --no-save --no-audit --no-fund @capacitor/core@8 @capacitor/cli@8 @capacitor/android@8
+        run: npm install --no-save --no-audit --no-fund @capacitor/core@8 @capacitor/cli@8 @capacitor/android@8 @capacitor-mlkit/translation@8 esbuild@0.25.12
+      - name: Bundle native offline English-Bengali translation bridge
+        run: |
+          npx esbuild src/native-translation.js --bundle --format=esm --platform=browser --target=es2022 --outfile=www/src/native-translation.bundle.js
+          test -s www/src/native-translation.bundle.js
       - name: Generate Android project
         run: |
           npx cap add android
