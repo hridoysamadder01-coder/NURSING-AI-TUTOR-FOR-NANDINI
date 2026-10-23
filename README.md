@@ -51,3 +51,15 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) and [CLAUDE_HANDOFF.md](./CLAUDE_HANDOFF.md
 ## Medical boundary
 
 Educational explanation and exam preparation only. No personalized medical diagnosis, prescriptions, medication doses, or unsupervised invasive procedures. Clinical practice requires instructor and institution guidance.
+
+## Automatically loaded Open RN textbooks
+The `library.html` mobile bookshelf reads **three publisher books automatically imported** under `data/books/`, so Nandini does **not** have to upload them herself. GitHub Actions imports the publisher-provided XML/XHTML text and attaches source book/chapter citations:
+- Nursing Fundamentals 2e: 141 extracted text chapters
+- Nursing Skills 2e: 214 extracted text chapters
+- Medical Terminology 2e: 148 extracted text chapters
+**Total 503 text-only chapters.** Nine chapter links fall back to the verified publisher book home page because exact URLs were not matched.
+
+This is a text-only transformation of CC BY 4.0 published books (except where otherwise noted); images, embedded media, activity widgets and layouts were excluded. It is NOT a substitute for every original PDF component or for Nandini's college-mandated books. Do not claim PDF page numbers for these extracted XHTML chapters. The reader gives official direct PDF download links and a source-attributed in-app search, with optional server-configured Bengali AI.
+
+The source is refreshed by running `python scripts/import_openrn.py` on a machine with internet or by GitHub's `Import Open RN Textbooks` workflow. No manual book upload needed for these three.
+
