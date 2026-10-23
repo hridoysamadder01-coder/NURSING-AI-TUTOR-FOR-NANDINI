@@ -51,3 +51,9 @@ Record exact tested commit, URL, checks, pass/fail and remaining limitations. Do
 ## Private local model option
 
 Read [LOCAL_AI.md](./LOCAL_AI.md) before touching a shared VPS. Never expose Ollama on a public port, and do not disrupt unrelated production workloads for a 1.7B model experiment. If memory is insufficient, report a hard blocker rather than silently falling back to paid APIs.
+
+## Existing Android debug APK connection
+
+After deploying an HTTPS address, set `NANDINI_ALLOW_ANDROID_ORIGIN=true` **only for this new nursing service**, not globally. This enables CORS only for Capacitor's `https://localhost` origin on its API and health routes; other origins are not granted CORS. The AI endpoint still requires `NANDINI_STUDENT_CODE`. Never expose Ollama's 11434 port publicly.
+
+On Android, set that exact HTTPS base in Study Coach → AI Server Settings. Do not embed a hard-coded VPS IP, secret or paid provider key in the debug APK. See `ANDROID.md`.
