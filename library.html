@@ -1,0 +1,48 @@
+<!doctype html><html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b746b"><link rel="manifest" href="./manifest.webmanifest"><title>নন্দিনীর বইয়ের তাক</title><style>
+:root{font-family:system-ui,"Noto Sans Bengali",sans-serif;background:#eff7f5;color:#143c37}*{box-sizing:border-box}body{margin:0}header{background:#0a736b;color:#fff;padding:19px 17px 25px;border-radius:0 0 24px 24px}header a{color:#fff;text-decoration:none}header h1{margin:9px 0 5px;font-size:25px}main{max-width:850px;margin:auto;padding:15px 14px 65px}.panel{background:white;border:1px solid #dbe9e4;border-radius:17px;margin:12px 0;padding:16px}p{line-height:1.75}h2{font-size:20px;margin:12px 0}h3{font-size:17px;margin:10px 0}.book{display:grid;grid-template-columns:60px 1fr;gap:12px;border-bottom:1px solid #e0ede9;padding:14px 0}.book:last-child{border-bottom:none}.cover{background:linear-gradient(145deg,#08786f,#0d514c);color:white;border-radius:7px;padding:10px 6px;text-align:center;font-weight:700;font-size:12px;display:grid;place-content:center;min-height:91px;box-shadow:3px 3px #aacbc2}.muted{color:#597870;font-size:13px}.btn{display:inline-block;border:0;background:#0a7569;color:#fff;text-decoration:none;font:inherit;font-weight:650;padding:9px 13px;border-radius:10px;cursor:pointer}.btn.alt{background:#e0f3ed;color:#075b54}.btn:disabled{opacity:.55}.actions{display:flex;gap:7px;flex-wrap:wrap}.warn{padding:12px 14px;background:#fff7e7;border-left:4px solid #e6b24c;border-radius:8px;font-size:13px;line-height:1.65}input{font:inherit;padding:12px;width:100%;border:1px solid #b9d9d0;border-radius:10px}#chapters{width:100%;padding:10px;border:1px solid #bbd8cf;border-radius:10px;font:inherit;max-width:100%}.sec{padding:12px 0;border-bottom:1px solid #ecf1ee}.sec:last-child{border-bottom:none}.sec h3{color:#126e63}#reading{white-space:normal;line-height:1.9}#reading p{margin:8px 0;white-space:pre-line}#results{margin-top:14px}.result{border-left:3px solid #399c8b;padding:10px 12px;margin:10px 0;background:#f8fcfa}.badge{background:#e1f2ec;color:#08705f;padding:4px 10px;border-radius:18px;font-size:12px;display:inline-block}a{color:#087367}button.link{border:0;background:none;color:#087367;text-decoration:underline;cursor:pointer;font:inherit;padding:3px 0;text-align:left}.hidden{display:none!important}footer{font-size:12px;text-align:center;color:#68817b;padding:15px} </style></head>
+<body><header><div style="max-width:820px;margin:auto"><a href="./index.html">← পড়াশোনার হোম</a><h1>📚 নন্দিনীর বইয়ের তাক</h1><div>বই খুঁজতে বা আলাদা করে আপলোড করতে হবে না</div></div></header>
+<main><div class="warn">এখানে Open RN-এর প্রকাশিত খোলা পাঠ্যবই ব্যবহার করছি, বাংলাদেশে নন্দিনীর কলেজের নির্দিষ্ট বই বলে দাবি করছি না। EPUB থেকে আমদানি করা লেখায় ছবি, চার্ট, ইন্টারঅ্যাকটিভ কার্যক্রম ও বিন্যাস থাকতে নাও পারে। পুরো বই দেখার জন্য প্রকাশকের মূল PDF/ওয়েববই ব্যবহার করো।</div>
+<section class="panel"><h2>তোমার বইসমূহ</h2><p id="state" class="muted">প্রকাশকের বইয়ের তালিকা লোড হচ্ছে…</p><div id="shelf"></div></section>
+<section class="panel hidden" id="readPanel"><span class="badge">অ্যাপের ভেতর বই</span><h2 id="chosenTitle"></h2><p class="muted" id="attribution"></p><label for="chapters">অধ্যায় বেছে নাও</label><select id="chapters"></select><h3>এই বইয়ের মধ্যে খোঁজো</h3><input type="search" id="searchText" placeholder="যেমন: infection, vital signs, heart অথবা হাত পরিষ্কার" aria-label="বইয়ের মধ্যে খোঁজো"><p><button class="btn" id="searchBtn">মূল বইয়ের লেখা খুঁজে দেখাও</button></p><div id="results" aria-live="polite"></div><div id="reading"></div></section>
+<footer>উৎস: Open RN / WisTech Open · CC BY 4.0 except where otherwise noted · মূল লেখাকে সরল টেক্সটে রূপান্তরিত করা হয়েছে · রোগীর চিকিৎসার নির্দেশনা নয়</footer>
+</main>
+<script type="module">
+import {rank} from './src/answer-core.js';
+const meta=[
+{id:'fundamentals',title:'Nursing Fundamentals 2e',home:'https://wtcs.pressbooks.pub/nursingfundamentals/',year:2024},
+{id:'skills',title:'Nursing Skills 2e',home:'https://wtcs.pressbooks.pub/nursingskills/',year:2023},
+{id:'terminology',title:'Medical Terminology 2e',home:'https://wtcs.pressbooks.pub/medterm/',year:2024}
+];
+const $=id=>document.getElementById(id);let book=null;let catalog=null;let sections=[];let lastId=null;
+function e(tag,text,cl){const el=document.createElement(tag);if(text!=null)el.textContent=text;if(cl)el.className=cl;return el}
+async function init(){try{const r=await fetch('./data/books/catalog.json');if(!r.ok)throw Error('missing catalog');const j=await r.json();if(!Array.isArray(j.books)||j.books.length!==3)throw Error('incomplete catalog');catalog=j;$('state').textContent='৩টি বই স্বয়ংক্রিয়ভাবে যুক্ত করা হয়েছে। অ্যাপ থেকেই অধ্যায় পড়ো অথবা প্রকাশকের মূল PDF ডাউনলোড করো।';}catch{$('state').textContent='প্রকাশকের মূল বইগুলো এখনই পড়া বা ডাউনলোড করা যাবে। অ্যাপের ভেতরের অধ্যায়ভিত্তিক সংস্করণ সার্ভারে এখনও প্রস্তুত হয়নি।'}
+for(const m of meta){const info=catalog?.books?.find(x=>x.id===m.id);const card=e('div',null,'book');const cover=e('div','Open RN\n'+(m.id==='terminology'?'Terms':m.id==='fundamentals'?'Nursing':'Skills'),'cover');const right=e('div');right.append(e('h3',m.title),e('p',info?'✓ '+info.chapters+'টি পাঠ/অধ্যায় · Text-only edition':'প্রকাশকের বই · '+m.year,'muted'));const actions=e('div',null,'actions');
+if(info){const open=e('button','📖 অ্যাপে পড়ো','btn');open.onclick=()=>loadBook(m);actions.append(open)}
+for(const [label,url] of [['মূল PDF ↗',m.home+'open/download?type=pdf'],['মূল বই ↗',m.home]]){const a=e('a',label,'btn alt');a.href=url;a.target='_blank';a.rel='noopener noreferrer';actions.append(a)}
+right.append(actions);card.append(cover,right);$('shelf').append(card)}
+const path=new URL(location.href).searchParams.get('book');if(catalog&&meta.some(m=>m.id===path)){await loadBook(meta.find(m=>m.id===path))}}
+async function loadBook(m){
+ $('readPanel').classList.remove('hidden');$('chosenTitle').textContent=m.title;$('reading').textContent='বইয়ের লেখা লোড হচ্ছে…';$('results').textContent='';$('chapters').replaceChildren();book=null;
+ try{const r=await fetch('./data/books/'+m.id+'.json');if(!r.ok)throw Error('missing book');const b=await r.json();if(!Array.isArray(b.chapters)||!b.chapters.length)throw Error('empty book');book=b;
+ $('attribution').textContent=b.publisher+' · '+b.year+' · '+b.license+'. প্রকাশকের মূল বই: '+b.source_url+'। '+b.modifications;
+ sections=b.chapters.flatMap((c,ci)=>c.sections.map((s,si)=>({title:c.title+' · '+s.heading,text:s.text,ci,si})));
+ for(let i=0;i<b.chapters.length;i++){const opt=e('option',b.chapters[i].title);opt.value=i;$('chapters').append(opt)}
+ $('chapters').onchange=()=>showChapter(Number($('chapters').value));showChapter(0);
+ history.replaceState({},'', './library.html?book='+encodeURIComponent(m.id));
+ $('readPanel').scrollIntoView({behavior:'smooth'});
+ }catch{$('reading').textContent='এই বইয়ের লেখা এখন পাওয়া যায়নি। উপরের মূল বই/মূল PDF লিংক ব্যবহার করো।';}
+}
+function showChapter(i){if(!book)return;const ch=book.chapters[i];if(!ch)return;
+ $('chapters').value=String(i);$('reading').replaceChildren();const h=e('h2',ch.title);$('reading').append(h);
+ for(const s of ch.sections){const block=e('section',null,'sec');block.append(e('h3',s.heading));for(const p of s.text.split(/\n\n/)){if(p.trim())block.append(e('p',p))}$('reading').append(block)}
+ const note=e('p','উৎস: '+book.title+' · '+ch.title+' · '+book.publisher+' · EPUB অধ্যায় (PDF পৃষ্ঠা নয়)','muted');$('reading').append(note);
+ const link=e('a','প্রকাশকের মূল ওয়েববই ↗');link.href=book.source_url;link.target='_blank';link.rel='noopener noreferrer';$('reading').append(link);
+}
+$('searchBtn').onclick=()=>{if(!book){$('results').textContent='আগে বই খোলো।';return}const q=$('searchText').value.trim();if(q.length<2){$('results').textContent='অন্তত দুই অক্ষর দিয়ে খোঁজো।';return}
+const hits=rank(q,sections,8);$('results').replaceChildren();
+if(!hits.length){$('results').append(e('p','বইয়ের লেখায় বিষয়টি পাওয়া যায়নি। অনুমান করে উত্তর দিচ্ছি না।','muted'));return}
+$('results').append(e('h3','বইয়ে পাওয়া অংশ ('+hits.length+'টি)'));
+for(const hit of hits){const box=e('div',null,'result');box.append(e('strong',hit.title));const snippet=hit.text.slice(0,320);box.append(e('p',snippet+(hit.text.length>320?'…':'')));const btn=e('button','এই অধ্যায় পড়ো','link');btn.onclick=()=>{showChapter(hit.ci);$('reading').scrollIntoView({behavior:'smooth'})};box.append(btn);box.append(e('p','উৎস: '+book.title+' · '+hit.title+' · EPUB section, PDF page not claimed','muted'));$('results').append(box)}
+};
+init();
+</script></body></html>
