@@ -17,7 +17,7 @@ GitHub-এর private repository থেকে তৈরি পরীক্ষা
 
 এটি ব্যক্তিগত পরীক্ষা করার **debug** APK, Play Store-এর production signed app নয়। উৎস যাচাই ছাড়া অন্য APK ইন্সটল করবে না। GitHub Actions artifact ৩০ দিনের জন্য রাখা হয়।
 
-**আপডেট সতর্কতা:** GitHub-এর প্রত্যেকটি ephemeral debug build আলাদা signing key দিয়ে স্বাক্ষরিত হতে পারে। নতুন APK আগেরটার ওপর ইন্সটল না হলে পুরোনোটি আনইন্সটল করতে হতে পারে, এবং ঐ অ্যাপের লোকাল নোট/অগ্রগতি হারাতে পারে। গুরুত্বপূর্ণ নোট বাইরে আলাদা করে রেখে দাও। স্থায়ী distribution-এর জন্য পরে persistent release-signing প্রয়োজন।
+**আপডেট:** এখন থেকে প্রতিটি APK একই স্থায়ী debug key (`android-signing/debug.keystore`) দিয়ে স্বাক্ষরিত হয়, তাই নতুন APK পুরোনোটার ওপর সরাসরি ইন্সটল হবে এবং নামানো AI মডেল, নোট ও অগ্রগতি থেকে যাবে। শুধু এই পরিবর্তনের আগের APK থেকে একবার আনইন্সটল করে নতুনটা ইন্সটল করতে হবে। এটি ব্যক্তিগত পরীক্ষার debug key; repository-তে থাকায় একে গোপন ধরা যাবে না। অনেকের মাঝে বিতরণের আগে GitHub Secrets-এ রাখা আলাদা release key লাগবে।
 
 ## লোকাল AI সার্ভার যুক্ত করা (ঐচ্ছিক)
 বই পড়ার জন্য API লাগে না। শুধু নিজের সার্ভারে AI চালু হলে:
@@ -42,4 +42,4 @@ In the newest Android APK, press **এই অধ্যায় বাংলা�
 
 **Accuracy boundary:** This is automatic translation, not a human-reviewed complete Bengali textbook; clinical terms and medicine instructions must be checked against the original English and a qualified teacher. All 632 source chapters are eligible for paragraph translation, but they are NOT pre-translated inside the distributed APK. Google ML Kit is separate from the optional future VPS AI Teacher.
 
-Older APKs do NOT include this on-device bilingual translator. Download the latest green APK artifact after the relevant build commit. Android debug signing across runs can change, so protect your notes before replacing the app.
+Older APKs do NOT include this on-device bilingual translator. Download the latest green APK artifact after the relevant build commit. APKs are now signed with the fixed debug key in `android-signing/`, so updates install over the previous app and keep the downloaded model and notes.
