@@ -4,7 +4,7 @@ import {mkdir,copyFile,readFile,stat,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 const sources=[
 'index.html','library.html','tutor.html','coach.html','settings.html','faridpur-first-year.html',
-'manifest.webmanifest','icon.svg','sw.js',
+'manifest.webmanifest','icon.svg','sw.js','src/app.css',
 'src/study-plan.js','src/api-config.js','src/translation-cache.js','src/answer-core.js','src/lesson-data.js',
 'data/books/catalog.json','data/books/fundamentals.json','data/books/skills.json','data/books/terminology.json','data/books/mentalhealth.json'
 ];

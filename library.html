@@ -2,131 +2,148 @@
 <html lang="bn">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#096f64"><link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#11998a"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./src/app.css">
 <meta name="description" content="নন্দিনীর বাংলা ও ইংরেজি নার্সিং বই, অধ্যায়, অনুচ্ছেদ এবং নোট">
 <title>বই পড়ি · নন্দিনীর Nursing Study</title>
 <style>
-:root{font-family:system-ui,"Noto Sans Bengali",sans-serif;color:#183a35;background:#f3f7f5;font-size:15px;font-synthesis:none}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0}
-button,input,select{font:inherit}button{cursor:pointer}a{color:#056c62;text-decoration:none}
-a:hover{text-decoration:underline}
-.top{background:#096f64;color:white;padding:calc(28px + env(safe-area-inset-top)) 18px 22px}
-.shell{max-width:960px;margin:0 auto}
-.topline{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.top a{color:#d7f5ed;font-size:13px}
-.top small{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#b4e4db}
-h1{font-size:22px;line-height:1.4;margin:10px 0 4px;font-weight:750;letter-spacing:-.02em}
-.top p{margin:0;line-height:1.7;font-size:13px;color:#d4eee7}
-main{max-width:960px;margin:0 auto;padding:18px 16px 88px}
-.shelf-intro{font-size:13px;line-height:1.7;color:#58766c;margin:0 0 15px}
-.panel{background:#fff;border:1px solid #dce9e2;border-radius:17px;padding:17px;margin:0 0 15px}
-.panel h2{font-size:17px;margin:0 0 12px}
-.bookrow{display:grid;grid-template-columns:52px minmax(0,1fr);gap:13px;border-top:1px solid #edf1ed;padding:15px 0}
-.bookrow:first-child{border-top:0;padding-top:2px}.cover{display:flex;align-items:center;justify-content:center;width:52px;height:72px;border-radius:5px 9px 9px 5px;background:#0a655a;color:#e2f6e9;font-weight:750;font-size:18px;box-shadow:inset 5px 0 0 #f6c985,2px 3px 6px #1b504124}
-.bookrow:nth-child(2n) .cover{background:#4d7a6c}.bookrow:nth-child(3n) .cover{background:#455c80}
-.bookrow h3{font-size:15px;line-height:1.4;margin:0 0 4px}.meta{font-size:12px;color:#6c827b;line-height:1.5}
-.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.btn{border:none;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;padding:9px 13px;min-height:40px;background:#096f64;color:#fff;font-weight:650;font-size:13px;text-decoration:none}
-.btn:hover{text-decoration:none}.btn.subtle{background:#e7f3ed;color:#095e53}.btn.line{border:1px solid #c6ddd3;background:white;color:#095e53}
-.btn:disabled{opacity:.55;cursor:default}.btn.tiny{padding:7px 10px;min-height:34px}
-.hidden{display:none!important}.reading-top{border-bottom:1px solid #e1eae5;padding-bottom:17px}
-.kicker{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:750;color:#13796c}
-.selected-book{font-size:21px;line-height:1.3;letter-spacing:-.025em;margin:5px 0 8px}
-.readerbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px;margin:17px 0 9px}
-label{display:block;color:#60776d;font-size:12px;font-weight:650;margin:0 0 6px}
-select,input[type=search],input[type=password]{width:100%;background:#fff;border:1px solid #bed8cd;border-radius:10px;padding:11px 12px;color:#17443b;min-width:0}
-.reader-controls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:13px 0}
-.switch{display:inline-flex;gap:3px;padding:3px;border:1px solid #d5e5dd;border-radius:12px;background:#f0f6f2}
-.switch button{border:0;background:transparent;border-radius:9px;padding:8px 13px;color:#55716a;font-size:12px;font-weight:650}
-.switch button.active{background:#fff;color:#065e55;box-shadow:0 1px 4px #1e5d4224}
-.page-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.note{padding:10px 13px;border-radius:10px;background:#f0f7f4;color:#526e64;line-height:1.65;font-size:12px;margin:12px 0}
-.notice{border-left:3px solid #b89b50;background:#fffaf0;padding:9px 12px;line-height:1.65;border-radius:0 8px 8px 0;font-size:12px;color:#735d2b}
-#article{margin:22px auto 0;max-width:740px}
-.chapter-number{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#16796e}
-.chapter-title{font-family:Georgia,"Noto Serif Bengali",serif;font-size:clamp(24px,5vw,33px);line-height:1.35;font-weight:700;letter-spacing:-.02em;margin:7px 0 13px}
-.chapter-lead{color:#657b72;font-size:13px;border-bottom:1px solid #dce7e1;padding-bottom:21px;margin-bottom:22px}
-.readsection{padding:0 0 15px;break-inside:avoid-page}
-.readsection h3{font-family:Georgia,"Noto Serif Bengali",serif;color:#1b423b;font-size:19px;line-height:1.45;letter-spacing:-.01em;margin:26px 0 12px}
-.readsection h3::before{content:"";display:block;width:28px;height:3px;background:#d1b56e;border-radius:6px;margin-bottom:10px}
-.paragraph{margin:0 0 20px}.source-list{padding-left:22px;margin:0 0 18px;list-style:disc}ol.source-list{list-style:decimal;padding-left:26px}.source-list .paragraph{margin-bottom:11px;padding-left:4px}.source-list .paragraph::marker{color:#168574}.source-list .original{margin:0}.paragraph p.original{margin:0}
+/* Bookshelf */
+.bookgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bookrow{display:flex;flex-direction:column;background:#fff;border-radius:var(--r-lg);padding:12px;box-shadow:var(--shadow-sm);border:1px solid rgba(222,234,229,.8)}
+.cover{position:relative;height:128px;border-radius:8px 16px 16px 8px;padding:12px 12px 12px 20px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;background:var(--tone,linear-gradient(150deg,#22b39c,#0a5f63));box-shadow:inset 7px 0 0 rgba(255,255,255,.25),0 10px 18px -12px rgba(10,60,60,.9)}
+.cover::after{content:"";position:absolute;width:120px;height:120px;right:-40px;top:-40px;border-radius:50%;background:rgba(255,255,255,.14)}
+.cover .em{font-size:28px;line-height:1}.cover b{font-size:22px;letter-spacing:.04em;line-height:1}.cover small{font-size:10px;letter-spacing:.08em;opacity:.85;text-transform:uppercase}
+.bookrow h3{font-size:14px;line-height:1.4;margin:11px 2px 3px}
+.meta{font-size:12px;color:var(--ink-2);line-height:1.5;margin:0 2px}
+.bookrow .actions{margin-top:auto;padding-top:10px;display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.pdf-link{font-size:12px;text-align:center;font-weight:650;text-decoration:none;padding:3px}
+/* Sticky reading bar */
+.readbar{display:none;position:sticky;top:0;z-index:20;color:#fff;background:linear-gradient(135deg,#13a08d,#0a6a62 60%,#0a4f5e);padding:calc(8px + env(safe-area-inset-top)) 12px 0;box-shadow:0 8px 20px -14px rgba(10,60,60,.9)}
+.readbar-in{display:flex;align-items:center;gap:8px;max-width:780px;margin:0 auto;padding-bottom:8px}
+.rb-text{flex:1;min-width:0;line-height:1.35}
+.rb-text small{display:block;font-size:11px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rb-text b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rb-progress{height:3px;margin:0 -12px;background:rgba(255,255,255,.18)}
+.rb-progress>div{height:100%;width:0;background:#ffd27a}
+body.reading .readbar{display:block}
+body.reading .shelf-hero,body.reading #shelfPanel{display:none}
+body:not(.reading) #readPanel{display:none}
+/* Reader tools */
+.tools-head{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.tools-head .mini{width:40px;height:54px;flex:none;border-radius:5px 10px 10px 5px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;background:var(--tone,linear-gradient(150deg,#22b39c,#0a5f63));box-shadow:inset 4px 0 0 rgba(255,255,255,.25)}
+.tools-head h2{font-size:16.5px;margin:0}
+.tools-row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:14px 0}
+.switch{display:inline-flex;gap:3px;padding:4px;border-radius:14px;background:#eef5f2}
+.switch button{border:0;background:transparent;border-radius:10px;padding:8px 14px;color:var(--ink-2);font-size:13px;font-weight:700}
+.switch button.active{background:#fff;color:var(--brand-ink);box-shadow:0 2px 8px -3px rgba(15,58,50,.35)}
+.font-btns{display:inline-flex;gap:6px}
+.font-btns button{width:42px;height:40px;border-radius:12px;border:1.5px solid var(--line-2);background:#fff;color:var(--brand-ink);font-weight:800}
+.translate{border-radius:16px;background:linear-gradient(150deg,#eefaf6,#f7fbf9);padding:12px;border:1px solid #d9eee6}
+.translate .btn-row .btn:first-child{flex:1}
+.reader-progress{height:6px;background:#dcefe8;border-radius:6px;overflow:hidden;margin:11px 0 0}
+.reader-progress>div{height:100%;width:0;background:linear-gradient(90deg,#22bfa4,#0b7468);transition:width .2s}
+#translateStatus{margin:8px 0 0}
+.searchbox{margin-top:16px}
+#results{margin-top:6px}
+.result{padding:12px 0;border-bottom:1px solid var(--line)}
+.result:last-child{border-bottom:0}
+.result strong{display:block;font-size:14px;line-height:1.45}.result p{font-family:Georgia,serif;line-height:1.6;margin:6px 0;font-size:14px;color:var(--ink-2)}
+.text-link{border:0;padding:0;background:none;color:var(--brand);font-weight:750;font-size:13px;text-align:left}
+/* Chapter text */
+#article{scroll-margin-top:80px;background:#fff;border-radius:var(--r-lg);padding:24px 18px 10px;box-shadow:var(--shadow);border:1px solid rgba(222,234,229,.8)}
+.chapter-title{font-family:Georgia,"Noto Serif Bengali",serif;font-size:clamp(24px,5vw,32px);line-height:1.35;font-weight:700;letter-spacing:-.015em;margin:12px 0 10px;color:var(--ink)}
+.chapter-lead{color:var(--ink-3);font-size:13px;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:20px}
+.readsection{padding:0 0 12px;break-inside:avoid-page}
+.readsection h3{font-family:Georgia,"Noto Serif Bengali",serif;color:#1b423b;font-size:19px;line-height:1.45;margin:26px 0 12px}
+.readsection h3::before{content:"";display:block;width:30px;height:4px;background:linear-gradient(90deg,#ffb35c,#ff7867);border-radius:6px;margin-bottom:10px}
+.paragraph{margin:0 0 20px}.source-list{padding-left:22px;margin:0 0 18px;list-style:disc}ol.source-list{list-style:decimal;padding-left:26px}.source-list .paragraph{margin-bottom:11px;padding-left:4px}.source-list .paragraph::marker{color:var(--brand);font-weight:700}.source-list .original{margin:0}.paragraph p.original{margin:0}
 .original{font-family:Georgia,"Noto Serif",serif;line-height:1.8;font-size:var(--reader-size,16px);color:#213a36;white-space:normal;overflow-wrap:anywhere}
-.bn{font-family:"Noto Serif Bengali",serif;line-height:1.85;font-size:var(--reader-size,16px);color:#0f4f45;margin-top:9px;padding:11px 14px;background:#f4faf7;border-left:2px solid #8cbfae;border-radius:0 9px 9px 0;overflow-wrap:anywhere}
-.translation-unready{display:none}.translation-note{font:12px system-ui,sans-serif;color:#69857a;margin:8px 0}
-.mode-english .bn{display:none}.mode-bangla .original{display:none}.mode-bangla .bn.translation-unready{display:block}
+.bn{font-family:"Noto Serif Bengali","Noto Sans Bengali",serif;line-height:1.85;font-size:var(--reader-size,16px);color:#0f4f45;margin-top:9px;padding:11px 14px;background:#f1faf6;border-left:3px solid #7cc8b4;border-radius:0 12px 12px 0;overflow-wrap:anywhere}
+.translation-unready{display:none}
+.mode-english .bn{display:none}.mode-bangla .original{display:none}.mode-bangla .bn.translation-unready{display:block;color:var(--ink-3);background:#f6f8f7;border-left-color:var(--line-2)}
 .mode-both .bn.translation-unready{display:none}
-.pending-msg{font-size:12px;color:#6e837b;line-height:1.6}
-.reader-progress{height:5px;background:#e4eee9;border-radius:4px;overflow:hidden;margin-top:12px}
-.reader-progress>div{height:100%;width:0;background:#179c81;transition:width .2s}
-#results{margin-top:14px}
-.result{padding:13px 0;border-bottom:1px solid #e3ede7}
-.result strong{display:block;font-size:14px}.result p{font-family:Georgia,serif;line-height:1.6;margin:7px 0;font-size:14px;color:#426058}
-.text-link{border:0;padding:0;background:none;color:#087368;font-weight:650;font-size:12px;text-align:left}
-.nav-chapter{display:flex;gap:10px;justify-content:space-between;align-items:center;border-top:1px solid #dae9e1;padding-top:20px;margin-top:20px}
-.searchbox{margin-top:14px;padding-top:14px;border-top:1px solid #e5ede8}
-.searchbox .actions{margin-top:8px}
-.source-foot{font-size:12px;color:#70827c;padding-top:20px;border-top:1px solid #e3ebe5;line-height:1.65}
-.stats{font-size:12px;color:#6a8179}
-@media(min-width:860px){.bookgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:23px}.bookrow:nth-child(2){border-top:0;padding-top:2px}}
-@media(max-width:520px){.panel{padding:15px}main{padding:14px 12px 65px}.readerbar{grid-template-columns:1fr}.reader-controls{justify-content:space-between}.btn{padding:9px 12px}.chapter-title{font-size:25px}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.nav-chapter{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.chapter-btn{display:flex;flex-direction:column;gap:3px;min-height:64px;padding:11px 14px;border-radius:16px;border:1.5px solid var(--line-2);background:#fff;text-align:left;color:var(--ink);min-width:0}
+.chapter-btn small{font-size:12px;font-weight:750;color:var(--brand)}
+.chapter-btn span{font-size:12.5px;color:var(--ink-2);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.chapter-btn.next{text-align:right;background:linear-gradient(150deg,#eefaf6,#fff)}
+.chapter-btn:disabled{opacity:.4;cursor:default}
+.source-foot{font-size:12px;color:var(--ink-3);line-height:1.7;margin:4px 2px 16px}
+@media(min-width:720px){.bookgrid{grid-template-columns:repeat(4,1fr)}#article{padding:34px 40px 16px}}
+@media(max-width:350px){.bookgrid{grid-template-columns:1fr}}
 </style></head>
 <body>
-<header class="top"><div class="shell">
-<div class="topline"><a href="./index.html">← হোম</a><small>NANDINI · LIBRARY</small></div>
-<h1>বই পড়ি, বুঝে শিখি 📖</h1><p>মূল ইংরেজি বই এবং বাংলায় পড়ার ব্যবস্থা</p>
+<header class="hero shelf-hero"><div class="wrap">
+<div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">Nandini · Library</span></div>
+<h1>📚 আমার বইয়ের তাক</h1><p>বই খোলো, অধ্যায় বেছে নাও। ইংরেজির পাশে বাংলাও পড়া যাবে।</p>
 </div></header>
+<div class="readbar"><div class="readbar-in">
+<button class="icon-btn" id="backShelf" type="button" aria-label="সব বই">←</button>
+<div class="rb-text"><small id="rbBook"></small><b id="rbChapter"></b></div>
+<button class="icon-btn" id="prevTop" type="button" aria-label="আগের অধ্যায়">‹</button><button class="icon-btn" id="nextTop" type="button" aria-label="পরের অধ্যায়">›</button>
+</div><div class="rb-progress"><div id="scrollProgress"></div></div></div>
 <main>
-<section class="panel" id="shelfPanel">
-<h2>আমার বুকশেলফ <span class="stats">· ৪টি রেফারেন্স বই</span></h2>
-<p class="shelf-intro">যে বই পড়বে সেটি খুলে অধ্যায় বেছে নাও। মূল ইংরেজি লেখা অক্ষত থাকবে। ফোনে বাংলা অনুবাদের জন্য আলাদা টাকা বা API লাগবে না।</p>
+<section id="shelfPanel">
+<h2 class="section-title">৪টি রেফারেন্স বই <span class="chip">✓ অফলাইনে পড়া যায়</span></h2>
 <div id="shelf" class="bookgrid"></div>
+<h2 class="section-title">আরও বই</h2>
+<nav class="menu" aria-label="আরও বই">
+<a href="./faridpur-first-year.html"><span class="ico">📦</span><span class="txt">৭ বিষয়ের সব বইয়ের তালিকা<small>BNMC সিলেবাস ও কলেজের বইয়ের উৎস</small></span><span class="chev">›</span></a>
+<a href="./index.html#pdf"><span class="ico">📄</span><span class="txt">নিজের PDF বই খুলো<small>ফোনেই খুলবে, আপলোড হবে না</small></span><span class="chev">›</span></a>
+</nav>
+<details class="info"><summary>ℹ️ এই বইগুলো সম্পর্কে</summary><p>Open RN / WisTech Open-এর প্রকাশিত বই (CC BY 4.0, অন্যভাবে উল্লেখিত অংশ ব্যতীত)। অ্যাপে শুধু লেখা আছে; ছবি ও আসল পৃষ্ঠা-বিন্যাস নেই। মূল ইংরেজি লেখা অক্ষত থাকবে। ফোনে বাংলা অনুবাদের জন্য আলাদা টাকা বা API লাগবে না।</p></details>
 </section>
-<section id="readPanel" class="panel hidden">
-<div class="reading-top">
-<span class="kicker">YOUR READING DESK</span>
-<h2 class="selected-book" id="chosenTitle"></h2>
-<div id="attribution" class="meta"></div>
-<div class="readerbar">
-<div><label for="chapters">সূচিপত্র · অধ্যায় বেছে নাও</label><select id="chapters" aria-label="অধ্যায়"></select></div>
-<div class="page-tools"><button id="prevTop" class="btn line tiny">← আগে</button><button id="nextTop" class="btn line tiny">পরে →</button></div>
-</div>
-<div class="reader-controls">
+<section id="readPanel">
+<div class="card">
+<div class="tools-head"><span class="mini" id="miniCover">NF</span><div><h2 id="chosenTitle"></h2><div id="attribution" class="fine"></div></div></div>
+<label class="field" for="chapters">📑 অধ্যায় বেছে নাও</label><select id="chapters" aria-label="অধ্যায়"></select>
+<div class="tools-row">
 <div class="switch" role="group" aria-label="পড়ার ভাষা">
 <button data-mode="english" type="button">English</button>
 <button data-mode="both" type="button">দুটোই</button>
 <button data-mode="bangla" type="button">বাংলা</button>
 </div>
-<div class="page-tools"><button class="btn line tiny" id="smaller" title="ফন্ট ছোট">A−</button><button class="btn line tiny" id="bigger" title="ফন্ট বড়">A+</button></div>
+<div class="font-btns"><button id="smaller" type="button" title="লেখা ছোট" aria-label="লেখা ছোট">A−</button><button id="bigger" type="button" title="লেখা বড়" aria-label="লেখা বড়">A+</button></div>
 </div>
-<div class="actions"><button class="btn" id="translateChapter">🌐 এই অধ্যায় বাংলায় আনো</button><button class="btn subtle" id="stopTranslate" disabled>থামাও</button><a class="btn line" id="officialLink" target="_blank" rel="noopener noreferrer">মূল বই ↗</a></div>
-<div id="translateStatus" class="note" aria-live="polite">বাংলা-ইংরেজি পাশাপাশি পড়তে চাইলে অনুবাদ বোতাম চাপো। প্রথমবার ফোনে ভাষা-মডেল ডাউনলোড হবে। পরে অনুবাদ ফোনেই চলবে।</div>
+<div class="translate">
+<div class="btn-row"><button class="btn" id="translateChapter" type="button">🌐 এই অধ্যায় বাংলায় আনো</button><button class="btn ghost hidden" id="stopTranslate" type="button" disabled>থামাও</button></div>
 <div class="reader-progress"><div id="translateProgress"></div></div>
-<div class="searchbox"><label for="searchText">এই বইয়ের মধ্যে খোঁজো</label><input id="searchText" type="search" placeholder="যেমন: vital signs, infection, communication" maxlength="150">
-<div class="actions"><button class="btn subtle" id="searchBtn">বইতে খুঁজো</button><a class="btn line" href="./coach.html">Study Coach ↗</a></div><div id="results" aria-live="polite"></div></div>
+<p id="translateStatus" class="fine" aria-live="polite">অনুবাদ বোতাম চাপলে ইংরেজির পাশে বাংলা দেখাবে। প্রথমবার ফোনে ভাষা-মডেল ডাউনলোড হবে, পরে ফোনেই চলবে।</p>
+</div>
+<div class="searchbox"><label class="field" for="searchText">🔍 এই বইয়ের মধ্যে খোঁজো</label>
+<div class="search-row"><input id="searchText" type="search" placeholder="যেমন: vital signs, infection" maxlength="150"><button class="btn" id="searchBtn" type="button">খুঁজো</button></div>
+<div id="results" aria-live="polite"></div></div>
 </div>
 <article id="article" class="mode-both" aria-label="অধ্যায়ের লেখা"></article>
-<nav class="nav-chapter" aria-label="অধ্যায় বদলাও"><button class="btn line" id="prevChapter">← আগের অধ্যায়</button><button class="btn line" id="nextChapter">পরের অধ্যায় →</button></nav>
-<p class="source-foot">মূল তথ্যের উৎস প্রকাশকের ইংরেজি বই। বাংলা অংশ মেশিনে অনুবাদ হলে সেটি মূল বইয়ের শব্দের সঙ্গে মিলিয়ে পড়বে, বিশেষত ওষুধ, ডোজ ও ক্লিনিক্যাল পরিভাষার ক্ষেত্রে। অধ্যায়ের উৎস-লিংক দেওয়া আছে; এখানে PDF-এর পৃষ্ঠা নম্বর অনুমান করা হয়নি।</p>
+<nav class="nav-chapter" aria-label="অধ্যায় বদলাও"><button class="chapter-btn" id="prevChapter" type="button"><small>← আগের অধ্যায়</small><span id="prevName"></span></button><button class="chapter-btn next" id="nextChapter" type="button"><small>পরের অধ্যায় →</small><span id="nextName"></span></button></nav>
+<div class="btn-row" style="justify-content:center;margin-bottom:12px"><a class="btn ghost sm" id="officialLink" target="_blank" rel="noopener noreferrer">🔗 প্রকাশকের মূল অধ্যায় ↗</a></div>
+<p class="source-foot">মূল তথ্যের উৎস প্রকাশকের ইংরেজি বই। বাংলা অংশ মেশিনে অনুবাদ হলে সেটি মূল বইয়ের শব্দের সঙ্গে মিলিয়ে পড়বে, বিশেষত ওষুধ, ডোজ ও ক্লিনিক্যাল পরিভাষার ক্ষেত্রে। এখানে PDF-এর পৃষ্ঠা নম্বর অনুমান করা হয়নি।</p>
+<section id="aiPanel" class="card hidden"><h2>✨ বই থেকে প্রশ্ন করো</h2><p class="muted">নিজস্ব লোকাল AI সার্ভার চালু থাকলেই বাংলায় ব্যাখ্যা আসবে। বই পড়া বা অনুবাদ করার জন্য এটি লাগে না।</p>
+<label class="field" for="aiQuestion">প্রশ্ন</label><input type="search" id="aiQuestion" placeholder="যেমন: Hand hygiene কেন জরুরি?">
+<label class="field" for="aiCode" style="margin-top:12px">ব্যক্তিগত অ্যাক্সেস কোড</label><input type="password" id="aiCode" autocomplete="off" placeholder="Access code">
+<div class="btn-row" style="margin-top:12px"><button class="btn" id="aiAsk" type="button">উৎস ধরে বুঝিয়ে বলো</button><a href="./settings.html" class="btn ghost">AI Server সেটিংস</a></div><div id="aiResult" aria-live="polite"></div>
 </section>
-<section id="aiPanel" class="panel hidden"><h2>বই থেকে প্রশ্ন করো</h2><p class="meta">নিজস্ব লোকাল AI সার্ভার চালু থাকলেই বাংলায় ব্যাখ্যা আসবে। বই পড়া বা অনুবাদ করার জন্য এটি লাগে না।</p>
-<label for="aiQuestion">প্রশ্ন</label><input type="search" id="aiQuestion" placeholder="যেমন: Hand hygiene কেন জরুরি?">
-<label for="aiCode" style="margin-top:10px">ব্যক্তিগত অ্যাক্সেস কোড</label><input type="password" id="aiCode" autocomplete="off" placeholder="Access code">
-<div class="actions"><button class="btn" id="aiAsk">উৎস ধরে বুঝিয়ে বলো</button><a href="./settings.html" class="btn line">AI Server সেটিংস</a></div><div id="aiResult" aria-live="polite"></div>
 </section>
 </main>
+<nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
+<a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
+<a href="./library.html" data-tab="books" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
+<a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
+<a href="./index.html#quiz" data-tab="quiz"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.4-2.8 4.2M12 17.6h.01"/></svg></span>MCQ</a>
+<a href="./index.html#notes" data-tab="notes"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14.5 7.5l2 2"/></svg></span>নোট</a>
+</div></nav>
 <script type="module">
 import {rank} from './src/answer-core.js';
 import {savedApiBase,apiUrl} from './src/api-config.js';
 import {paragraphKey,readTranslation,saveTranslation} from './src/translation-cache.js';
 const meta=[
-{id:'fundamentals',title:'Nursing Fundamentals 2e',label:'নার্সিংয়ের মৌলিক বিষয়',cover:'NF',home:'https://wtcs.pressbooks.pub/nursingfundamentals/'},
-{id:'skills',title:'Nursing Skills 2e',label:'নার্সিং দক্ষতা ও ব্যবহারিক কাজ',cover:'NS',home:'https://wtcs.pressbooks.pub/nursingskills/'},
-{id:'terminology',title:'Medical Terminology 2e',label:'চিকিৎসাবিজ্ঞানের শব্দার্থ',cover:'MT',home:'https://wtcs.pressbooks.pub/medterm/'},
-{id:'mentalhealth',title:'Nursing Mental Health and Community Concepts 2e',label:'মানসিক স্বাস্থ্য ও কমিউনিটি',cover:'MH',home:'https://wtcs.pressbooks.pub/nursingmhcc/'}
+{id:'fundamentals',title:'Nursing Fundamentals 2e',label:'নার্সিংয়ের মৌলিক বিষয়',cover:'NF',emoji:'🩺',tone:'linear-gradient(150deg,#23b59d,#0a5f63)',home:'https://wtcs.pressbooks.pub/nursingfundamentals/'},
+{id:'skills',title:'Nursing Skills 2e',label:'নার্সিং দক্ষতা ও ব্যবহারিক কাজ',cover:'NS',emoji:'💉',tone:'linear-gradient(150deg,#ff9a6c,#e4536b)',home:'https://wtcs.pressbooks.pub/nursingskills/'},
+{id:'terminology',title:'Medical Terminology 2e',label:'চিকিৎসাবিজ্ঞানের শব্দার্থ',cover:'MT',emoji:'🔤',tone:'linear-gradient(150deg,#8f7ff7,#5140c9)',home:'https://wtcs.pressbooks.pub/medterm/'},
+{id:'mentalhealth',title:'Nursing Mental Health and Community Concepts 2e',label:'মানসিক স্বাস্থ্য ও কমিউনিটি',cover:'MH',emoji:'💚',tone:'linear-gradient(150deg,#4fb0ef,#2161b5)',home:'https://wtcs.pressbooks.pub/nursingmhcc/'}
 ];
 const $=id=>document.getElementById(id),E=(tag,value,className)=>{const el=document.createElement(tag);if(value!==undefined)el.textContent=value;if(className)el.className=className;return el};
-let catalog=null,book=null,chapterIndex=0,sections=[],view='both',font=16,token=0,working=false;
+const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+let catalog=null,book=null,bookMeta=null,chapterIndex=0,sections=[],view='both',font=16,token=0,working=false;
 let nativeTranslator=null,nativeChecked=false,remaining=[];
 function localValue(k,d){try{return localStorage.getItem(k)||d}catch{return d}}
 function saveValue(k,v){try{localStorage.setItem(k,v)}catch{}}
@@ -145,42 +162,50 @@ function changeFont(d){font=Math.max(14,Math.min(21,font+d));saveValue('nandini-
 function readBookId(){return new URL(location.href).searchParams.get('book')}
 async function init(){
 try{const r=await fetch('./data/books/catalog.json');if(!r.ok)throw Error('catalog_missing');catalog=await r.json()}catch{}
-for(const m of meta){const info=catalog?.books?.find(x=>x.id===m.id),row=E('div',undefined,'bookrow'),cover=E('div',m.cover,'cover'),text=E('div');
-text.append(E('h3',m.title),E('div',m.label,'meta'));
-text.append(E('div',info?info.chapters+'টি অধ্যায় · ইংরেজি মূল পাঠ':'প্রকাশকের মূল বই','meta'));
+for(const m of meta){const info=catalog?.books?.find(x=>x.id===m.id),row=E('div',undefined,'bookrow'),cover=E('div',undefined,'cover');
+cover.style.setProperty('--tone',m.tone);cover.append(E('span',m.emoji,'em'),E('b',m.cover),E('small','Open RN · 2e'));
+row.append(cover,E('h3',m.title),E('div',m.label,'meta'));
+row.append(E('div',info?bn(info.chapters)+'টি অধ্যায়':'প্রকাশকের মূল বই','meta'));
 const links=E('div',undefined,'actions');
-if(info){const btn=E('button','পড়া শুরু →','btn');btn.onclick=()=>loadBook(m);links.append(btn)}
-const src=E('a','মূল PDF ↗','btn line');src.href=m.home+'open/download?type=pdf';src.rel='noopener noreferrer';src.target='_blank';links.append(src);
-text.append(links);row.append(cover,text);$('shelf').append(row)}
+if(info){const btn=E('button','পড়া শুরু →','btn sm');btn.type='button';btn.onclick=()=>loadBook(m);links.append(btn)}
+const src=E('a','মূল PDF ↗','pdf-link');src.href=m.home+'open/download?type=pdf';src.rel='noopener noreferrer';src.target='_blank';links.append(src);
+row.append(links);$('shelf').append(row)}
 const saved=meta.find(x=>x.id===readBookId());if(saved&&catalog)await loadBook(saved);
 await aiReady();
 }
+function showShelf(){token++;remaining=[];document.body.classList.remove('reading');if(history?.replaceState)history.replaceState({},'','./library.html');scrollTo(0,0)}
+$('backShelf').onclick=showShelf;
 async function loadBook(m){
- token++;remaining=[];$('readPanel').classList.remove('hidden');$('chosenTitle').textContent=m.title;
- $('attribution').textContent=m.label+' · Open RN / WisTech Open · পাঠ্য সংস্করণ';
- $('article').replaceChildren(E('p','বইয়ের অধ্যায় খুলছে…','note'));
+ token++;remaining=[];bookMeta=m;document.body.classList.add('reading');scrollTo(0,0);
+ $('chosenTitle').textContent=m.title;$('rbBook').textContent=m.title;$('rbChapter').textContent='বই খুলছে…';
+ $('miniCover').textContent=m.cover;$('miniCover').style.setProperty('--tone',m.tone);
+ $('attribution').textContent=m.label+' · Open RN / WisTech Open';
+ $('results').replaceChildren();
+ $('article').replaceChildren(E('p','বইয়ের অধ্যায় খুলছে…','fine'));
  try{
  const r=await fetch('./data/books/'+m.id+'.json');if(!r.ok)throw Error('book_unavailable');
  const doc=await r.json();if(!doc.chapters?.length)throw Error('chapters_unavailable');
  book=doc;sections=book.chapters.flatMap((ch,ci)=>ch.sections.map((s,si)=>({title:ch.title+' · '+s.heading,text:s.text,ci,si})));
  $('chapters').replaceChildren();
- book.chapters.forEach((ch,i)=>{const o=E('option',(i+1)+'. '+ch.title);o.value=i;$('chapters').append(o)});
+ // Group "1.1, 1.2 …" sections under their parent chapter number so the long list is easier to scan.
+ let group=null,groupKey=null;
+ book.chapters.forEach((ch,i)=>{const key=(String(ch.title).match(/^(\d+|[IVXLC]+)[.\s]/)||[])[1]||'';if(!group||key!==groupKey){groupKey=key;group=E('optgroup');group.label=key?'অধ্যায় '+key:'অন্যান্য';$('chapters').append(group)}const o=E('option',ch.title);o.value=i;group.append(o)});
  const raw=Number(new URL(location.href).searchParams.get('chapter')||0);
  chapterIndex=Number.isInteger(raw)&&raw>=0&&raw<book.chapters.length?raw:0;
  $('chapters').onchange=()=>showChapter(Number($('chapters').value));
  await showChapter(chapterIndex,false);
  if(history?.replaceState)history.replaceState({},'','./library.html?book='+encodeURIComponent(m.id)+'&chapter='+chapterIndex);
- $('readPanel').scrollIntoView({behavior:'smooth',block:'start'});
- }catch{$('article').replaceChildren(E('p','অ্যাপের বই খুলতে পারিনি। প্রকাশকের PDF লিংকটি ব্যবহার করো।','note'))}
+ }catch{$('rbChapter').textContent=m.title;$('article').replaceChildren(E('p','অ্যাপের বই খুলতে পারিনি। প্রকাশকের PDF লিংকটি ব্যবহার করো।','muted'))}
 }
 function paragraphs(text){return String(text||'').split(/\n\s*\n/).map(s=>s.replace(/\s+/g,' ').trim()).filter(s=>s.length>10)}
 async function showChapter(i,scroll=true){
  if(!book||i<0||i>=book.chapters.length)return;
  token++;const current=token;
  chapterIndex=i;$('chapters').value=String(i);const ch=book.chapters[i],root=$('article');root.replaceChildren();
- root.append(E('div','অধ্যায় '+(i+1)+' / '+book.chapters.length,'chapter-number'));
+ root.append(E('span','অধ্যায় '+bn(i+1)+' / '+bn(book.chapters.length),'chip'));
  root.append(E('h2',ch.title,'chapter-title'));
- root.append(E('div',book.title+' · '+ch.sections.length+'টি উপশিরোনাম','chapter-lead'));
+ root.append(E('div',book.title+' · '+bn(ch.sections.length)+'টি উপশিরোনাম','chapter-lead'));
+ $('rbChapter').textContent=ch.title;
  const all=[];
  for(let si=0;si<ch.sections.length;si++){
  const sec=ch.sections[si],section=E('section',undefined,'readsection');
@@ -209,44 +234,52 @@ async function showChapter(i,scroll=true){
  remaining=all;$('officialLink').href=ch.url||book.source_url;
  $('prevChapter').disabled=$('prevTop').disabled=i===0;
  $('nextChapter').disabled=$('nextTop').disabled=i===book.chapters.length-1;
+ $('prevName').textContent=i>0?book.chapters[i-1].title:'এটাই প্রথম অধ্যায়';
+ $('nextName').textContent=i<book.chapters.length-1?book.chapters[i+1].title:'বই শেষ 🎉';
  mode(view);
  $('translateProgress').style.width='0';
  $('translateStatus').textContent='ইংরেজি মূল পাঠ প্রস্তুত। বাংলা অনুবাদ চাইলে উপরের বোতাম চাপো।';
- $('translateChapter').disabled=false;$('stopTranslate').disabled=true;
+ $('translateChapter').disabled=false;$('stopTranslate').disabled=true;$('stopTranslate').classList.add('hidden');
+ saveValue('nandini-last-read',JSON.stringify({book:book.id,title:book.title,cover:bookMeta?.cover||'',chapter:i,total:book.chapters.length,chapterTitle:ch.title}));
+ if(history?.replaceState)history.replaceState({},'','./library.html?book='+encodeURIComponent(book.id)+'&chapter='+i);
+ if(scroll)root.scrollIntoView({behavior:'smooth',block:'start'});
+ updateScroll();
  await Promise.all(all.map(async item=>{
     const saved=await readTranslation(item.key);
     if(current!==token)return;
     if(saved){item.node.textContent=saved;item.node.classList.remove('translation-unready');item.done=true}
  }));
+ if(current!==token)return;
  remaining=all.filter(p=>!p.done);
- $('translateStatus').textContent=remaining.length?('এই অধ্যায়ের '+(all.length-remaining.length)+'/'+all.length+'টি অনুচ্ছেদের বাংলা অনুবাদ আছে। বাকিগুলো অনুবাদ করা যাবে।'):'এই অধ্যায়ের সব অনুচ্ছেদের বাংলা অনুবাদ ফোনে সংরক্ষিত আছে।';
+ $('translateStatus').textContent=remaining.length?('এই অধ্যায়ের '+bn(all.length-remaining.length)+'/'+bn(all.length)+'টি অনুচ্ছেদের বাংলা অনুবাদ আছে। বাকিগুলো অনুবাদ করা যাবে।'):'✓ এই অধ্যায়ের সব অনুচ্ছেদের বাংলা অনুবাদ ফোনে সংরক্ষিত আছে।';
  $('translateProgress').style.width=(all.length?((all.length-remaining.length)/all.length)*100:100)+'%';
- if(history?.replaceState)history.replaceState({},'','./library.html?book='+encodeURIComponent(book.id)+'&chapter='+i);
- if(scroll)root.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function navigate(delta){showChapter(chapterIndex+delta)}
 $('prevChapter').onclick=$('prevTop').onclick=()=>navigate(-1);
 $('nextChapter').onclick=$('nextTop').onclick=()=>navigate(1);
+// Thin bar under the reading header shows how far through the chapter text the reader is.
+function updateScroll(){const a=$('article'),r=a.getBoundingClientRect(),h=a.offsetHeight-innerHeight*.6;$('scrollProgress').style.width=(h>0?Math.max(0,Math.min(1,-r.top/h))*100:0)+'%'}
+addEventListener('scroll',()=>{if(document.body.classList.contains('reading'))requestAnimationFrame(updateScroll)},{passive:true});
 async function getNative(){
  if(nativeChecked)return nativeTranslator;
  nativeChecked=true;
  try{const n=await import('./src/native-translation.bundle.js');if(n.isAvailable())nativeTranslator=n}catch{}
  return nativeTranslator;
 }
-$('stopTranslate').onclick=()=>{token++;working=false;$('stopTranslate').disabled=true;$('translateChapter').disabled=false;$('translateStatus').textContent='অনুবাদ থামানো হয়েছে। তৈরি অংশগুলো সংরক্ষিত আছে।'};
+$('stopTranslate').onclick=()=>{token++;working=false;$('stopTranslate').disabled=true;$('stopTranslate').classList.add('hidden');$('translateChapter').disabled=false;$('translateStatus').textContent='অনুবাদ থামানো হয়েছে। তৈরি অংশগুলো সংরক্ষিত আছে।'};
 $('translateChapter').onclick=async()=>{
  if(working){return}
  if(!book)return;
  const translate=await getNative();
- if(!translate){$('translateStatus').textContent='এই সুবিধা Android APK-তে কাজ করবে। ব্রাউজারে মূল ইংরেজি বই পড়া যাবে; ফোনে নতুন APK ইনস্টল করো।';return}
- if(!remaining.length){$('translateStatus').textContent='এই অধ্যায়ের বাংলা অনুবাদ ইতিমধ্যে সংরক্ষিত আছে।';mode('both');return}
+ if(!translate){$('translateStatus').textContent='বাংলা অনুবাদ Android APK-তে কাজ করবে। ব্রাউজারে মূল ইংরেজি বই পড়া যাবে; ফোনে নতুন APK ইনস্টল করো।';return}
+ if(!remaining.length){$('translateStatus').textContent='✓ এই অধ্যায়ের বাংলা অনুবাদ ইতিমধ্যে সংরক্ষিত আছে।';mode('both');return}
  const myToken=token;
- working=true;$('translateChapter').disabled=true;$('stopTranslate').disabled=false;
+ working=true;$('translateChapter').disabled=true;$('stopTranslate').disabled=false;$('stopTranslate').classList.remove('hidden');
  mode('both');
  try{
  $('translateStatus').textContent='বাংলা ও ইংরেজি ভাষা-মডেল প্রস্তুত হচ্ছে। প্রথমবার ইন্টারনেট লাগতে পারে…';
  await translate.prepare();
- const batch=remaining.slice(0,28),total=remaining.length;
+ const batch=remaining.slice(0,28);
  for(let k=0;k<batch.length;k++){
   if(token!==myToken)break;
   const item=batch[k],parts=item.text.match(/.{1,900}(?:\s|$)/gu)||[item.text];
@@ -261,24 +294,24 @@ $('translateChapter').onclick=async()=>{
   const doneTotal=Array.from($('article').querySelectorAll('.paragraph .bn:not(.translation-unready)')).length;
   const count=$('article').querySelectorAll('.paragraph').length;
   $('translateProgress').style.width=(count?doneTotal/count*100:0)+'%';
-  $('translateStatus').textContent='বাংলা অনুবাদ: '+doneTotal+'/'+count+' অনুচ্ছেদ। মূল ইংরেজির সঙ্গে মিলিয়ে পড়ো।';
+  $('translateStatus').textContent='বাংলা অনুবাদ: '+bn(doneTotal)+'/'+bn(count)+' অনুচ্ছেদ। মূল ইংরেজির সঙ্গে মিলিয়ে পড়ো।';
  }
  remaining=remaining.filter(x=>!x.done);
- if(token===myToken)$('translateStatus').textContent=remaining.length?('আরও '+remaining.length+'টি অনুচ্ছেদ বাকি। আবার চাপলে পরের অংশ অনুবাদ হবে।'):'পুরো অধ্যায়ের ইংরেজি ও বাংলা দুটোই প্রস্তুত। অফলাইনে সংরক্ষিত।';
+ if(token===myToken)$('translateStatus').textContent=remaining.length?('আরও '+bn(remaining.length)+'টি অনুচ্ছেদ বাকি। আবার চাপলে পরের অংশ অনুবাদ হবে।'):'✓ পুরো অধ্যায়ের ইংরেজি ও বাংলা দুটোই প্রস্তুত। অফলাইনে সংরক্ষিত।';
  }catch(error){$('translateStatus').textContent='অনুবাদ শুরু করা যায়নি। ফোনের ইন্টারনেট, ফাঁকা স্টোরেজ এবং ভাষা-মডেলের ডাউনলোড পরীক্ষা করো। মূল ইংরেজি পাঠ অক্ষত আছে।'}
- finally{working=false;$('stopTranslate').disabled=true;$('translateChapter').disabled=false}
+ finally{working=false;$('stopTranslate').disabled=true;$('stopTranslate').classList.add('hidden');$('translateChapter').disabled=false}
 };
 $('searchBtn').onclick=()=>{
  if(!book)return;
  const q=$('searchText').value.trim();$('results').replaceChildren();
- if(q.length<2){$('results').append(E('p','দুই বা তার বেশি অক্ষর লিখে খোঁজো।','meta'));return}
+ if(q.length<2){$('results').append(E('p','দুই বা তার বেশি অক্ষর লিখে খোঁজো।','fine'));return}
  const found=rank(q,sections,8);
- if(!found.length){$('results').append(E('p','এই বইতে মিলে এমন মূল লেখা পাওয়া যায়নি।','meta'));return}
- $('results').append(E('h3','পাওয়া অধ্যায় ও অনুচ্ছেদ','meta'));
+ if(!found.length){$('results').append(E('p','এই বইতে মিলে এমন মূল লেখা পাওয়া যায়নি।','fine'));return}
+ $('results').append(E('p',bn(found.length)+'টি মিল পাওয়া গেছে','fine'));
  for(const hit of found){
   const row=E('div',undefined,'result');row.append(E('strong',hit.title));
   row.append(E('p',hit.text.slice(0,230)+(hit.text.length>230?'…':'')));
-  const jump=E('button','অধ্যায়টি পড়ো →','text-link');jump.onclick=()=>showChapter(hit.ci);
+  const jump=E('button','অধ্যায়টি পড়ো →','text-link');jump.type='button';jump.onclick=()=>showChapter(hit.ci);
   row.append(jump);$('results').append(row)
  }
 };

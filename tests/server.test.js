@@ -6,6 +6,7 @@ test('static app and health endpoints do not need an API key',async()=>{
   const stat=await fetch(origin+'/api/status');assert.equal(stat.status,200);assert.equal((await stat.json()).ai_enabled,false);
   const page=await fetch(origin+'/tutor.html');assert.equal(page.status,200);assert.match(await page.text(),/বইভিত্তিক/);
   const asset=await fetch(origin+'/src/lesson-data.js');assert.equal(asset.status,200);
+  const css=await fetch(origin+'/src/app.css');assert.equal(css.status,200);assert.match(css.headers.get('content-type'),/text\/css/);
   const forbidden=await fetch(origin+'/package.json');assert.equal(forbidden.status,404);
   const ai=await fetch(origin+'/api/ask',{method:'POST'});assert.equal(ai.status,503);
   const coach=await fetch(origin+'/coach.html');assert.equal(coach.status,200);assert.match(await coach.text(),/Study Coach/);

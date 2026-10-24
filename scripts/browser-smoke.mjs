@@ -16,9 +16,9 @@ try{
  assert.match(await page.locator('#chosenSubject').innerText(),/নার্সিং/);
  assert.equal(await page.locator('.topic').count(),8);
  await page.locator('.topic button').first().click();
- assert.equal(await page.locator('#doneStat').innerText(),'1');
+ assert.match(await page.locator('#doneStat').innerText(),/^(1|১)$/);
  await page.reload({waitUntil:'networkidle'});
- assert.equal(await page.locator('#doneStat').innerText(),'1');
+ assert.match(await page.locator('#doneStat').innerText(),/^(1|১)$/);
  await page.locator('#search').fill('hand hygiene');
  await page.locator('#searchBtn').click();
  await page.waitForFunction(()=>document.querySelectorAll('#sources .source').length>0,null,{timeout:20000});

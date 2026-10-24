@@ -1,24 +1,81 @@
 <!doctype html>
-<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b746b"><meta name="description" content="নন্দিনীর ৭ বিষয়ের নার্সিং স্টাডি কোচ"><link rel="manifest" href="./manifest.webmanifest"><title>Nandini · Study Coach</title>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#11998a"><meta name="description" content="নন্দিনীর ৭ বিষয়ের নার্সিং স্টাডি কোচ"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./src/app.css"><title>Nandini · Study Coach</title>
 <style>
-:root{font-family:system-ui,"Noto Sans Bengali",sans-serif;color:#153c37;background:#f0f8f5}*{box-sizing:border-box}body{margin:0}header{background:linear-gradient(120deg,#0a756c,#15584f);color:#fff;border-radius:0 0 26px 26px;padding:19px 16px 25px}header>div,main{max-width:810px;margin:auto}header a{color:#fff;font-size:14px;text-decoration:none}header h1{font-size:25px;margin:10px 0 4px}header p{opacity:.88;margin:0;line-height:1.6}main{padding:15px 14px 70px}h2{font-size:20px;margin:8px 0 14px}h3{font-size:17px;margin:8px 0}p{line-height:1.75}.panel{background:#fff;border:1px solid #d9e9e3;border-radius:17px;padding:16px;margin-bottom:13px;box-shadow:0 2px 9px #103e3210}.muted{color:#657e77;font-size:13px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px}.stat{background:#e4f5ef;border-radius:13px;padding:12px}.stat b{font-size:23px;color:#08776c;display:block}.stat span{font-size:12px;color:#456b62}.bar{height:9px;background:#e2f0e9;border-radius:20px;overflow:hidden}.bar div{height:100%;background:#138f79;border-radius:20px;transition:width .2s}.pills{display:flex;gap:8px;overflow-x:auto;padding:4px 0 9px;scrollbar-width:thin}.pill{white-space:nowrap;border:1px solid #b6dcd2;background:#fff;color:#196357;border-radius:999px;padding:10px 12px;font-size:13px;cursor:pointer}.pill.selected{background:#0a7568;color:#fff;border-color:#0a7568}.topic{border-top:1px solid #e4ede9;padding:15px 0}.topic:first-child{border-top:0}.topichead{display:flex;gap:10px;align-items:start}.topichead strong{flex:1}.dot{width:30px;height:30px;flex:0 0 auto;display:grid;place-content:center;border-radius:50%;background:#e4f5ef;color:#08786a;font-weight:700}.topic.done .dot{background:#137e68;color:#fff}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.btn{border:0;border-radius:10px;background:#0a7568;color:white;padding:10px 13px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.btn.secondary{background:#e3f4ed;color:#096357}.btn:disabled{opacity:.55}.note{width:100%;min-height:72px;resize:vertical;padding:11px;border:1px solid #c7ded6;border-radius:10px;font:inherit;margin-top:8px}input,select{font:inherit}input[type=search],input[type=password]{width:100%;border:1px solid #b6d7cd;border-radius:10px;padding:12px;background:white;color:#174139}.source{border-left:3px solid #208d7e;padding:10px 13px;margin:9px 0;background:#f6fbf9;border-radius:0 9px 9px 0}.source p{font-size:14px;line-height:1.7;margin:7px 0}.source a{color:#08766b;font-size:13px}.warning{background:#fff7e7;border-left:4px solid #e9b45a;padding:12px;border-radius:8px;font-size:13px;line-height:1.65}.hidden{display:none!important}#sources{overflow-wrap:anywhere}.small{font-size:12px;color:#6b8580}footer{text-align:center;color:#68837b;font-size:12px;line-height:1.6;padding:8px}@media(max-width:440px){.btn{flex:1}.actions{gap:6px}}
+.overview{display:flex;align-items:center;gap:16px;margin-top:18px}
+.overview .stats{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.overview .stat{background:rgba(255,255,255,.14);border-radius:14px;padding:9px 11px}
+.overview .stat b{display:block;font-size:22px;line-height:1.25}
+.overview .stat span{font-size:11.5px;color:rgba(255,255,255,.85)}
+#progressLine{margin-top:12px;font-size:12.5px}
+.pills{position:relative;display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:2px 16px 10px;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pill{white-space:nowrap;border:1.5px solid var(--line-2);background:#fff;color:var(--ink-2);border-radius:999px;padding:9px 14px;font-size:13px;font-weight:680}
+.pill.selected{background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;border-color:transparent;box-shadow:0 6px 14px -8px rgba(11,116,104,.8)}
+.subject-head{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.subject-head .em{width:56px;height:56px;flex:none;border-radius:18px;display:grid;place-items:center;font-size:30px;background:linear-gradient(150deg,#e3f7ef,#c9efe1)}
+.subject-head h2{font-size:19px;margin:0}
+.subject-head p{margin:2px 0 0}
+.topic{position:relative;display:flex;gap:13px;padding:14px 0 14px;border-top:1px solid var(--line)}
+.topic:first-child{border-top:0}
+.dot{width:34px;height:34px;flex:none;display:grid;place-content:center;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);font-weight:800;font-size:14px}
+.topic.done .dot{background:linear-gradient(135deg,#22bfa4,#0b7468);color:#fff}
+.topic.due .dot{background:linear-gradient(135deg,#ffb35c,#f0753f);color:#fff}
+.topic-body{flex:1;min-width:0}
+.topic-body strong{display:block;font-size:15px;line-height:1.5}
+.topic.done strong{color:var(--ink-2)}
+.state{font-size:12.5px;margin:2px 0 0;color:var(--brand)}
+.topic.due .state{color:#c0601f;font-weight:700}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.topic details summary{font-size:12.5px;color:var(--ink-3);cursor:pointer;margin-top:9px;font-weight:650}
+.note{min-height:76px!important;margin:8px 0}
+.source{border-left:3px solid var(--brand);padding:11px 14px;margin:10px 0;background:#f5fbf9;border-radius:0 14px 14px 0}
+.source strong{font-size:13.5px;line-height:1.5;display:block}
+.source p{font-size:14px;line-height:1.7;margin:6px 0;font-family:Georgia,serif;color:var(--ink-2)}
+.source a{font-size:13px;font-weight:700}
+#sources{overflow-wrap:anywhere}
+.refs{display:flex;gap:8px;flex-wrap:wrap}
 </style></head>
-<body><header><div><a href="./index.html">← নন্দিনীর হোম</a><h1>🌱 আমার Study Coach</h1><p>সাতটি বিষয়। নিজের গতি। বই পড়ে বুঝে এগিয়ে যাও।</p></div></header>
-<main><section class="panel"><div class="stats"><div class="stat"><b id="doneStat">০</b><span>পড়া বিষয়</span></div><div class="stat"><b id="dueStat">০</b><span>আজ রিভিশন বাকি</span></div></div><p class="muted">প্রথম বর্ষের নিজের পড়ার পরিকল্পনা। এগুলো কলেজের অফিসিয়াল অধ্যায়তালিকা নয়।</p><div class="bar" role="progressbar" aria-label="মোট পড়ার অগ্রগতি" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="totalBar"><div id="fill"></div></div><p id="progressLine" class="muted"></p></section>
-<section class="panel"><h2>আজ কোন বিষয় পড়বে?</h2><div id="subjectTabs" class="pills" role="group" aria-label="বিষয় বেছে নাও"></div><h2 id="chosenSubject"></h2><p id="chosenDesc" class="muted"></p><div id="topics"></div></section>
-<section class="panel"><h2>🔎 বইয়ের মধ্যে প্রশ্ন খোঁজো</h2><p class="muted">প্রকাশকের চারটি Open RN বই থেকে প্রাসঙ্গিক মূল লেখা ও অধ্যায়ের লিংক দেখাবে। ভুল উত্তর তৈরি করবে না। ইংরেজি শব্দ লিখলে সাধারণত ভালো ফল পাওয়া যায়।</p><label for="search">প্রশ্ন বা ইংরেজি শব্দ</label><input id="search" type="search" placeholder="যেমন: hand hygiene, vital signs, lung" maxlength="300"><p class="actions"><button class="btn" id="searchBtn">সব বইয়ে খুঁজো</button><button class="btn secondary" id="clearBtn">মুছে দাও</button></p><div id="searchState" class="small" aria-live="polite"></div><div id="sources"></div></section>
-<section class="panel hidden" id="aiPanel"><h2>✨ বই থেকে বাংলায় বুঝে নাও</h2><p class="muted">সার্ভারে লোকাল AI চালু থাকলেই ব্যবহার করা যাবে। AI শুধু সার্ভার নিজে খুঁজে পাওয়া বইয়ের অংশ পাবে। উত্তর ও উৎস মিলিয়ে পড়বে।</p><label for="accessCode">ব্যক্তিগত অ্যাক্সেস কোড</label><input id="accessCode" type="password" autocomplete="off" placeholder="Nandini Access Code"><p><button class="btn" id="askAI">বাংলায় বুঝিয়ে বলো</button></p><div id="aiReply" aria-live="polite"></div></section>
-<section class="panel"><h2>🤖 নিজের AI Server</h2><p class="muted">VPS-এ লোকাল মডেল চালু হলে তার HTTPS ঠিকানা এখানে সংযুক্ত করো। বই ও নোট এর আগেও কাজ করবে।</p><a class="btn secondary" href="./settings.html">AI Server সেটিংস →</a></section>
-<section class="panel"><h2>📚 তোমার রিসোর্স</h2><div class="actions"><a class="btn secondary" href="./library.html">৪টি বই পড়ো</a><a class="btn secondary" href="./tutor.html">বাংলা পাঠ ও MCQ</a><a class="btn secondary" href="./faridpur-first-year.html">৭ বিষয়ের উৎস</a></div></section>
-<div class="warning">শুধু শিক্ষার জন্য। বাস্তব রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে এই অ্যাপ ব্যবহার করবে না। অফলাইন প্রগ্রেস/নোট এই ফোনেই থাকে। ব্রাউজার ডেটা মুছলে হারাতে পারে।</div>
-<footer>Made for Nandini · Bangladesh Diploma Nursing, 1st Year</footer>
+<body><header class="hero"><div class="wrap">
+<div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">Study Coach</span></div>
+<h1>🌱 আমার পড়ার প্ল্যান</h1><p>সাতটি বিষয়। নিজের গতি। বই পড়ে বুঝে এগিয়ে যাও।</p>
+<div class="overview"><div class="ring" id="ring" role="progressbar" aria-label="মোট পড়ার অগ্রগতি" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><b id="ringPct">০%</b></div><div class="stats"><div class="stat"><b id="doneStat">০</b><span>পড়া শেষ</span></div><div class="stat"><b id="dueStat">০</b><span>আজ রিভিশন</span></div></div></div>
+<p id="progressLine"></p>
+</div></header>
+<main>
+<h2 class="section-title">আজ কোন বিষয় পড়বে?</h2>
+<div id="subjectTabs" class="pills" role="group" aria-label="বিষয় বেছে নাও"></div>
+<section class="card">
+<div class="subject-head"><span class="em" id="chosenEmoji">🩺</span><div><h2 id="chosenSubject"></h2><p id="chosenDesc" class="fine"></p></div></div>
+<div class="bar"><div id="subjectFill"></div></div>
+<div id="topics" style="margin-top:6px"></div>
+</section>
+<h2 class="section-title">🔎 চারটি বইয়ে খোঁজো</h2>
+<section class="card"><p class="muted">প্রকাশকের Open RN বই থেকে মূল লেখা ও অধ্যায়ের লিংক দেখাবে, নিজে থেকে উত্তর বানাবে না। ইংরেজি শব্দে খুঁজলে ভালো ফল পাবে।</p><label class="field" for="search">প্রশ্ন বা ইংরেজি শব্দ</label><div class="search-row"><input id="search" type="search" placeholder="যেমন: hand hygiene, vital signs" maxlength="300"><button class="btn" id="searchBtn" type="button">খুঁজো</button></div><div class="btn-row" style="margin-top:8px"><button class="btn ghost sm" id="clearBtn" type="button">মুছে দাও</button><span id="searchState" class="fine" aria-live="polite"></span></div><div id="sources"></div></section>
+<section class="card hidden" id="aiPanel"><h2>✨ বই থেকে বাংলায় বুঝে নাও</h2><p class="muted">সার্ভারে লোকাল AI চালু থাকলেই ব্যবহার করা যাবে। AI শুধু সার্ভার নিজে খুঁজে পাওয়া বইয়ের অংশ পাবে। উত্তর ও উৎস মিলিয়ে পড়বে।</p><label class="field" for="accessCode">ব্যক্তিগত অ্যাক্সেস কোড</label><input id="accessCode" type="password" autocomplete="off" placeholder="Nandini Access Code"><p style="margin-top:12px"><button class="btn" id="askAI" type="button">বাংলায় বুঝিয়ে বলো</button></p><div id="aiReply" aria-live="polite"></div></section>
+<h2 class="section-title">📚 তোমার রিসোর্স</h2>
+<nav class="menu" aria-label="রিসোর্স">
+<a href="./library.html"><span class="ico">📖</span><span class="txt">৪টি বই পড়ো<small>English + বাংলা পাশাপাশি</small></span><span class="chev">›</span></a>
+<a href="./tutor.html"><span class="ico">🧠</span><span class="txt">বাংলা পাঠ ও MCQ<small>সংক্রমণ প্রতিরোধ</small></span><span class="chev">›</span></a>
+<a href="./faridpur-first-year.html"><span class="ico">📦</span><span class="txt">৭ বিষয়ের উৎস<small>সিলেবাস ও বইয়ের তালিকা</small></span><span class="chev">›</span></a>
+<a href="./settings.html"><span class="ico">🤖</span><span class="txt">নিজের AI Server<small>VPS-এ লোকাল মডেল চালু হলে HTTPS ঠিকানা যুক্ত করো</small></span><span class="chev">›</span></a>
+</nav>
+<details class="info"><summary>ℹ️ জেনে রাখো</summary><p>এটি প্রথম বর্ষের নিজের পড়ার পরিকল্পনা, কলেজের অফিসিয়াল অধ্যায়তালিকা নয়। শুধু শিক্ষার জন্য। বাস্তব রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে এই অ্যাপ ব্যবহার করবে না।</p><p>প্রগ্রেস ও নোট এই ফোনেই থাকে। ব্রাউজার ডেটা মুছলে হারাতে পারে।</p></details>
+<p class="fine" style="text-align:center">Made for Nandini · Bangladesh Diploma Nursing, 1st Year</p>
 </main>
+<nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
+<a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
+<a href="./library.html" data-tab="books"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
+<a href="./coach.html" data-tab="coach" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
+<a href="./index.html#quiz" data-tab="quiz"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.4-2.8 4.2M12 17.6h.01"/></svg></span>MCQ</a>
+<a href="./index.html#notes" data-tab="notes"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14.5 7.5l2 2"/></svg></span>নোট</a>
+</div></nav>
 <script type="module">
 import {SUBJECTS,TOTAL_TOPICS,taskId,SOURCE_LINKS,subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
 import {apiUrl} from './src/api-config.js';
 const $=id=>document.getElementById(id);
 const e=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
+const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
 const key='nandini-coach-v1';
 function readState(){try{const o=JSON.parse(localStorage.getItem(key)||'{}');return typeof o==='object'&&o!==null&&!Array.isArray(o)?o:{}}catch{return {}}}
 let state=readState(),chosen=subjectByCode(new URL(location.href).searchParams.get('subject'))?.code||'D135';
@@ -26,40 +83,45 @@ function saveState(){try{localStorage.setItem(key,JSON.stringify(state));return 
 function dateToday(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()}
 function due(item){return Boolean(item?.done&&item?.nextReview&&item.nextReview<=dateToday())}
 function refreshStats(){const tasks=Object.values(state).filter(v=>v&&v.done);const allDue=tasks.filter(due).length;
- $('doneStat').textContent=tasks.length;
- $('dueStat').textContent=allDue;
- const percent=Math.round(tasks.length/TOTAL_TOPICS*100);$('fill').style.width=percent+'%';
- $('totalBar').setAttribute('aria-valuenow',String(percent));
- $('progressLine').textContent=TOTAL_TOPICS+'টি পড়ার লক্ষ্য থেকে '+tasks.length+'টি শেষ ('+percent+'%)। আজ অন্তত একটি বিষয়ে ২০ মিনিট মন দিয়ে পড়ো।'}
+ $('doneStat').textContent=bn(tasks.length);
+ $('dueStat').textContent=bn(allDue);
+ const percent=Math.round(tasks.length/TOTAL_TOPICS*100);
+ $('ring').style.setProperty('--p',percent);$('ringPct').textContent=bn(percent)+'%';
+ $('ring').setAttribute('aria-valuenow',String(percent));
+ $('progressLine').textContent=bn(TOTAL_TOPICS)+'টি পড়ার লক্ষ্য থেকে '+bn(tasks.length)+'টি শেষ। আজ অন্তত একটি বিষয়ে ২০ মিনিট মন দিয়ে পড়ো।'}
 function tabs(){
  $('subjectTabs').replaceChildren();
  for(const s of SUBJECTS){const btn=e('button',s.emoji+' '+s.name,'pill'+(s.code===chosen?' selected':''));btn.type='button';btn.setAttribute('aria-pressed',String(s.code===chosen));btn.onclick=()=>{chosen=s.code;history.replaceState({},'', './coach.html?subject='+s.code);render()};$('subjectTabs').append(btn)}
+ const rail=$('subjectTabs'),sel=rail.querySelector('.selected');if(sel)rail.scrollLeft=sel.offsetLeft-(rail.clientWidth-sel.offsetWidth)/2;
 }
 function render(){
  refreshStats();tabs();
- const subject=subjectByCode(chosen);$('chosenSubject').textContent=subject.emoji+' '+subject.bn;
- $('chosenDesc').textContent=subject.name+' · '+subject.code+' · '+subject.topics.length+'টি প্রস্তাবিত শেখার বিষয়';
+ const subject=subjectByCode(chosen);$('chosenSubject').textContent=subject.bn;$('chosenEmoji').textContent=subject.emoji;
+ const doneHere=subject.topics.filter((t,i)=>state[taskId(subject.code,i)]?.done).length;
+ $('chosenDesc').textContent=subject.name+' · '+subject.code+' · '+bn(doneHere)+'/'+bn(subject.topics.length)+'টি শেষ';
+ $('subjectFill').style.width=Math.round(doneHere/subject.topics.length*100)+'%';
  const list=$('topics');list.replaceChildren();
  for(let i=0;i<subject.topics.length;i++){
  const [title,query]=subject.topics[i],id=taskId(subject.code,i),saved=state[id]||{};
- const block=e('article',undefined,'topic'+(saved.done?' done':''));const head=e('div',undefined,'topichead');head.append(e('span',saved.done?'✓':String(i+1),'dot'),e('strong',title));block.append(head);
- if(saved.done){const p=e('p',due(saved)?'🔁 রিভিশন দেওয়ার সময় হয়েছে':'✓ পড়া হয়েছে, পরবর্তী রিভিশন নির্ধারিত','muted');block.append(p)}
- const acts=e('div',undefined,'actions');const mark=e('button',saved.done?'পড়া হয়েছে ✓':'পড়া শেষ করেছি','btn');mark.onclick=()=>{state[id]={...state[id],done:!saved.done,reviewCount:0,nextReview:!saved.done?dateToday()+86400000:null};saveState();render()};
+ const block=e('article',undefined,'topic'+(saved.done?' done':'')+(due(saved)?' due':''));const body=e('div',undefined,'topic-body');
+ block.append(e('span',saved.done?(due(saved)?'↻':'✓'):bn(i+1),'dot'),body);body.append(e('strong',title));
+ if(saved.done){body.append(e('p',due(saved)?'🔁 রিভিশন দেওয়ার সময় হয়েছে':'✓ পড়া হয়েছে, পরবর্তী রিভিশন নির্ধারিত','state'))}
+ const acts=e('div',undefined,'actions');const mark=e('button',saved.done?'পড়া হয়েছে ✓':'পড়া শেষ করেছি','btn sm'+(saved.done?' soft':''));mark.type='button';mark.onclick=()=>{state[id]={...state[id],done:!saved.done,reviewCount:0,nextReview:!saved.done?dateToday()+86400000:null};saveState();render()};
  acts.append(mark);
- if(saved.done){const rev=e('button','আজ রিভিশন করেছি','btn secondary');rev.onclick=()=>{const count=Number(saved.reviewCount||0)+1;const days=count===1?3:count===2?7:14;state[id]={...saved,done:true,reviewCount:count,nextReview:dateToday()+days*86400000};saveState();render()};acts.append(rev)}
- const q=e('button','বইতে খুঁজো','btn secondary');q.onclick=()=>{$('search').value=query;$('search').scrollIntoView({behavior:'smooth',block:'center'});searchBooks()};acts.append(q);
- block.append(acts);
- const details=e('details');const summ=e('summary','আমার নোট','muted');details.append(summ);
+ if(saved.done){const rev=e('button','আজ রিভিশন করেছি','btn sm'+(due(saved)?' coral':' ghost'));rev.type='button';rev.onclick=()=>{const count=Number(saved.reviewCount||0)+1;const days=count===1?3:count===2?7:14;state[id]={...saved,done:true,reviewCount:count,nextReview:dateToday()+days*86400000};saveState();render()};acts.append(rev)}
+ const q=e('button','🔍 বইতে খুঁজো','btn sm ghost');q.type='button';q.onclick=()=>{$('search').value=query;$('search').scrollIntoView({behavior:'smooth',block:'center'});searchBooks()};acts.append(q);
+ body.append(acts);
+ const details=e('details');const summ=e('summary',saved.note?'✎ আমার নোট (লেখা আছে)':'✎ আমার নোট');details.append(summ);
  const text=e('textarea',undefined,'note');text.placeholder='নিজের ভাষায় যা বুঝেছি লিখি...';text.value=saved.note||'';
- const save=e('button','নোট সংরক্ষণ','btn secondary');const status=e('p',undefined,'small');
+ const save=e('button','নোট সংরক্ষণ','btn sm soft');save.type='button';const status=e('p',undefined,'fine');
  save.onclick=()=>{state[id]={...(state[id]||{}),note:text.value.slice(0,1500)};status.textContent=saveState()?'নোট সংরক্ষণ হয়েছে ✓':'ফোনে নোট সংরক্ষণ করা যাচ্ছে না';refreshStats()};
- details.append(text,save,status);block.append(details);
+ details.append(text,save,status);body.append(details);
  list.append(block);
  }
- const ref=e('div',undefined,'actions');
- for(const id of subject.references){const link=e('a','📖 '+({fundamentals:'Nursing Fundamentals',skills:'Nursing Skills',terminology:'Medical Terminology',mentalhealth:'Mental Health & Community'}[id]),'btn secondary');link.href=SOURCE_LINKS[id];ref.append(link)}
- for(const x of subject.extras){const a=e('a',x.title+' ↗','btn secondary');a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';ref.append(a)}
- if(ref.childNodes.length){list.append(e('h3','সহায়ক পড়ার উৎস'),ref)}
+ const ref=e('div',undefined,'refs');
+ for(const id of subject.references){const link=e('a','📖 '+({fundamentals:'Nursing Fundamentals',skills:'Nursing Skills',terminology:'Medical Terminology',mentalhealth:'Mental Health & Community'}[id]),'btn sm soft');link.href=SOURCE_LINKS[id];ref.append(link)}
+ for(const x of subject.extras){const a=e('a',x.title+' ↗','btn sm ghost');a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';ref.append(a)}
+ if(ref.childNodes.length){const h=e('h3','সহায়ক পড়ার উৎস');h.style.margin='16px 0 10px';list.append(h,ref)}
 }
 async function serverSearch(query){const r=await fetch(apiUrl('/api/books/search')+'?q='+encodeURIComponent(query)+'&book=all');if(!r.ok)throw Error('no_server_search');const j=await r.json();return j.matches||[]}
 let offlineIndex;
@@ -70,7 +132,7 @@ async function fallbackSearch(query){
 let busy=false;
 async function searchBooks(){const query=$('search').value.trim();if(query.length<2){$('searchState').textContent='অন্তত দুই অক্ষরে খোঁজো।';return}if(busy)return;busy=true;$('searchBtn').disabled=true;$('sources').replaceChildren();$('searchState').textContent='চারটি বই থেকে সূত্র খুঁজছি…';
  try{let hits;try{hits=await serverSearch(query)}catch{hits=await fallbackSearch(query)}
- $('searchState').textContent=hits.length?hits.length+'টি প্রাসঙ্গিক উৎস পাওয়া গেছে।':'এই বইগুলোতে সরাসরি মিলে এমন অংশ পাওয়া যায়নি।';
+ $('searchState').textContent=hits.length?bn(hits.length)+'টি প্রাসঙ্গিক উৎস পাওয়া গেছে।':'এই বইগুলোতে সরাসরি মিলে এমন অংশ পাওয়া যায়নি।';
  for(const h of hits){const box=e('div',undefined,'source');box.append(e('strong',h.bookTitle+' · '+h.chapter));box.append(e('p',h.excerpt.slice(0,650)+(h.excerpt.length>650?'…':'')));const a=e('a','প্রকাশকের মূল অধ্যায় ↗');a.href=h.sourceUrl;a.target='_blank';a.rel='noopener noreferrer';box.append(a);$('sources').append(box)}
  }catch{$('searchState').textContent='বইয়ের সার্চ চালু করা যায়নি। অ্যাপটি প্রথমবার ইন্টারনেটসহ খুলো।'}
  finally{busy=false;$('searchBtn').disabled=false}
