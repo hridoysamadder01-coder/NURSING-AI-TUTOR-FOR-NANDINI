@@ -1,10 +1,10 @@
 // Adds the on-device LLM (llama.cpp + NandiniLlm Capacitor plugin) to the generated android/ project.
 // Run after `npx cap add android && npx cap sync android`. llama.cpp comes from the pinned
 // llama-cpp-python sdist on PyPI (same source the desktop evaluation used), checked by SHA-256.
-import {mkdir,cp,readFile,writeFile,rm,readdir} from 'node:fs/promises';
+import {mkdir,cp,readFile,writeFile,rm,readdir,stat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {join,basename} from 'node:path';
+import {join,basename,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 
 const SDIST={url:'https://files.pythonhosted.org/packages/e4/b4/c8cd17629ced0b9644a71d399a91145aedef109c0333443bef015e45b704/llama_cpp_python-0.3.16.tar.gz',
@@ -49,6 +49,9 @@ public class MainActivity extends BridgeActivity {
 // Native build: arm64 only, Release-optimised even in debug APKs, and the per-CPU ggml libraries
 // extracted to nativeLibraryDir so ggml can pick the right one at runtime.
 const ndk=process.env.ANDROID_NDK_LATEST_HOME?basename(process.env.ANDROID_NDK_LATEST_HOME):'';
+// One fixed debug key for every build: Android refuses to install an APK signed with another key over the
+// old app, and uninstalling would delete the 2.4 GB downloaded model. (A personal-testing key, not a secret.)
+const keystore=resolve('android-signing/debug.keystore');await stat(keystore);
 const gradlePath='android/app/build.gradle';
 let gradle=await readFile(gradlePath,'utf8');
 if(gradle.includes('nandini_llm'))throw Error('build.gradle already patched');
@@ -68,6 +71,14 @@ ${ndk?`    ndkVersion "${ndk}"\n`:''}    defaultConfig {
     }
     packagingOptions {
         jniLibs { useLegacyPackaging = true }
+    }
+    signingConfigs {
+        debug {
+            storeFile file("${keystore}")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
     }
 }
 `;

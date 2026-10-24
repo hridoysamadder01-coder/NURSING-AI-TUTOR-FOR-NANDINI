@@ -68,12 +68,6 @@ jobs:
           npx cap sync android
       - name: Add on-device LLM (llama.cpp + NandiniLlm plugin)
         run: node scripts/add-local-llm.mjs
-      # Every runner would otherwise create a new random debug key, and Android refuses to install an APK signed
-      # with a different key over the old one (uninstalling would also delete the 2.4 GB AI model).
-      - name: Use the fixed debug signing key
-        run: |
-          mkdir -p ~/.android
-          cp android-signing/debug.keystore ~/.android/debug.keystore
       - name: Compile debug APK for personal device testing
         working-directory: android
         run: |
