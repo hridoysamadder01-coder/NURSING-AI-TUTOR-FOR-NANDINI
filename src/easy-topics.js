@@ -399,7 +399,7 @@ export const TOPICS=[
  terms:[['Symptom','উপসর্গ'],['Nausea','বমিভাব'],['Dizziness','মাথা ঘোরা'],['Shortness of breath','শ্বাসকষ্ট'],['Allergy','অ্যালার্জি'],['Open question','খোলা প্রশ্ন']],
  check:{q:'কোনটি খোলা প্রশ্ন (Open question)?',options:['Are you in pain?','Did you eat?','How are you feeling today?','Is it your left arm?'],answer:2,why:'"How are you feeling today?"-এর উত্তর হ্যাঁ/না দিয়ে হয় না; রোগী নিজের মতো করে বলেন।'},
  book:{id:'fundamentals',q:'therapeutic communication open-ended questions'},coach:['D116:3','D135:7']},
-{id:'pain-words',subject:'D116',title:'ব্যথা ও উপসর্গের ইংরেজি',en:'Describing Pain & Symptoms',
+{id:'pain-words',subject:'D116',title:'ব্যথা ও উপসর্গের ইংরেজি',en:'Describing Pain & Symptoms (PQRST)',
  gist:'রোগী কেমন ব্যথা বা কষ্ট পাচ্ছেন, তা ঠিক ইংরেজি শব্দে লিখতে পারলে চিকিৎসক আর অন্য নার্সরা সহজে বুঝতে পারেন।',
  points:[
   'ব্যথার ধরন: Sharp (তীক্ষ্ণ, খোঁচা দেওয়া), Dull (ভোঁতা), Burning (জ্বালাপোড়া), Throbbing (দপদপে), Cramping (মোচড় দেওয়া)।',

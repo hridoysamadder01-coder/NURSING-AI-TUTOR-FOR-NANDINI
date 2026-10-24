@@ -13,6 +13,7 @@ on:
       - coach.html
       - settings.html
       - topics.html
+      - ask.html
       - src/**
       - data/books/**
 permissions:

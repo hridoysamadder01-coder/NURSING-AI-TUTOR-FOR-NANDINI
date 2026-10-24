@@ -75,6 +75,14 @@ try{
  await page.locator('a[href="./topics.html#vital-signs"]').click();
  await page.waitForURL(/topics\.html#vital-signs/);
  assert.equal(await page.locator('#vital-signs').getAttribute('open'),'');
+ await page.goto(base+'/index.html',{waitUntil:'networkidle'});
+ await page.locator('.askhome input').fill('osmosis কী?');
+ await page.locator('.askhome button').click();
+ await page.waitForURL(/ask\.html/);
+ await page.waitForFunction(()=>document.querySelector('#chat .msg.bot h3')?.textContent.includes('অভিস্রবণ'),null,{timeout:10000});
+ await page.locator('#q').fill('ধমনি আর শিরার পার্থক্য কী?');
+ await page.locator('#askForm button').click();
+ await page.waitForFunction(()=>[...document.querySelectorAll('#chat .msg.bot h3')].some(h=>h.textContent.includes('হৃদ্')),null,{timeout:10000});
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics');
+ console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}
