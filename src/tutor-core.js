@@ -5,8 +5,10 @@ import {TOPICS} from './easy-topics.js';
 const key=s=>String(s||'').normalize('NFC').toLowerCase().replace(/[‌‍্]/g,'');
 export function tokens(text){return key(text).split(/[^a-z0-9ঀ-৿₂]+/u).filter(Boolean)}
 const STOP=new Set(tokens(`কী কি কেন কীভাবে কিভাবে কোনটি কোনটা কোন কাকে কাদের বলে বলা হয় হয়ে এর এ ও আর বা মানে বলো বল বুঝিয়ে বুঝাও বোঝাও বুঝি সহজ সহজে ভাবে করে করা একটু আমাকে আমি তুমি আপনি এটা এটি ওটা কত কতটা কয়টি কয়টা পার্থক্য তফাত দাও লেখো সম্পর্কে নিয়ে জানতে জানাও চাই বাংলায় বাংলা প্লিজ মামা মান সাথে সঙ্গে থেকে জন্য কাজ উদাহরণ
+ যত্ন নিয়ম লক্ষণ হলে কম বেশি দেখা যায় দিতে করতে রোগী রোগীর রোগীকে রোগীদের প্রতিরোধ করব করবো করি হয় নার্স নার্সের নার্সরা যত্নে যত্নের
  the a an is are was what why how which who when where of in on at to for and or explain define definition meaning mean means tell me about please difference between vs versus do does give
  ki keno kivabe kibhabe kare kake bole bolo mane ar er theke jonno kaj plz pls`));
+export const isStopword=t=>STOP.has(t);
 // A few everyday words that do not appear in the topic text itself.
 const SYNONYMS={'হার্ট':['heart'],'হৃৎপিণ্ড':['heart'],'প্রেসার':['bp','রক্তচাপ'],'pressure':['bp'],'bp':['রক্তচাপ'],'প্রস্রাব':['মূত্র'],'পেশাব':['মূত্র'],'urine':['মূত্র'],'লিভার':['যকৃত'],'liver':['যকৃত'],'ইনফেকশন':['infection'],'জীবাণুমুক্ত':['sterile'],'প্রোটিন':['আমিষ'],'হাতধোয়া':['হাত'],'handwash':['hand'],'wash':['hand'],'pulse':['নাড়ি'],'temperature':['তাপমাত্রা'],'জ্বর':['তাপমাত্রা'],'computer':['কম্পিউটার'],'কম্পিউটারের':['কম্পিউটার']};
 const SYN=new Map(Object.entries(SYNONYMS).map(([k,v])=>[key(k),v.map(key)]));

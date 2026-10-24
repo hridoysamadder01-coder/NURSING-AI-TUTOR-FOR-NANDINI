@@ -27,6 +27,11 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 .askbar button{flex:none;width:44px;height:44px;border:0;border-radius:50%;background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;font-size:18px;display:grid;place-items:center}
 .clear{border:0;background:none;color:var(--ink-3);font-size:12.5px;font-weight:650;padding:4px;margin:0 auto}
 .ai-code{display:flex;gap:6px;margin-top:8px}
+.aibox{margin-top:12px;padding:12px 13px;border-radius:16px;background:linear-gradient(160deg,#f3f0ff,#fff 70%);border:1px solid #e2dcff}
+.aibox>b{display:block;font-size:13px;color:#4b3dbd;margin-bottom:6px}
+.aibox .out{white-space:pre-wrap;line-height:1.75;font-size:14.5px}
+.aibox .meta{font-size:11.5px;color:var(--ink-3);margin-top:8px}
+.aibox .btn{margin-top:8px}
 </style></head>
 <body>
 <header class="hero"><div class="wrap">
@@ -36,7 +41,7 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 <main>
 <div id="chat" aria-live="polite"></div>
 <p style="text-align:center;margin-top:14px"><button class="clear" id="clearChat" type="button">🗑️ কথোপকথন মুছে দাও</button></p>
-<details class="info"><summary>ℹ️ এই Tutor কীভাবে কাজ করে</summary><p>এই Tutor পুরোপুরি ফোনেই চলে, তাই সঙ্গে সঙ্গে উত্তর দেয়। এটা ChatGPT-এর মতো নিজে নতুন লেখা বানায় না; অ্যাপের ৬ বিষয়ের সহজ বাংলা ব্যাখ্যা আর ৪টি বই থেকে তোমার প্রশ্নের সবচেয়ে কাছের অংশ খুঁজে দেখায়। তাই নিজে থেকে ভুল তথ্য বানায় না, তবে সব প্রশ্নের উত্তর অ্যাপে না-ও থাকতে পারে।</p><p>সহজ বাংলা ব্যাখ্যাগুলো AI-এর সাহায্যে লেখা, শিক্ষক এখনো যাচাই করেননি। নিজের AI সার্ভার (সেটিংসে) যুক্ত থাকলে বাড়তি "AI সার্ভারে জিজ্ঞেস করো" বোতাম দেখাবে। শুধু শিক্ষার জন্য; রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে ব্যবহার করবে না।</p></details>
+<details class="info"><summary>ℹ️ এই Tutor কীভাবে কাজ করে</summary><p>প্রথম উত্তরটা (কার্ড) পুরোপুরি ফোনেই সঙ্গে সঙ্গে আসে: অ্যাপের ৬ বিষয়ের সহজ বাংলা ব্যাখ্যা আর ৪টি বই থেকে তোমার প্রশ্নের সবচেয়ে কাছের অংশ। এটা নিজে নতুন লেখা বানায় না, তাই ভুল তথ্য বানায় না।</p><p>Android অ্যাপে সেটিংস থেকে "ফোনের ভেতরের AI" (Gemma) নামালে, কার্ডের নিচে AI শিক্ষক ওই যাচাই করা লেখা পড়ে প্রশ্ন অনুযায়ী বুঝিয়ে বলে (RAG)। এটা ইন্টারনেট ছাড়াই চলে, কিন্তু ছোট AI মাঝে মাঝে ভুল করে, আর ফোনভেদে উত্তর আসতে কয়েক সেকেন্ড থেকে এক মিনিট লাগতে পারে। তাই AI-এর উত্তর সবসময় ওপরের কার্ডের সঙ্গে মিলিয়ে নেবে।</p><p>সহজ বাংলা ব্যাখ্যাগুলো AI-এর সাহায্যে লেখা, শিক্ষক এখনো যাচাই করেননি। নিজের AI সার্ভার (সেটিংসে) যুক্ত থাকলে বাড়তি "AI সার্ভারে জিজ্ঞেস করো" বোতাম দেখাবে। শুধু শিক্ষার জন্য; রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে ব্যবহার করবে না।</p></details>
 </main>
 <div class="askbar"><form id="askForm" autocomplete="off"><input id="q" type="search" maxlength="200" placeholder="যেমন: osmosis কী? ধমনি আর শিরার পার্থক্য?" aria-label="তোমার প্রশ্ন" enterkeyhint="send"><button type="submit" aria-label="পাঠাও">➤</button></form></div>
 <nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
@@ -52,11 +57,15 @@ import {topicById} from './src/easy-topics.js';
 import {subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
 import {apiUrl} from './src/api-config.js';
+import {retrieve,chunkBooks,buildIndex,buildMessages,NOT_FOUND} from './src/rag.js';
+import * as llm from './src/local-llm.js';
 const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
 let asked=[];try{const h=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(h))asked=h.filter(x=>typeof x==='string').slice(-20)}catch{}
 const saveAsked=()=>{try{localStorage.setItem(KEY,JSON.stringify(asked.slice(-20)))}catch{}};
-let aiEnabled=false;
+let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null;
+const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+if(llm.available())llm.status().then(st=>{localModel=llm.activeModel(st)}).catch(()=>{});
 fetch(apiUrl('/api/status'),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{aiEnabled=Boolean(s?.ai_enabled)}).catch(()=>{});
 function bubble(cls){const b=E('div',undefined,'msg '+cls);$('chat').append(b);return b}
 function suggestions(list,into){const row=E('div',undefined,'suggest');for(const s of list){const b=E('button',s);b.type='button';b.onclick=()=>ask(s);row.append(b)}into.append(row)}
@@ -69,10 +78,11 @@ function topicCard(b,t){
  if(t.book){const a=E('a','বইয়ে মূল ইংরেজি ↗','btn sm ghost');a.href='./library.html?book='+t.book.id+'&q='+encodeURIComponent(t.book.q);acts.append(a)}
  b.append(acts);
 }
+async function loadBooks(){if(!rawBooks)rawBooks=await Promise.all(['fundamentals','skills','terminology','mentalhealth'].map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}));return rawBooks}
 let books;
 async function searchBooks(q){
  try{const r=await fetch(apiUrl('/api/books/search')+'?q='+encodeURIComponent(q)+'&book=all');if(r.ok){const j=await r.json();return (j.matches||[]).slice(0,3)}}catch{}
- if(!books){const data=await Promise.all(['fundamentals','skills','terminology','mentalhealth'].map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}));
+ if(!books){const data=await loadBooks();
   books=data.flatMap(b=>b.chapters.flatMap(ch=>ch.sections.map(s=>({title:ch.title+' · '+s.heading,text:s.text,bookTitle:b.title,chapter:ch.title,sourceUrl:ch.url||b.source_url}))))}
  return rank(q,books,3).map(h=>({bookTitle:h.bookTitle,chapter:h.chapter,sourceUrl:h.sourceUrl,excerpt:h.text.slice(0,400)}));
 }
@@ -100,7 +110,37 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
   else await bookHits(b,q);
  }
  aiButton(b,q);
+ localAiOffer(b,q,lookInBooks);
  if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});
+}
+// On-device AI (Android app only): RAG over the verified Bangla explanation or the books, streamed under the instant card.
+function localAiOffer(b,q,auto){
+ if(!llm.available())return;
+ if(!localModel){if(!localHinted){localHinted=true;const a=E('a','✨ ফোনের ভেতরের AI চালু করো (একবার ডাউনলোড)','btn sm soft');a.href='./settings.html#local-ai';b.append(a)}return}
+ if(auto&&llm.autoEnabled()){localAi(b,q);return}
+ const btn=E('button','✨ AI-কে দিয়ে বুঝিয়ে নাও','btn sm soft');btn.type='button';btn.onclick=()=>{btn.remove();localAi(b,q)};b.append(btn);
+}
+function localAi(b,q){
+ const box=E('div',undefined,'aibox'),out=E('div','অপেক্ষা করছি…','out typing'),meta=E('div','','meta');
+ box.append(E('b','✨ AI শিক্ষক · '+localModel.label+' (ফোনের ভেতরে)'),out);b.append(box);
+ const stop=E('button','⏹ থামাও','btn sm ghost');stop.type='button';stop.onclick=()=>llm.stop();
+ aiChain=aiChain.then(async()=>{
+  try{
+   let ctx=retrieve(q,null);
+   if(!ctx.topic){out.textContent='📚 বই প্রস্তুত হচ্ছে…';if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));ctx=retrieve(q,ragIndex)}
+   if(!ctx.grounded){out.className='out';out.textContent=NOT_FOUND;return}
+   out.textContent='🧠 AI চালু হচ্ছে… (প্রথমবার একটু সময় লাগে)';
+   await llm.load(localModel);
+   out.textContent='ভাবছি…';box.append(stop);
+   let text='';const t0=performance.now();
+   const res=await llm.generate(buildMessages(q,ctx),{onToken:t=>{text+=t;out.className='out';out.textContent=text}});
+   if(!text.trim()){out.className='out';out.textContent=NOT_FOUND}
+   const secs=(performance.now()-t0)/1000,speed=res.generateMs?res.generatedTokens/(res.generateMs/1000):0;
+   meta.textContent='⏱ '+bn(secs.toFixed(1))+' সেকেন্ড · '+bn(speed.toFixed(1))+' টোকেন/সেকেন্ড'+(res.stopped?' · থামানো হয়েছে':'')+'\n⚠️ AI ভুল করতে পারে। ওপরের যাচাই করা ব্যাখ্যা বা বইয়ের সঙ্গে মিলিয়ে নাও।';
+   meta.style.whiteSpace='pre-line';box.append(meta);
+  }catch(e){out.className='out';out.textContent='AI চালানো যায়নি ('+(e?.message||e)+')। সেটিংসে মডেল ও ফোনের ফাঁকা RAM দেখো।'}
+  finally{stop.remove()}
+ });
 }
 async function bookHits(b,q){
   const wait=E('p','📚 ৪টি বইয়ের মূল ইংরেজিতে খুঁজছি…','typing');b.append(wait);

@@ -6,6 +6,8 @@ on:
       - scripts/prepare-android.mjs
       - scripts/import_openrn.py
       - capacitor.config.json
+      - android-llm/**
+      - scripts/add-local-llm.mjs
       - .github/workflows/build-android.yml
       - index.html
       - library.html
@@ -21,7 +23,7 @@ permissions:
 jobs:
   android:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -63,11 +65,19 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+      - name: Add on-device LLM (llama.cpp + NandiniLlm plugin)
+        run: node scripts/add-local-llm.mjs
       - name: Compile debug APK for personal device testing
         working-directory: android
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon assembleDebug
+      - name: Verify native LLM libraries are packaged for every ARM CPU generation
+        run: |
+          unzip -l android/app/build/outputs/apk/debug/app-debug.apk | grep 'lib/arm64-v8a/' | tee native-libs.txt
+          for lib in libnandini_llm.so libllama.so libggml.so libggml-base.so libc++_shared.so libggml-cpu-android_armv8.0_1.so libggml-cpu-android_armv8.2_1.so; do
+            grep -q "lib/arm64-v8a/$lib" native-libs.txt || { echo "missing $lib"; exit 1; }
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: nandini-nursing-study-android-debug
