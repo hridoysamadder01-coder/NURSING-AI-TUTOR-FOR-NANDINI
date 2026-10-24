@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,6 +32,9 @@ public class NandiniLlmPlugin extends Plugin {
     private final ExecutorService modelThread = Executors.newSingleThreadExecutor();
     private final ExecutorService downloadThread = Executors.newSingleThreadExecutor();
     private final AtomicBoolean cancelDownload = new AtomicBoolean(false);
+    private final List<PluginCall> downloadCalls = new ArrayList<>();
+    private volatile String downloadingFile = null;
+    private volatile long downloadReceived = 0;
     private String loadedFile = null;
 
     private File modelDir() {
@@ -65,6 +70,8 @@ public class NandiniLlmPlugin extends Plugin {
         }
         out.put("files", files);
         out.put("loaded", loadedFile);
+        out.put("downloading", downloadingFile);
+        out.put("downloadReceived", downloadReceived);
         out.put("totalRamMb", mem.totalMem / (1024 * 1024));
         out.put("availRamMb", mem.availMem / (1024 * 1024));
         out.put("freeSpaceMb", modelDir().getUsableSpace() / (1024 * 1024));
@@ -79,7 +86,8 @@ public class NandiniLlmPlugin extends Plugin {
     public void download(PluginCall call) {
         String url = call.getString("url");
         File dest = modelFile(call.getString("fileName"));
-        long size = (long) (double) call.getDouble("bytes", 0.0);
+        // Model sizes are above 2^31, so the bridge delivers them as a Long; getDouble() would return its default.
+        long size = call.getData().optLong("bytes", 0L);
         if (url == null || !url.startsWith("https://") || dest == null || size <= 0) {
             call.reject("bad_request");
             return;
@@ -89,14 +97,26 @@ public class NandiniLlmPlugin extends Plugin {
             return;
         }
         File part = new File(dest.getPath() + ".part");
-        long have = part.exists() ? part.length() : 0;
-        if (modelDir().getUsableSpace() < size - have + 200L * 1024 * 1024) {
-            call.reject("no_space");
-            return;
+        synchronized (downloadCalls) {
+            // The settings page may be reopened while a download runs: join it instead of starting a second one.
+            if (downloadingFile != null) {
+                if (downloadingFile.equals(dest.getName())) downloadCalls.add(call);
+                else call.reject("busy");
+                return;
+            }
+            long have = part.exists() ? part.length() : 0;
+            if (modelDir().getUsableSpace() < size - have + 200L * 1024 * 1024) {
+                call.reject("no_space");
+                return;
+            }
+            downloadingFile = dest.getName();
+            downloadReceived = have;
+            downloadCalls.add(call);
         }
         cancelDownload.set(false);
         downloadThread.execute(() -> {
             HttpURLConnection conn = null;
+            String error = null;
             try {
                 long got = part.exists() ? part.length() : 0;
                 conn = (HttpURLConnection) new URL(url).openConnection();
@@ -115,6 +135,7 @@ public class NandiniLlmPlugin extends Plugin {
                         if (cancelDownload.get()) throw new Exception("cancelled");
                         out.write(buf, 0, n);
                         got += n;
+                        downloadReceived = got;
                         long now = System.currentTimeMillis();
                         if (now - lastEvent > 400) {
                             lastEvent = now;
@@ -129,12 +150,21 @@ public class NandiniLlmPlugin extends Plugin {
                 }
                 if (!part.renameTo(dest)) throw new Exception("rename_failed");
                 notifyListeners("downloadProgress", new JSObject().put("received", size).put("total", size));
-                call.resolve(new JSObject().put("done", true));
             } catch (Exception e) {
                 if ("size_mismatch".equals(e.getMessage()) || "not_gguf".equals(e.getMessage())) part.delete();
-                call.reject(e.getMessage() == null ? "download_failed" : e.getMessage());
+                error = e.getMessage() == null ? "download_failed" : e.getMessage();
             } finally {
                 if (conn != null) conn.disconnect();
+            }
+            List<PluginCall> waiting;
+            synchronized (downloadCalls) {
+                waiting = new ArrayList<>(downloadCalls);
+                downloadCalls.clear();
+                downloadingFile = null;
+            }
+            for (PluginCall c : waiting) {
+                if (error == null) c.resolve(new JSObject().put("done", true));
+                else c.reject(error);
             }
         });
     }

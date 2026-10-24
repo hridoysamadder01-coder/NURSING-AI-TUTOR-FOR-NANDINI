@@ -81,16 +81,21 @@ const trim=(s,words)=>{const w=String(s).split(/\s+/);return w.length>words?w.sl
 export const NOT_FOUND='এই প্রশ্নের উত্তর অ্যাপের বইয়ে পাইনি। শিক্ষককে জিজ্ঞেস করো।';
 // The same messages are used by the native llama.cpp runtime (via the model's own chat template) and by the desktop evaluation.
 // Small models stay most faithful when they reuse verified sentences, so the instruction asks for that.
-export function buildMessages(question,ctx,{passageWords=90}={}){
+// A desktop test showed that asking the model itself for a chatty opener and closing made it add wrong facts,
+// so the prompt only sets a warm tone; greetings and "বুঝিনি / উদাহরণ দাও" buttons are handled by the app.
+const FOLLOW_UP={
+ simpler:'নন্দিনী আগের ব্যাখ্যাটা বুঝতে পারেনি। আরো সহজ করে, খুব ছোট ছোট বাক্যে আবার বোঝাও।',
+ example:'নন্দিনী একটা উদাহরণ চাইছে। "তথ্য"-এ থাকা উদাহরণ বা "মনে রাখার কৌশল" দিয়ে সহজ করে বোঝাও। নতুন কোনো তথ্য বা উদাহরণ বানাবে না।'};
+export function buildMessages(question,ctx,{passageWords=90,followUp=null}={}){
  const sources=[];
- if(ctx.topic){const t=ctx.topic;sources.push(t.title+' ('+t.en+'): '+t.gist+'\n'+t.points.map(p=>'- '+p).join('\n'))}
+ if(ctx.topic){const t=ctx.topic;sources.push(t.title+' ('+t.en+'): '+t.gist+'\n'+t.points.map(p=>'- '+p).join('\n')+(followUp==='example'?'\nমনে রাখার কৌশল: '+t.trick:''))}
  else for(const p of ctx.passages)sources.push(p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,passageWords));
- const system='তুমি নন্দিনীর নার্সিং শিক্ষক। নিয়ম:\n'+
+ const system='তুমি নন্দিনীর বন্ধুর মতো নার্সিং শিক্ষক। তাকে "তুমি" বলে আন্তরিক, সহজ কথ্য বাংলায় বলবে। নিয়ম:\n'+
   '১) শুধু "তথ্য" অংশে যা লেখা আছে, তা থেকেই উত্তর দেবে। নিজের থেকে কোনো তথ্য যোগ করবে না।\n'+
   '২) তথ্যের বাক্যগুলো যতটা সম্ভব হুবহু ব্যবহার করবে। সংখ্যা, "কম/বেশি", "থেকে/দিকে" একদম বদলাবে না।\n'+
-  '৩) সহজ বাংলায় ৩–৫টি ছোট পয়েন্টে লিখবে। ইংরেজি পরিভাষা বন্ধনীতে রাখবে।\n'+
+  '৩) প্রথমে এক লাইনে মূল কথাটা বলবে, তারপর ৩–৫টি ছোট পয়েন্ট। ইংরেজি পরিভাষা বন্ধনীতে রাখবে।\n'+
   '৪) "তথ্য"-এ উত্তর না থাকলে শুধু লিখবে: '+NOT_FOUND+'\n'+
   '৫) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত দেবে না।';
- const user='তথ্য:\n'+(sources.length?sources.join('\n\n'):'(কিছু নেই)')+'\n\nপ্রশ্ন: '+String(question).trim();
+ const user='তথ্য:\n'+(sources.length?sources.join('\n\n'):'(কিছু নেই)')+'\n\nপ্রশ্ন: '+String(question).trim()+(FOLLOW_UP[followUp]?'\n\n'+FOLLOW_UP[followUp]:'');
  return [{role:'system',content:system},{role:'user',content:user}];
 }

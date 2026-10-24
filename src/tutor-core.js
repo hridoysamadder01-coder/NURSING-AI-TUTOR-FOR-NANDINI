@@ -33,6 +33,38 @@ export function questionTokens(question){
  const out=[];for(const q of tokens(question)){if(STOP.has(q))continue;out.push(q);for(const extra of SYN.get(q)||[])out.push(extra)}
  return [...new Set(out)];
 }
+// Everyday chat ("hi", "ধন্যবাদ", "বুঝিনি") gets a friendly reply instead of a topic search.
+// A message counts only when every word is chat or filler, so "hi, osmosis ki?" is still answered as a question.
+const FILLER=new Set(tokens('মামা mama ভাই bhai আপু apu নন্দিনী nandini tutor টিউটর না na একটা একটি ekta akta can you'));
+// Checked in this order, so "how are you" is "how" and "good night" is "bye".
+const CHAT=[
+ ['thanks','ধন্যবাদ শুকরিয়া thanks thank thanku thankyou thx tnx ty dhonnobad dhonnobaad'],
+ ['who','তুমি তোমার কে নাম tumi tomar ke nam who your name'],
+ ['how','কেমন আছো আছেন আছ kemon acho achen how'],
+ ['bye','bye বাই আল্লাহ হাফেজ allah hafez খোদা khoda টাটা tata night নাইট শুভরাত্রি রাত্রি'],
+ ['ok','ok okay ওকে আচ্ছা accha acha হুম hmm জি ji হ্যাঁ ha haa yes বুঝেছি বুঝলাম বুঝছি bujhechi bujhlam bujhsi got it understood দারুণ darun nice great ভালো valo bhalo আছি achi'],
+ ['greet','hi hello hey hlw helo hii hiii হাই হ্যালো হেলো salam assalamualaikum আসসালামু আলাইকুম সালাম নমস্কার nomoskar good গুড morning evening afternoon শুভ সকাল সন্ধ্যা']
+].map(([kind,words])=>[kind,new Set(tokens(words))]);
+const FOLLOW=new Set(tokens('বুঝিনি বুঝি বুঝলাম বুঝতে পারিনি পারলাম পারছি নাই নি আরো আরও আরেকটু একটু সহজ সহজে আবার উদাহরণ বিস্তারিত বোঝাও বুঝাও বুঝিয়ে দিয়ে বলো দাও করে ক্লিয়ার clear bujhi bujhini bujhinai bujhlam buji nai aro arektu ektu aktu sohoj abar udahoron diye example examples again more simple simpler easy easier explain detail details bolo dao kore bujhao'));
+const EXAMPLE=new Set(tokens('উদাহরণ udahoron example examples'));
+const NOT_UNDERSTOOD=new Set(tokens('বুঝিনি নাই নি না bujhini bujhinai nai na'));
+export function smallTalk(text){
+ const ws=tokens(text);if(!ws.length)return null;
+ const kinds=new Set();
+ for(const w of ws){const hit=CHAT.find(([,set])=>set.has(w));if(hit)kinds.add(hit[0]);else if(!FILLER.has(w)&&!STOP.has(w))return null}
+ // "বুঝিনি" must reach the follow-up path, not be read as "ok".
+ if(ws.some(w=>NOT_UNDERSTOOD.has(w))&&kinds.has('ok'))return null;
+ for(const [kind] of CHAT)if(kinds.has(kind))return kind;
+ return null;
+}
+// "বুঝিনি", "আরো সহজ করে বলো", "উদাহরণ দাও" refer to the previous question.
+export function followUpKind(text){
+ const ws=tokens(text);if(!ws.length)return null;
+ let hit=false;
+ for(const w of ws){if(FOLLOW.has(w)){hit=true;continue}if(!FILLER.has(w)&&!STOP.has(w))return null}
+ if(!hit)return null;
+ return ws.some(w=>EXAMPLE.has(w))?'example':'simpler';
+}
 export function askTutor(question,{limit=3}={}){
  const qs=questionTokens(question);
  const scored=INDEX.map(({topic,fields})=>{let score=0;for(const q of qs){let top=0;for(const [name,w] of FIELDS)top=Math.max(top,w*best(q,fields[name]));score+=top}return {topic,score:Math.round(score*100)/100}})

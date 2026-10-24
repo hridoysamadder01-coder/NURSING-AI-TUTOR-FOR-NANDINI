@@ -10,12 +10,14 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 .msg.bot h3{font-size:16.5px;margin:8px 0 0;line-height:1.45}
 .msg.bot .en{display:block;font-size:12px;color:var(--brand);font-weight:700}
 .msg.bot p{margin:8px 0}
+.msg .lead{margin:0 0 8px;font-weight:650;color:var(--brand-ink)}
 .msg .gist{background:var(--brand-soft);color:var(--brand-ink);padding:10px 12px;border-radius:13px}
 .msg ul{margin:6px 0;padding-left:20px}.msg li{margin-bottom:5px}.msg li::marker{color:var(--brand)}
 .msg .trick{background:var(--amber-soft);color:#6b4a12;padding:10px 12px;border-radius:13px;margin:8px 0;font-size:14px}
 .termrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
 .termchip{font-size:12.5px;padding:5px 10px;border-radius:10px;background:var(--sky-soft);color:#1b62a3;font-weight:650}
 .suggest{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.suggest.quick button{background:var(--brand-soft);border-color:transparent}
 .suggest button{border:1.5px solid var(--line-2);background:#fff;color:var(--brand-ink);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:650}
 .msg .btn-row{margin-top:10px}
 .source{border-left:3px solid var(--brand);padding:8px 12px;margin:8px 0;background:#f5fbf9;border-radius:0 12px 12px 0;font-size:13px}
@@ -52,7 +54,7 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 <a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
 </div></nav>
 <script type="module">
-import {askTutor} from './src/tutor-core.js';
+import {askTutor,smallTalk,followUpKind} from './src/tutor-core.js';
 import {topicById} from './src/easy-topics.js';
 import {subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
@@ -63,13 +65,44 @@ const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.crea
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
 let asked=[];try{const h=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(h))asked=h.filter(x=>typeof x==='string').slice(-20)}catch{}
 const saveAsked=()=>{try{localStorage.setItem(KEY,JSON.stringify(asked.slice(-20)))}catch{}};
-let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null;
+let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null,lastQ=null;
 const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
 // Answers wait (briefly) for this, otherwise the first question would wrongly say the AI is not installed.
 const localReady=llm.available()?Promise.race([llm.status().then(st=>{localModel=llm.activeModel(st)}),new Promise(r=>setTimeout(r,1500))]).catch(()=>{}):Promise.resolve();
 fetch(apiUrl('/api/status'),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{aiEnabled=Boolean(s?.ai_enabled)}).catch(()=>{});
 function bubble(cls){const b=E('div',undefined,'msg '+cls);$('chat').append(b);return b}
 function suggestions(list,into){const row=E('div',undefined,'suggest');for(const s of list){const b=E('button',s);b.type='button';b.onclick=()=>ask(s);row.append(b)}into.append(row)}
+const CHAT_REPLY={
+ greet:'হ্যালো নন্দিনী! 😊 আজ কোন টপিকটা কঠিন লাগছে? বাংলা, ইংরেজি বা Banglish-এ প্রশ্ন লেখো, আমি সহজ করে বুঝিয়ে দেবো।',
+ how:'আমি ভালো আছি, ধন্যবাদ! 😊 তুমি কেমন আছো? চলো, আজ একটা টপিক একসাথে শিখি।',
+ who:'আমি নন্দিনীর Tutor 🤖 তোমার ৬টি বিষয়ের কঠিন টপিক সহজ বাংলায় বুঝিয়ে দিই। উত্তর দিই অ্যাপের যাচাই করা ব্যাখ্যা আর বই থেকে।',
+ thanks:'তোমাকেও ধন্যবাদ! 🌸 আরো কিছু জানতে চাইলে নির্দ্বিধায় জিজ্ঞেস করো।',
+ ok:'দারুণ! 🎉 চাইলে MCQ দিয়ে নিজেকে একবার যাচাই করে নাও।',
+ bye:'ঠিক আছে, ভালো থেকো! 🌙 পড়ার ফাঁকে বিশ্রামও নিও। আবার দেখা হবে।'};
+const OPENERS=['চলো সহজ করে বুঝি 😊','ভালো প্রশ্ন! 👏 দেখো:','এটা সহজ, ধাপে ধাপে দেখো 👇'];
+// One-tap replies under the latest answer, so asking again feels like a normal chat.
+const QUICK=[['🤔 বুঝিনি','বুঝিনি'],['💡 উদাহরণ দাও','উদাহরণ দাও'],['✅ বুঝেছি','বুঝেছি']];
+function quickReplies(b){for(const old of $('chat').querySelectorAll('.quick'))old.remove();const row=E('div',undefined,'suggest quick');for(const [label,q] of QUICK){const x=E('button',label);x.type='button';x.onclick=()=>ask(q);row.append(x)}b.append(row)}
+function chatReply(kind){
+ const b=bubble('bot');b.append(E('p',CHAT_REPLY[kind]));
+ const last=lastQ&&askTutor(lastQ);
+ if(kind==='ok'&&last?.confident){const a=E('a','📝 '+last.topics[0].topic.title+' · MCQ','btn sm soft');a.href='./topics.html#'+last.topics[0].topic.id;b.append(a)}
+ else if(kind==='greet'||kind==='how'||kind==='who')suggestions(SUGGEST.slice(0,3),b);
+ return b;
+}
+// "বুঝিনি" / "উদাহরণ দাও": explain the previous question again (verified trick first, then the local AI).
+function followUp(kind,auto){
+ const b=bubble('bot');
+ if(!lastQ){b.append(E('p','কোন টপিকটা বুঝতে চাও? প্রশ্নটা লিখে দাও, আমি সহজ করে বুঝিয়ে দেবো 😊'));return b}
+ b.append(E('p',kind==='example'?'ঠিক আছে, উদাহরণ দিয়ে বলছি 😊':'কোনো চিন্তা নেই, আবার সহজ করে বলছি 😊'));
+ const r=askTutor(lastQ);
+ if(r.confident){const t=r.topics[0].topic;b.append(E('h3',t.title),E('p',t.gist,'gist'),E('div','🧠 '+t.trick,'trick'));
+  const a=E('a','📖 পুরো টপিক ও MCQ','btn sm');a.href='./topics.html#'+t.id;b.append(a)}
+ else if(!localModel)b.append(E('p','ওপরের বইয়ের অংশটা আরেকবার পড়ে দেখো, অথবা শিক্ষককে জিজ্ঞেস করো।','fine'));
+ localAiOffer(b,lastQ,auto,kind);
+ quickReplies(b);
+ return b;
+}
 function greet(){const b=bubble('bot');b.append(E('p','আমি নন্দিনীর Tutor 🤖 তোমার ৬ বিষয়ের যেকোনো কঠিন টপিক নিয়ে প্রশ্ন করো। বাংলা, ইংরেজি বা Banglish, সব চলবে।'));suggestions(SUGGEST,b)}
 function topicCard(b,t){
  const s=subjectByCode(t.subject);b.append(E('span',(s?.emoji||'📘')+' '+(s?.name||''),'chip'),E('h3',t.title),E('span',t.en,'en'),E('p',t.gist,'gist'));
@@ -98,9 +131,13 @@ function aiButton(b,q){
    }catch{out.textContent='AI সার্ভারে যোগাযোগ করা যাচ্ছে না।'}finally{go.disabled=false}}};
 }
 async function answer(q,{scroll=true,lookInBooks=true}={}){
+ const talk=smallTalk(q),follow=!talk&&followUpKind(q);
+ if(talk||follow){const b=talk?chatReply(talk):followUp(follow,lookInBooks);if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return}
+ lastQ=q;
  const r=askTutor(q),b=bubble('bot');
  if(r.terms.length){const row=E('div',undefined,'termrow');for(const t of r.terms)row.append(E('span',t.en+' = '+t.bn,'termchip'));b.append(row)}
  if(r.confident){
+  b.append(E('p',OPENERS[q.length%OPENERS.length],'lead'));
   topicCard(b,r.topics[0].topic);
   const more=r.topics.slice(1).map(x=>x.topic.title);if(more.length){b.append(E('p','এগুলোও কাজে লাগতে পারে:','fine'));suggestions(more,b)}
  }else{
@@ -112,16 +149,17 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
  }
  aiButton(b,q);
  localAiOffer(b,q,lookInBooks);
+ if(r.confident||llm.available())quickReplies(b);
  if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});
 }
 // On-device AI (Android app only): RAG over the verified Bangla explanation or the books, streamed under the instant card.
-function localAiOffer(b,q,auto){
+function localAiOffer(b,q,auto,mode=null){
  if(!llm.available())return;
  if(!localModel){if(!localHinted){localHinted=true;const a=E('a','✨ ফোনের ভেতরের AI চালু করো (একবার ডাউনলোড)','btn sm soft');a.href='./settings.html#local-ai';b.append(a)}return}
- if(auto&&llm.autoEnabled()){localAi(b,q);return}
- const btn=E('button','✨ AI-কে দিয়ে বুঝিয়ে নাও','btn sm soft');btn.type='button';btn.onclick=()=>{btn.remove();localAi(b,q)};b.append(btn);
+ if(auto&&llm.autoEnabled()){localAi(b,q,mode);return}
+ const btn=E('button','✨ AI-কে দিয়ে বুঝিয়ে নাও','btn sm soft');btn.type='button';btn.onclick=()=>{btn.remove();localAi(b,q,mode)};b.append(btn);
 }
-function localAi(b,q){
+function localAi(b,q,mode=null){
  const box=E('div',undefined,'aibox'),out=E('div','অপেক্ষা করছি…','out typing'),meta=E('div','','meta');
  box.append(E('b','✨ AI শিক্ষক · '+localModel.label+' (ফোনের ভেতরে)'),out);b.append(box);
  const stop=E('button','⏹ থামাও','btn sm ghost');stop.type='button';stop.onclick=()=>llm.stop();
@@ -134,7 +172,7 @@ function localAi(b,q){
    await llm.load(localModel);
    out.textContent='ভাবছি…';box.append(stop);
    let text='';const t0=performance.now();
-   const res=await llm.generate(buildMessages(q,ctx),{onToken:t=>{text+=t;out.className='out';out.textContent=text}});
+   const res=await llm.generate(buildMessages(q,ctx,{followUp:mode}),{maxTokens:320,onToken:t=>{text+=t;out.className='out';out.textContent=text}});
    if(!text.trim()){out.className='out';out.textContent=NOT_FOUND}
    const secs=(performance.now()-t0)/1000,speed=res.generateMs?res.generatedTokens/(res.generateMs/1000):0;
    meta.textContent='⏱ '+bn(secs.toFixed(1))+' সেকেন্ড · '+bn(speed.toFixed(1))+' টোকেন/সেকেন্ড'+(res.stopped?' · থামানো হয়েছে':'')+'\n⚠️ AI ভুল করতে পারে। ওপরের যাচাই করা ব্যাখ্যা বা বইয়ের সঙ্গে মিলিয়ে নাও।';

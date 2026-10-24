@@ -107,10 +107,19 @@ try{
  await app.waitForFunction(()=>document.querySelector('.aibox .meta')?.textContent.includes('AI ভুল করতে পারে'));
  const sent=await app.evaluate(()=>window.__gen[0]);
  assert.equal(sent[0].role,'system');assert.match(sent[1].content,/তথ্য:/);assert.match(sent[1].content,/বাম নিলয়/);
+ // Natural chat: "বুঝিনি" re-explains the previous question, a greeting gets a friendly reply without the model.
+ await app.locator('#chat .quick button',{hasText:'বুঝিনি'}).click();
+ await app.waitForFunction(()=>window.__gen.length===2&&document.querySelectorAll('.aibox .meta').length===2,null,{timeout:10000});
+ assert.match(await app.locator('#chat .msg.bot').last().innerText(),/আবার সহজ করে বলছি/);
+ const again=await app.evaluate(()=>window.__gen[1][1].content);
+ assert.match(again,/বাম নিলয়/);assert.match(again,/বুঝতে পারেনি/);
+ await app.locator('#q').fill('hi mama');await app.locator('#askForm button').click();
+ await app.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('হ্যালো নন্দিনী'));
+ assert.equal(await app.locator('#chat .quick').count(),1,'only the latest answer keeps the quick replies');
  await app.locator('#q').fill('বাংলাদেশের ক্রিকেট অধিনায়ক কে?');await app.locator('#askForm button').click();
  await app.waitForFunction(()=>[...document.querySelectorAll('.aibox .out')].some(o=>o.textContent.includes('পাইনি')),null,{timeout:20000});
- assert.equal(await app.evaluate(()=>window.__gen.length),1,'off-topic question must not reach the model');
+ assert.equal(await app.evaluate(()=>window.__gen.length),2,'greetings and off-topic questions must not reach the model');
  await nativeCtx.close();
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup and streamed RAG answer (stand-in engine)');
+ console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up and small talk (stand-in engine)');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}

@@ -12,8 +12,10 @@ test('Bangla questions reach the right English book passages (cross-lingual RAG)
 test('verified Bangla explanation is used on a strong topic match and off-topic questions never reach the model',()=>{
  const vit=retrieve('ভাইটাল সাইনের স্বাভাবিক মান কত?',index);assert.equal(vit.topic.id,'vital-signs');
  const [system,user]=buildMessages('ভাইটাল সাইনের স্বাভাবিক মান কত?',vit);
- assert.equal(system.role,'system');assert.match(system.content,/নিজের থেকে কোনো তথ্য যোগ করবে না/);assert.ok(system.content.includes(NOT_FOUND));
- assert.match(user.content,/৬০–১০০/);assert.match(user.content,/প্রশ্ন: ভাইটাল সাইনের/);
+ assert.equal(system.role,'system');assert.match(system.content,/নিজের থেকে কোনো তথ্য যোগ করবে না/);assert.match(system.content,/"তুমি" বলে/);assert.ok(system.content.includes(NOT_FOUND));
+ assert.match(user.content,/৬০–১০০/);assert.match(user.content,/প্রশ্ন: ভাইটাল সাইনের/);assert.doesNotMatch(user.content,/বুঝতে পারেনি|মনে রাখার কৌশল/);
+ assert.match(buildMessages('ভাইটাল সাইনের স্বাভাবিক মান কত?',vit,{followUp:'simpler'})[1].content,/বুঝতে পারেনি/);
+ const ex=buildMessages('ভাইটাল সাইনের স্বাভাবিক মান কত?',vit,{followUp:'example'})[1].content;assert.match(ex,/উদাহরণ চাইছে/);assert.ok(ex.includes('মনে রাখার কৌশল: '+vit.topic.trick));
  for(const q of ['বাংলাদেশের ক্রিকেট অধিনায়ক কে?','আজকের আবহাওয়া কেমন?']){const r=retrieve(q,index);assert.equal(r.grounded,false,q);assert.equal(r.passages.length,0)}
  assert.equal(retrieve('RAM আর ROM-এর পার্থক্য কী?',index).passages.length,0,'ICT topics get no nursing-book passage');
 });

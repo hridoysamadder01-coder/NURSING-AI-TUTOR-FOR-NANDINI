@@ -40,10 +40,13 @@ async function renderAi(){
    row.append(use,test,del);
   }else{
    const dl=E('button','⬇️ নামাও ('+gb(m.bytes)+')','btn sm');dl.type='button';
-   dl.onclick=async()=>{dl.disabled=true;bar.classList.remove('hidden');const cancel=E('button','বাতিল','btn sm ghost');cancel.type='button';cancel.onclick=()=>llm.cancelDownload();row.append(cancel);
-    try{await llm.download(m,(got,total)=>{fill.style.width=(got/total*100).toFixed(1)+'%';msg.textContent='নামছে: '+gb(got)+' / '+gb(total)});llm.chooseModel(m.id);renderAi()}
-    catch(e){msg.textContent=({no_space:'ফোনে যথেষ্ট ফাঁকা জায়গা নেই।',cancelled:'বাতিল করা হয়েছে। আবার চাপলে যেখানে থেমেছিল সেখান থেকে নামবে।'})[e?.message]||('নামানো যায়নি ('+(e?.message||e)+')। ইন্টারনেট দেখে আবার চেষ্টা করো, যেখানে থেমেছিল সেখান থেকে নামবে।');dl.disabled=false;cancel.remove()}};
-   row.append(dl);
+   const progress=(got,total)=>{fill.style.width=(got/total*100).toFixed(1)+'%';msg.textContent='নামছে: '+gb(got)+' / '+gb(total)};
+   const start=async()=>{dl.disabled=true;bar.classList.remove('hidden');const cancel=E('button','বাতিল','btn sm ghost');cancel.type='button';cancel.onclick=()=>llm.cancelDownload();row.append(cancel);
+    try{await llm.download(m,progress);llm.chooseModel(m.id);renderAi()}
+    catch(e){msg.textContent=({no_space:'ফোনে যথেষ্ট ফাঁকা জায়গা নেই।',busy:'আরেকটা মডেল নামছে। ওটা শেষ হলে আবার চাপো।',cancelled:'বাতিল করা হয়েছে। আবার চাপলে যেখানে থেমেছিল সেখান থেকে নামবে।'})[e?.message]||('নামানো যায়নি ('+(e?.message||e)+')। ইন্টারনেট দেখে আবার চেষ্টা করো, যেখানে থেমেছিল সেখান থেকে নামবে।');dl.disabled=false;cancel.remove()}};
+   dl.onclick=start;row.append(dl);
+   // Page reopened while the download keeps running in the app: show its progress and wait for it.
+   if(st.downloading===m.file){progress(st.downloadReceived||0,m.bytes);start()}
   }
   card.append(row,bar,msg);box.append(card);
  }
