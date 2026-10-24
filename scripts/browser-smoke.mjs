@@ -64,6 +64,17 @@ try{
   await page.locator('#searchText').fill('hand hygiene');
  await page.locator('#searchBtn').click();
  assert.ok((await page.locator('#results').innerText()).length>40);
+ await page.goto(base+'/topics.html',{waitUntil:'networkidle'});
+ assert.ok((await page.locator('.tcard').count())>=30,'Simple-Bangla topics missing');
+ await page.locator('#topicSearch').fill('osmosis');
+ await page.locator('#osmosis summary').click();
+ await page.locator('#osmosis .option').nth(1).click();
+ assert.match(await page.locator('#osmosis .explain').innerText(),/সঠিক/);
+ assert.match(await page.locator('#osmosis a[href*="library.html"]').getAttribute('href'),/book=fundamentals&q=/);
+ await page.goto(base+'/coach.html',{waitUntil:'networkidle'});
+ await page.locator('a[href="./topics.html#vital-signs"]').click();
+ await page.waitForURL(/topics\.html#vital-signs/);
+ assert.equal(await page.locator('#vital-signs').getAttribute('open'),'');
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader');
+ console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}

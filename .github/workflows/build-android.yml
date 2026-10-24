@@ -12,6 +12,7 @@ on:
       - tutor.html
       - coach.html
       - settings.html
+      - topics.html
       - src/**
       - data/books/**
 permissions:

@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {spawnSync} from 'node:child_process';
 const file=async name=>readFile(new URL('../'+name,import.meta.url),'utf8');
 test('browser inline script passes Node syntax check',async()=>{
- for(const path of ['index.html','tutor.html','library.html','faridpur-first-year.html','coach.html','settings.html']){const html=await file(path);const m=html.match(/<script(?: type="module")?>([\s\S]*?)<\/script>/);if(!m){assert.equal(path,'faridpur-first-year.html','unexpected missing script');continue}const parsed=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(parsed.status,0,path+' JavaScript syntax error: '+parsed.stderr)}
+ for(const path of ['index.html','tutor.html','library.html','faridpur-first-year.html','coach.html','settings.html','topics.html']){const html=await file(path);const m=html.match(/<script(?: type="module")?>([\s\S]*?)<\/script>/);if(!m){assert.equal(path,'faridpur-first-year.html','unexpected missing script');continue}const parsed=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(parsed.status,0,path+' JavaScript syntax error: '+parsed.stderr)}
 });
 test('UI labels do not misrepresent search as verified generative AI',async()=>{
  const html=await file('tutor.html');
