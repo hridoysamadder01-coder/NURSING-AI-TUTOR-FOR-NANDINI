@@ -83,6 +83,33 @@ try{
  await page.locator('#q').fill('ধমনি আর শিরার পার্থক্য কী?');
  await page.locator('#askForm button').click();
  await page.waitForFunction(()=>[...document.querySelectorAll('#chat .msg.bot h3')].some(h=>h.textContent.includes('হৃদ্')),null,{timeout:10000});
+ // Android app path with a stand-in for the native NandiniLlm plugin (the real engine is checked in the APK build).
+ const nativeCtx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
+ await nativeCtx.addInitScript(()=>{
+  const l={},emit=(ev,d)=>(l[ev]||[]).forEach(f=>f(d));let files=JSON.parse(localStorage.getItem('test-model-files')||'[]');window.__gen=[];
+  window.Capacitor={isNativePlatform:()=>true,Plugins:{NandiniLlm:{
+   addListener:async(ev,fn)=>{(l[ev]??=[]).push(fn);return {remove:()=>{l[ev]=l[ev].filter(f=>f!==fn)}}},
+   status:async()=>({files,loaded:null,totalRamMb:8000,availRamMb:4000,freeSpaceMb:20000,cores:8,threads:4,abi:'arm64-v8a',device:'Test Phone'}),
+   download:async({fileName,bytes})=>{for(const r of [.25,.5,1])emit('downloadProgress',{received:bytes*r,total:bytes});files=[{name:fileName,bytes}];localStorage.setItem('test-model-files',JSON.stringify(files));return {done:true}},
+   load:async()=>({ms:5,threads:4,system:'test'}),
+   generate:async({messages})=>{window.__gen.push(messages);for(const t of ['ধমনি ','হৃদ্‌যন্ত্র ','থেকে ','রক্ত ','দূরে ','নেয়।'])emit('token',{text:t});return {promptTokens:300,generatedTokens:6,prefillMs:900,generateMs:600,stopped:false}},
+   stop:async()=>{},cancelDownload:async()=>{},deleteModel:async()=>{files=[]},unload:async()=>{}}}};
+ });
+ const app=await nativeCtx.newPage();app.on('pageerror',e=>errors.push(String(e)));
+ await app.goto(base+'/settings.html#local-ai',{waitUntil:'networkidle'});
+ await app.waitForFunction(()=>document.querySelector('#aiDevice')?.textContent.includes('Test Phone'));
+ await app.locator('#aiModels button',{hasText:'নামাও'}).first().click();
+ await app.waitForFunction(()=>document.querySelector('#aiModels h3')?.textContent.includes('✅'));
+ assert.ok(await app.locator('#aiAuto').isVisible());
+ await app.goto(base+'/ask.html?q='+encodeURIComponent('ধমনি আর শিরার পার্থক্য কী?'),{waitUntil:'networkidle'});
+ await app.waitForFunction(()=>document.querySelector('.aibox .out')?.textContent.includes('দূরে নেয়'),null,{timeout:10000});
+ await app.waitForFunction(()=>document.querySelector('.aibox .meta')?.textContent.includes('AI ভুল করতে পারে'));
+ const sent=await app.evaluate(()=>window.__gen[0]);
+ assert.equal(sent[0].role,'system');assert.match(sent[1].content,/তথ্য:/);assert.match(sent[1].content,/বাম নিলয়/);
+ await app.locator('#q').fill('বাংলাদেশের ক্রিকেট অধিনায়ক কে?');await app.locator('#askForm button').click();
+ await app.waitForFunction(()=>[...document.querySelectorAll('.aibox .out')].some(o=>o.textContent.includes('পাইনি')),null,{timeout:20000});
+ assert.equal(await app.evaluate(()=>window.__gen.length),1,'off-topic question must not reach the model');
+ await nativeCtx.close();
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor');
+ console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup and streamed RAG answer (stand-in engine)');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}

@@ -65,7 +65,8 @@ let asked=[];try{const h=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.is
 const saveAsked=()=>{try{localStorage.setItem(KEY,JSON.stringify(asked.slice(-20)))}catch{}};
 let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null;
 const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
-if(llm.available())llm.status().then(st=>{localModel=llm.activeModel(st)}).catch(()=>{});
+// Answers wait (briefly) for this, otherwise the first question would wrongly say the AI is not installed.
+const localReady=llm.available()?Promise.race([llm.status().then(st=>{localModel=llm.activeModel(st)}),new Promise(r=>setTimeout(r,1500))]).catch(()=>{}):Promise.resolve();
 fetch(apiUrl('/api/status'),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{aiEnabled=Boolean(s?.ai_enabled)}).catch(()=>{});
 function bubble(cls){const b=E('div',undefined,'msg '+cls);$('chat').append(b);return b}
 function suggestions(list,into){const row=E('div',undefined,'suggest');for(const s of list){const b=E('button',s);b.type='button';b.onclick=()=>ask(s);row.append(b)}into.append(row)}
@@ -158,6 +159,7 @@ async function ask(text,{remember=true}={}){
 $('askForm').addEventListener('submit',e=>{e.preventDefault();const q=$('q').value;$('q').value='';ask(q)});
 $('clearChat').onclick=()=>{asked=[];saveAsked();$('chat').replaceChildren();greet()};
 greet();
+await localReady;
 for(const q of asked){const me=bubble('me');me.textContent=q;await answer(q,{scroll:false,lookInBooks:false})}
 // The home page ask box opens ask.html?q=…; drop it from the URL so a reload does not ask twice.
 const fromHome=new URL(location.href).searchParams.get('q');
