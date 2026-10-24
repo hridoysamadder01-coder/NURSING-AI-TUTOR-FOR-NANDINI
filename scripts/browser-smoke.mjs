@@ -25,6 +25,7 @@ try{
  const src=await page.locator('#sources .source a').first().getAttribute('href');
  assert.match(src,/https:\/\/wtcs\.pressbooks\.pub\//);
  await page.goto(base+'/settings.html',{waitUntil:'networkidle'});
+ await page.locator('#advanced summary').click();
  await page.locator('#apiBase').fill('http://invalid.example');
  await page.locator('#save').click();
  assert.match(await page.locator('#result').innerText(),/HTTPS/);
