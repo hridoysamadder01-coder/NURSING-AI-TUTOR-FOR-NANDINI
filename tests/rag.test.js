@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
-import {chunkBooks,buildIndex,retrieve,buildMessages,queryTerms,NOT_FOUND} from '../src/rag.js';
+import {chunkBooks,buildIndex,retrieve,buildMessages,queryTerms,NOT_FOUND,isDoseQuestion} from '../src/rag.js';
 import {MODELS} from '../src/local-llm.js';
 const books=await Promise.all(['fundamentals','skills','terminology','mentalhealth'].map(async id=>JSON.parse(await readFile(new URL('../data/books/'+id+'.json',import.meta.url),'utf8'))));
 const index=buildIndex(chunkBooks(books));
@@ -21,4 +21,8 @@ test('verified Bangla explanation is used on a strong topic match and off-topic 
 });
 test('on-device model catalog is pinned to exact Hugging Face revisions and sizes',()=>{
  for(const m of MODELS){assert.match(m.url,/^https:\/\/huggingface\.co\/[\w.-]+\/[\w.-]+\/resolve\/[0-9a-f]{40}\/[\w.-]+\.gguf$/);assert.ok(m.url.endsWith('/'+m.file));assert.ok(Number.isInteger(m.bytes)&&m.bytes>5e8);assert.match(m.file,/^[A-Za-z0-9._-]+\.gguf$/)}
+});
+test('patient dose questions never reach the model, unit conversions still do',()=>{
+ for(const q of ['জ্বরের রোগীকে প্যারাসিটামল কত mg দেব?','insulin dose koto','ডোজ কত দিতে হয়?','রোগীকে কয়টা ট্যাবলেট কত টা দেব','how much mg should I give the patient'])assert.equal(isDoseQuestion(q),true,q);
+ for(const q of ['১ গ্রাম কত mg?','mg থেকে mcg','ভাইটাল সাইনের স্বাভাবিক মান কত?','প্যারাসিটামল কী কাজ করে?'])assert.equal(isDoseQuestion(q),false,q);
 });

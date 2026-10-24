@@ -59,7 +59,7 @@ import {topicById} from './src/easy-topics.js';
 import {subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
 import {apiUrl} from './src/api-config.js';
-import {retrieve,chunkBooks,buildIndex,buildMessages,NOT_FOUND} from './src/rag.js';
+import {retrieve,chunkBooks,buildIndex,buildMessages,NOT_FOUND,DOSE_NOTE,isDoseQuestion} from './src/rag.js';
 import * as llm from './src/local-llm.js';
 const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
@@ -165,6 +165,7 @@ function localAi(b,q,mode=null){
  const stop=E('button','⏹ থামাও','btn sm ghost');stop.type='button';stop.onclick=()=>llm.stop();
  aiChain=aiChain.then(async()=>{
   try{
+   if(isDoseQuestion(q)){out.className='out';out.textContent=DOSE_NOTE;return}
    let ctx=retrieve(q,null);
    if(!ctx.topic){out.textContent='📚 বই প্রস্তুত হচ্ছে…';if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));ctx=retrieve(q,ragIndex)}
    if(!ctx.grounded){out.className='out';out.textContent=NOT_FOUND;return}

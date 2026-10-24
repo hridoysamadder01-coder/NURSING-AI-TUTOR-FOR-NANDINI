@@ -79,6 +79,12 @@ export function retrieve(question,index,{k=2}={}){
 }
 const trim=(s,words)=>{const w=String(s).split(/\s+/);return w.length>words?w.slice(0,words).join(' ')+' …':String(s)};
 export const NOT_FOUND='এই প্রশ্নের উত্তর অ্যাপের বইয়ে পাইনি। শিক্ষককে জিজ্ঞেস করো।';
+// Patient doses are never left to a small model, whatever the retrieved text says ("১ গ্রাম কত mg" is still a unit question).
+export const DOSE_NOTE='ওষুধের ডোজ রোগী অনুযায়ী চিকিৎসক ঠিক করেন, তাই AI ডোজ বলবে না। ডোজ নিয়ে সবসময় ইনচার্জ নার্স বা চিকিৎসককে জিজ্ঞেস করো। 🙏';
+export function isDoseQuestion(q){
+ const s=String(q||'').normalize('NFC');
+ return /ডোজ|ডোস|dose|dosage/i.test(s)||(/কত\s*(mg|ml|মিলিগ্রাম|এমজি|মিলি|এমএল|ট্যাবলেট|টা|টি|ইউনিট|unit)|how\s+(much|many)\s+(mg|ml|tablet|unit)/i.test(s)&&/দেব|দিব|দিতে|দেওয়া|খাওয়া|খাব|খাবে|রোগী|give|patient/i.test(s));
+}
 // The same messages are used by the native llama.cpp runtime (via the model's own chat template) and by the desktop evaluation.
 // Small models stay most faithful when they reuse verified sentences, so the instruction asks for that.
 // A desktop test showed that asking the model itself for a chatty opener and closing made it add wrong facts,
