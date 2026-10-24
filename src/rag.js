@@ -23,7 +23,10 @@ const BN_EN={'রক্ত':'blood','রক্তচাপ':'blood pressure','�
  'তাপমাত্রা':'temperature','লক্ষণ':'symptom sign','উপসর্গ':'symptom','কারণ':'cause','চিকিৎসা':'treatment','প্রতিরোধ':'prevention','যত্ন':'care','নাড়ি':'pulse','ওজন':'weight','ক্যান্সার':'cancer','ডায়রিয়া':'diarrhea','বমি':'vomiting nausea','কাশি':'cough','অ্যালার্জি':'allergy','টিকা':'vaccine immunization',
  'ড্রেসিং':'dressing wound','ক্যাথেটার':'catheter','স্যালাইন':'saline intravenous fluid','মানসিক':'mental','উদ্বেগ':'anxiety','বিষণ্নতা':'depression','মৃত্যু':'death dying',
  'প্রেসার':'blood pressure','কোষ':'cell','হজম':'digestion','খাবার':'food nutrition','যকৃত':'liver','লিভার':'liver','পাকস্থলী':'stomach','অন্ত্র':'intestine','হরমোন':'hormone',
- 'চোখ':'eye','কান':'ear','মুখ':'mouth oral','দাঁত':'teeth oral','পা':'leg foot','হাঁটা':'ambulation walking','বিছানা':'bed','গোসল':'bathing hygiene','ব্যান্ডেজ':'bandage dressing'};
+ 'নেফ্রন':'nephron','হাইপোক্সিয়া':'hypoxia oxygen','স্টেরাইল':'sterile','গ্লাভস':'gloves','ইনসুলিন':'insulin','প্যারাসিটামল':'acetaminophen',
+ 'অ্যান্টিবায়োটিক':'antibiotic','ক্যানুলা':'cannula intravenous','নেবুলাইজার':'nebulizer','স্টেথোস্কোপ':'stethoscope','থার্মোমিটার':'thermometer','পালস':'pulse',
+ 'প্রেশার':'blood pressure','ইউরিন':'urine','ব্লাড':'blood','সুগার':'glucose','ডায়েট':'diet nutrition','ভিটামিন':'vitamin','এনিমা':'enema','সিরিঞ্জ':'syringe',
+ 'স্ট্রেস':'stress','দুশ্চিন্তা':'anxiety stress','চাপ':'stress','পরার':'don','খোলার':'doff','মাপতে':'measure assess','মাপা':'measure assess','চোখ':'eye','কান':'ear','মুখ':'mouth oral','দাঁত':'teeth oral','পা':'leg foot','হাঁটা':'ambulation walking','বিছানা':'bed','গোসল':'bathing hygiene','ব্যান্ডেজ':'bandage dressing'};
 const LEX=new Map();
 // Words listed in BN_EN are kept even when the topic matcher ignores them (লক্ষণ, যত্ন…).
 const KEEP=new Set();

@@ -10,7 +10,9 @@ const STOP=new Set(tokens(`কী কি কেন কীভাবে কিভ�
  ki keno kivabe kibhabe kare kake bole bolo mane ar er theke jonno kaj plz pls`));
 export const isStopword=t=>STOP.has(t);
 // A few everyday words that do not appear in the topic text itself.
-const SYNONYMS={'হার্ট':['heart'],'হৃৎপিণ্ড':['heart'],'প্রেসার':['bp','রক্তচাপ'],'pressure':['bp'],'bp':['রক্তচাপ'],'প্রস্রাব':['মূত্র'],'পেশাব':['মূত্র'],'urine':['মূত্র'],'লিভার':['যকৃত'],'liver':['যকৃত'],'ইনফেকশন':['infection'],'জীবাণুমুক্ত':['sterile'],'প্রোটিন':['আমিষ'],'হাতধোয়া':['হাত'],'handwash':['hand'],'wash':['hand'],'pulse':['নাড়ি'],'temperature':['তাপমাত্রা'],'জ্বর':['তাপমাত্রা'],'computer':['কম্পিউটার'],'কম্পিউটারের':['কম্পিউটার']};
+const SYNONYMS={'হার্ট':['heart'],'হৃৎপিণ্ড':['heart'],'প্রেসার':['bp','রক্তচাপ'],'pressure':['bp'],'bp':['রক্তচাপ'],'প্রস্রাব':['মূত্র'],'পেশাব':['মূত্র'],'urine':['মূত্র'],'লিভার':['যকৃত'],'liver':['যকৃত'],'ইনফেকশন':['infection'],'জীবাণুমুক্ত':['sterile'],'প্রোটিন':['আমিষ'],'হাতধোয়া':['হাত'],'handwash':['hand'],'wash':['hand'],'pulse':['নাড়ি'],'temperature':['তাপমাত্রা'],'জ্বর':['তাপমাত্রা'],'computer':['কম্পিউটার'],'কম্পিউটারের':['কম্পিউটার'],
+ // English nursing words often typed in Bangla letters.
+ 'স্টেরাইল':['sterile'],'জীবাণুমুক্ত':['sterile'],'নেফ্রন':['nephron'],'হাইপোক্সিয়া':['অক্সিজেন'],'পালস':['pulse'],'প্রেশার':['bp'],'ইউরিন':['মূত্র'],'অটোক্লেভ':['autoclave'],'স্যালাইন':['osmosis'],'আইভি':['osmosis']};
 const SYN=new Map(Object.entries(SYNONYMS).map(([k,v])=>[key(k),v.map(key)]));
 // Common Bengali and English endings, so "ধমনির" finds "ধমনি" and "signs" finds "sign".
 const ENDINGS=tokens('ের র কে তে টা টি টির গুলো গুলি দের য় েরা রা এর ে s es').concat(['ে','য়']).map(key);

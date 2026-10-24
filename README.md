@@ -87,3 +87,21 @@ These explanations were **written with AI help and have not been reviewed by a n
 The Study Coach, home page and book list now use exactly the six subjects Nandini gave, in her order: Fundamentals of Nursing, Anatomy & Physiology, Basic Science, Microbiology & Parasitology, ICT, English (36 study tasks). Behavioral Science (BNMC D111) was dropped because it is not in her list; any old progress saved for it is ignored. The Mental Health book stays on the shelf, marked as extra reading.
 
 `ask.html` is a chat-style Tutor that runs fully on the phone (about 0.5 ms per question, no internet). `src/tutor-core.js` matches Bangla, English or Banglish questions to the 35 simple-Bangla topics, shows matching term meanings, and falls back to the four Open RN books. **It is not a generative language model**: it only shows text already in the app, so it cannot invent facts, and it says so when it has no answer. If the owner's own AI server is configured in Settings, each answer also offers the existing source-grounded `/api/books/ask` route.
+
+## October 24: on-device local AI with Bangla RAG (experimental, owner testing first)
+
+The Android app can now run a language model **fully on the phone** (no internet after a one-time download), on top of the Tutor's retrieval:
+
+- **RAG** (`src/rag.js`): BM25 over 6,457 passages of the four Open RN books, a Bangla→English nursing lexicon (including English words typed in Bangla letters), and the verified simple-Bangla topics. Questions with no grounded match never reach the model; the app answers "পাইনি" directly. The prompt asks the model to reuse the verified sentences and not add facts.
+- **Engine** (`android-llm/`): llama.cpp (pinned through the `llama-cpp-python` 0.3.16 sdist, SHA-256 checked in `scripts/add-local-llm.mjs`) behind a small JNI library and the `NandiniLlm` Capacitor plugin. ggml is built with one CPU backend per ARM generation (armv8.0 / 8.2 dotprod / 8.2 fp16 / 8.6 i8mm) and picks the best at runtime, so older chips such as Snapdragon 680 do not crash. Tokens stream as UTF-8 bytes so Bengali characters are never split. CI fails if these libraries are missing from the APK.
+- **Model**: Gemma 3 4B (Q4_0, 2.37 GB, Gemma Terms of Use), downloaded from a pinned Hugging Face revision into app-private storage with resume, size and GGUF checks. Needs a phone with about 6 GB RAM or more.
+
+How the model was chosen (desktop CPU, 4 threads, same RAG prompts, greedy decoding):
+
+| Model | Size | Result on Bangla nursing questions |
+|---|---|---|
+| Gemma 3 1B, Qwen 2.5 1.5B, Llama 3.2 1B | 0.7–1.1 GB | Unusable: mostly English or broken Bangla, frequent invented facts |
+| Gemma 3n E2B | 3.0 GB | Fluent, but 3 of 10 answers had factual errors |
+| **Gemma 3 4B** | 2.4 GB | 10 of 10 faithful in the first set; in a second set of 8, one wrong answer (PPE order presented for sterile gloves) and it correctly refused a medicine-dose question |
+
+On the desktop CPU, Gemma 3 4B produced a full answer in roughly 4–13 seconds. **Speed on a real phone has not been measured yet**; expect it to be several times slower on a mid-range phone. Settings has a speed test for this. The Tutor always shows the instant verified card first and labels the AI answer "AI ভুল করতে পারে". Nothing here has been tested on a physical Android device yet.
