@@ -90,6 +90,13 @@ jobs:
           "$aapt" dump permissions android/app/build/outputs/apk/debug/app-debug.apk | tee permissions.txt
           grep -q 'android.permission.RECORD_AUDIO' permissions.txt
           grep -q 'android.permission.MODIFY_AUDIO_SETTINGS' permissions.txt
+      - name: Verify the app's own logo (not Capacitor's) is the launcher icon
+        run: |
+          aapt=$(ls "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -1)
+          "$aapt" dump resources android/app/build/outputs/apk/debug/app-debug.apk > resources.txt
+          grep 'mipmap/ic_launcher_bg\|drawable/splash_logo\|drawable/splash' resources.txt
+          grep -q 'mipmap/ic_launcher_bg' resources.txt
+          grep -q 'drawable/splash_logo' resources.txt
       - uses: actions/upload-artifact@v4
         with:
           name: nandini-nursing-study-android-debug

@@ -70,6 +70,8 @@ The source is refreshed by running `python scripts/import_openrn.py` on a machin
 
 A working GitHub Actions build pipeline compiles a personal debug APK with all **four** text-only Open RN books (632 source chapters). See [ANDROID.md](./ANDROID.md) for how to download the latest successful artifact and install it. Verified Chrome mobile-screen automated journey tests cover notes/reload, book search, and chapter reading; real-phone validation remains pending.
 
+The app's logo is `icon.svg` (a nurse's cap). `node scripts/make-icons.mjs` renders it into the Android launcher icons in `android-icons/` (legacy, round, adaptive foreground and background, launch-screen logo); `scripts/add-local-llm.mjs` copies them over Capacitor's default icons and splash, and CI checks they are in the APK.
+
 The offline APK contains an **AI Server Settings** page where a future owner-managed HTTPS Ollama server URL can be saved without rebuilding the app. Only the URL is stored; student access codes are not. Server deployment is optional for static reading, notes and sample MCQs. This is not yet verified live AI on the VPS.
 
 ## October 23: redesigned bilingual book reader

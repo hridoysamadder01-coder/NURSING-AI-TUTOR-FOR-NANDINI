@@ -99,4 +99,23 @@ ${ndk?`    ndkVersion "${ndk}"\n`:''}    defaultConfig {
 }
 `;
 await writeFile(gradlePath,gradle);
+
+// The app's own logo (icon.svg, rendered by scripts/make-icons.mjs) instead of Capacitor's: launcher icons for every
+// density, an adaptive icon (logo over its gradient), and a launch screen with the logo in place of Capacitor's splash.
+const resDir=join(app,'res');
+await cp('android-icons/res',resDir,{recursive:true,force:true});
+const adaptive=`<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_bg"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>
+`;
+for(const f of ['ic_launcher.xml','ic_launcher_round.xml'])await writeFile(join(resDir,'mipmap-anydpi-v26',f),adaptive);
+for(const d of await readdir(resDir))if(d.startsWith('drawable'))await rm(join(resDir,d,'splash.png'),{force:true});
+await writeFile(join(resDir,'drawable','splash.xml'),`<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape android:shape="rectangle"><solid android:color="#F0F8F6"/></shape></item>
+    <item android:gravity="center" android:width="144dp" android:height="144dp" android:drawable="@drawable/splash_logo"/>
+</layer-list>
+`);
 console.log(JSON.stringify({status:'local_llm_added',llama:SDIST.dir,ndk:ndk||'(default)'}));
