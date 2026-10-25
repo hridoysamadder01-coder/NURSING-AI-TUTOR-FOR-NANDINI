@@ -112,7 +112,18 @@ try{
  await app.waitForFunction(()=>window.__gen.length===2&&document.querySelectorAll('.aibox .meta').length===2,null,{timeout:10000});
  assert.match(await app.locator('#chat .msg.bot').last().innerText(),/আবার সহজ করে বলছি/);
  const again=await app.evaluate(()=>window.__gen[1][1].content);
- assert.match(again,/বাম নিলয়/);assert.match(again,/বুঝতে পারেনি/);
+ assert.match(again,/ধমনি \(Artery\) হৃদ্‌যন্ত্র থেকে রক্ত দূরে নেয়/);assert.match(again,/বুঝতে পারেনি/);
+ // A second "বুঝিনি" must not repeat: another explaining style and another part of the verified topic.
+ await app.locator('#chat .quick button',{hasText:'বুঝিনি'}).click();
+ await app.waitForFunction(()=>window.__gen.length===3&&document.querySelectorAll('.aibox .meta').length===3,null,{timeout:10000});
+ const third=await app.evaluate(()=>window.__gen[2][1].content);
+ assert.match(third,/ধাপে ধাপে/);assert.notEqual(third,again);
+ assert.match(await app.locator('#chat .msg.bot').last().innerText(),/ধাপে ধাপে দেখো/);
+ await app.locator('#q').fill('bondhu');await app.locator('#askForm button').click();
+ await app.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('বন্ধু'));
+ await app.locator('#q').fill('ami khub tired');await app.locator('#askForm button').click();
+ await app.waitForFunction(()=>window.__gen.length===4,null,{timeout:10000});
+ assert.match(await app.evaluate(()=>window.__gen[3][0].content),/পড়ার বন্ধু/,'feelings get the friendly chat prompt, not a book search');
  await app.locator('#q').fill('hi mama');await app.locator('#askForm button').click();
  await app.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('হ্যালো নন্দিনী'));
  assert.equal(await app.locator('#chat .quick').count(),1,'only the latest answer keeps the quick replies');
@@ -120,7 +131,7 @@ try{
  await app.waitForFunction(()=>[...document.querySelectorAll('.aibox .out')].some(o=>o.textContent.includes('পাইনি')),null,{timeout:20000});
  await app.locator('#q').fill('জ্বরের রোগীকে প্যারাসিটামল কত mg দেব?');await app.locator('#askForm button').click();
  await app.waitForFunction(()=>[...document.querySelectorAll('.aibox .out')].some(o=>o.textContent.includes('ডোজ রোগী অনুযায়ী')),null,{timeout:20000});
- assert.equal(await app.evaluate(()=>window.__gen.length),2,'greetings, off-topic and dose questions must not reach the model');
+ assert.equal(await app.evaluate(()=>window.__gen.length),4,'greetings, off-topic and dose questions must not reach the model');
  await nativeCtx.close();
  assert.deepEqual(errors,[]);
  console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up and small talk (stand-in engine)');

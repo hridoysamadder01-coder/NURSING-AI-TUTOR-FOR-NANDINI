@@ -54,52 +54,74 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 <a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
 </div></nav>
 <script type="module">
-import {askTutor,smallTalk,followUpKind} from './src/tutor-core.js';
+import {askTutor,smallTalk,followUpKind,chatLike} from './src/tutor-core.js';
 import {topicById} from './src/easy-topics.js';
 import {subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
 import {apiUrl} from './src/api-config.js';
-import {retrieve,chunkBooks,buildIndex,buildMessages,NOT_FOUND,DOSE_NOTE,isDoseQuestion} from './src/rag.js';
+import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion} from './src/rag.js';
 import * as llm from './src/local-llm.js';
 const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
 let asked=[];try{const h=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(h))asked=h.filter(x=>typeof x==='string').slice(-20)}catch{}
 const saveAsked=()=>{try{localStorage.setItem(KEY,JSON.stringify(asked.slice(-20)))}catch{}};
-let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null,lastQ=null;
+let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null;
+// The question "বুঝিনি" refers to, and how many times it has been re-explained.
+let lastQ=null,tries=0;
+const turns={};const pick=(list,key)=>{const i=turns[key]=(turns[key]??-1)+1;return list[i%list.length]};
 const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
 // Answers wait (briefly) for this, otherwise the first question would wrongly say the AI is not installed.
 const localReady=llm.available()?Promise.race([llm.status().then(st=>{localModel=llm.activeModel(st)}),new Promise(r=>setTimeout(r,1500))]).catch(()=>{}):Promise.resolve();
 fetch(apiUrl('/api/status'),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{aiEnabled=Boolean(s?.ai_enabled)}).catch(()=>{});
 function bubble(cls){const b=E('div',undefined,'msg '+cls);$('chat').append(b);return b}
 function suggestions(list,into){const row=E('div',undefined,'suggest');for(const s of list){const b=E('button',s);b.type='button';b.onclick=()=>ask(s);row.append(b)}into.append(row)}
+// Several wordings each, used in turn, so the Tutor does not repeat itself.
 const CHAT_REPLY={
- greet:'হ্যালো নন্দিনী! 😊 আজ কোন টপিকটা কঠিন লাগছে? বাংলা, ইংরেজি বা Banglish-এ প্রশ্ন লেখো, আমি সহজ করে বুঝিয়ে দেবো।',
- how:'আমি ভালো আছি, ধন্যবাদ! 😊 তুমি কেমন আছো? চলো, আজ একটা টপিক একসাথে শিখি।',
- who:'আমি নন্দিনীর Tutor 🤖 তোমার ৬টি বিষয়ের কঠিন টপিক সহজ বাংলায় বুঝিয়ে দিই। উত্তর দিই অ্যাপের যাচাই করা ব্যাখ্যা আর বই থেকে।',
- thanks:'তোমাকেও ধন্যবাদ! 🌸 আরো কিছু জানতে চাইলে নির্দ্বিধায় জিজ্ঞেস করো।',
- ok:'দারুণ! 🎉 চাইলে MCQ দিয়ে নিজেকে একবার যাচাই করে নাও।',
- bye:'ঠিক আছে, ভালো থেকো! 🌙 পড়ার ফাঁকে বিশ্রামও নিও। আবার দেখা হবে।'};
+ greet:['হ্যালো নন্দিনী! 😊 আজ কোন টপিকটা কঠিন লাগছে? বাংলা, ইংরেজি বা Banglish-এ প্রশ্ন লেখো, আমি সহজ করে বুঝিয়ে দেবো।','আবার দেখা হলো! 🌸 চলো, আজ একটা টপিক একসাথে জয় করি। কী দিয়ে শুরু করবে?','হাই! 👋 যা কঠিন লাগে নির্দ্বিধায় জিজ্ঞেস করো, যতবার দরকার ততবার বোঝাবো।'],
+ how:['আমি ভালো আছি, ধন্যবাদ! 😊 তুমি কেমন আছো? চলো, আজ একটা টপিক একসাথে শিখি।','তোমার সাথে পড়তে পারলে আমি সবসময় ভালো থাকি! 😄 তোমার দিন কেমন যাচ্ছে?'],
+ friend:['হ্যাঁ, আমি তোমার পড়ার বন্ধু! 😊 যতবার দরকার, ততবার বুঝিয়ে দেবো। কোন টপিক দিয়ে শুরু করবে?','বন্ধু সবসময় পাশে আছে 🤝 যেটা কঠিন লাগে জিজ্ঞেস করো, আমি একটুও বিরক্ত হবো না।'],
+ who:['আমি নন্দিনীর Tutor 🤖 তোমার ৬টি বিষয়ের কঠিন টপিক সহজ বাংলায় বুঝিয়ে দিই। উত্তর দিই অ্যাপের যাচাই করা ব্যাখ্যা আর বই থেকে।','আমি তোমার পড়ার বন্ধু Tutor 😊 না বোঝা পর্যন্ত নানাভাবে বুঝিয়ে দেওয়াই আমার কাজ।'],
+ thanks:['তোমাকেও ধন্যবাদ! 🌸 আরো কিছু জানতে চাইলে নির্দ্বিধায় জিজ্ঞেস করো।','এটা তো আমার আনন্দ! 😊 তুমি খুব ভালো করছ, এভাবেই চালিয়ে যাও।'],
+ ok:['দারুণ! 🎉 চাইলে MCQ দিয়ে নিজেকে একবার যাচাই করে নাও।','বাহ, খুব ভালো! 👏 একটা ছোট MCQ দিয়ে পাকা করে নেবে?','চমৎকার! ⭐ পরের টপিকে যাবে, নাকি এটাই আরেকবার ঝালিয়ে নেবে?'],
+ bye:['ঠিক আছে, ভালো থেকো! 🌙 পড়ার ফাঁকে বিশ্রামও নিও। আবার দেখা হবে।','বিদায় বন্ধু! 👋 আজ যা শিখলে সেটা ঘুমানোর আগে একবার মনে করে নিও।']};
+const CHAT_FALLBACK={
+ personal:['তোমার কথা শুনছি 🤍 পড়া কঠিন লাগলে একটু বিরতি নাও, পানি খাও, তারপর ছোট একটা টপিক দিয়ে আবার শুরু করি। কোনটা কঠিন লাগছে বলো তো?','এমন লাগাটা একদম স্বাভাবিক, তুমি একা নও 🤝 একটু বিশ্রাম নিয়ে এসো, তারপর আমরা ধীরে ধীরে একসাথে পড়বো।'],
+ short:['আমি তোমার পড়ার বন্ধু 😊 যেকোনো নার্সিং টপিক জিজ্ঞেস করো, সহজ বাংলায় বুঝিয়ে দেবো।','বলো, কোন টপিকটা নিয়ে কথা বলবে? 🙂 যেমন: "Osmosis কী?" বা "bp normal koto"।']};
 const OPENERS=['চলো সহজ করে বুঝি 😊','ভালো প্রশ্ন! 👏 দেখো:','এটা সহজ, ধাপে ধাপে দেখো 👇'];
+const PATIENCE=['কোনো চিন্তা নেই, আবার সহজ করে বলছি 😊','একদম ঠিক আছে, কঠিন জিনিস বুঝতে সময় লাগে। এবার অন্যভাবে বলি 💪','তুমি ভালো করছ! চলো আরেকবার একসাথে দেখি 👣','প্রশ্ন করাটাই শেখার আসল উপায় 🌱 এবার অন্য দিক থেকে দেখি।','হাল ছাড়বো না, একসাথে পারবোই! 🤝 আরেকভাবে বলি।'];
+const EXAMPLE_OPENERS=['ঠিক আছে, উদাহরণ দিয়ে বলছি 😊','আরেকটা উদাহরণ দেখো 💡','এবার অন্য একটা উদাহরণ নিই 🌟'];
 // One-tap replies under the latest answer, so asking again feels like a normal chat.
 const QUICK=[['🤔 বুঝিনি','বুঝিনি'],['💡 উদাহরণ দাও','উদাহরণ দাও'],['✅ বুঝেছি','বুঝেছি']];
 function quickReplies(b){for(const old of $('chat').querySelectorAll('.quick'))old.remove();const row=E('div',undefined,'suggest quick');for(const [label,q] of QUICK){const x=E('button',label);x.type='button';x.onclick=()=>ask(q);row.append(x)}b.append(row)}
 function chatReply(kind){
- const b=bubble('bot');b.append(E('p',CHAT_REPLY[kind]));
+ const b=bubble('bot');b.append(E('p',pick(CHAT_REPLY[kind],kind)));
  const last=lastQ&&askTutor(lastQ);
  if(kind==='ok'&&last?.confident){const a=E('a','📝 '+last.topics[0].topic.title+' · MCQ','btn sm soft');a.href='./topics.html#'+last.topics[0].topic.id;b.append(a)}
- else if(kind==='greet'||kind==='how'||kind==='who')suggestions(SUGGEST.slice(0,3),b);
+ else if(kind==='greet'||kind==='how'||kind==='who'||kind==='friend')suggestions(SUGGEST.slice(0,3),b);
  return b;
 }
-// "বুঝিনি" / "উদাহরণ দাও": explain the previous question again (verified trick first, then the local AI).
+// A small MCQ inside the chat: tap an option to see if it is right.
+function miniCheck(b,c){
+ b.append(E('p','🎯 '+c.q,'lead'));const row=E('div',undefined,'suggest'),fb=E('p','','fine');
+ c.options.forEach((o,i)=>{const x=E('button',o);x.type='button';x.onclick=()=>{fb.textContent=i===c.answer?'✅ সঠিক! '+c.why:'❌ হয়নি, কিন্তু চেষ্টা দারুণ! সঠিক উত্তর: '+c.options[c.answer]+'। '+c.why};row.append(x)});
+ b.append(row,fb);
+}
+// "বুঝিনি" / "উদাহরণ দাও", as many times as needed: every round shows a different part of the verified topic
+// and asks the local AI for a different way of explaining.
 function followUp(kind,auto){
  const b=bubble('bot');
  if(!lastQ){b.append(E('p','কোন টপিকটা বুঝতে চাও? প্রশ্নটা লিখে দাও, আমি সহজ করে বুঝিয়ে দেবো 😊'));return b}
- b.append(E('p',kind==='example'?'ঠিক আছে, উদাহরণ দিয়ে বলছি 😊':'কোনো চিন্তা নেই, আবার সহজ করে বলছি 😊'));
+ tries++;
+ b.append(E('p',kind==='example'?pick(EXAMPLE_OPENERS,'ex'):PATIENCE[(tries-1)%PATIENCE.length]));
  const r=askTutor(lastQ);
- if(r.confident){const t=r.topics[0].topic;b.append(E('h3',t.title),E('p',t.gist,'gist'),E('div','🧠 '+t.trick,'trick'));
+ if(r.confident){const t=r.topics[0].topic,step=(tries-1)%4;b.append(E('h3',t.title));
+  if(kind==='example'?step%2===0:step===0)b.append(E('div','🧠 '+t.trick,'trick'),E('p',t.gist,'gist'));
+  else if(kind==='example'||step===3)miniCheck(b,t.check);
+  else if(step===1){b.append(E('p','ধাপে ধাপে দেখো:','fine'));const ol=E('ol');for(const p of t.points)ol.append(E('li',p));b.append(ol)}
+  else if(step===2){b.append(E('p','কঠিন শব্দগুলোর মানে:','fine'));const row=E('div',undefined,'termrow');for(const [en,bnw] of t.terms)row.append(E('span',en+' = '+bnw,'termchip'));b.append(row,E('div','🧠 '+t.trick,'trick'))}
   const a=E('a','📖 পুরো টপিক ও MCQ','btn sm');a.href='./topics.html#'+t.id;b.append(a)}
- else if(!localModel)b.append(E('p','ওপরের বইয়ের অংশটা আরেকবার পড়ে দেখো, অথবা শিক্ষককে জিজ্ঞেস করো।','fine'));
- localAiOffer(b,lastQ,auto,kind);
+ else if(!localModel)b.append(E('p','ওপরের বইয়ের অংশটা আরেকবার ধীরে ধীরে পড়ে দেখো, অথবা শিক্ষককে জিজ্ঞেস করো।','fine'));
+ localAiOffer(b,lastQ,auto,{kind,attempt:tries-1});
  quickReplies(b);
  return b;
 }
@@ -131,10 +153,28 @@ function aiButton(b,q){
    }catch{out.textContent='AI সার্ভারে যোগাযোগ করা যাচ্ছে না।'}finally{go.disabled=false}}};
 }
 async function answer(q,{scroll=true,lookInBooks=true}={}){
- const talk=smallTalk(q),follow=!talk&&followUpKind(q);
+ const talk=smallTalk(q);
+ // Asking the same question again means it was not clear yet: explain it a new way instead of repeating.
+ const follow=!talk&&(followUpKind(q)||(lastQ&&q.trim().toLowerCase()===lastQ.trim().toLowerCase()&&'simpler'));
  if(talk||follow){const b=talk?chatReply(talk):followUp(follow,lookInBooks);if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return}
- lastQ=q;
- const r=askTutor(q),b=bubble('bot');
+ const r=askTutor(q),chat=chatLike(q);
+ // Talking about herself or her feelings ("আমি খুব ক্লান্ত"): a friend's reply, not a failed search.
+ if(chat==='personal'&&!r.confident){
+  const b=bubble('bot');if(!localModel||!llm.autoEnabled())b.append(E('p',pick(CHAT_FALLBACK.personal,'personal')));
+  localAiOffer(b,q,lookInBooks,{chat:true});if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return;
+ }
+ const b=bubble('bot');
+ if(chat&&!r.topics.length){
+  // One or two words ("bondhu", "diabetes"): show book passages if there are any, otherwise just chat.
+  const hits=lookInBooks?await bookHits(b,q,{quiet:true}):0;
+  if(hits){lastQ=q;tries=0}
+  else if(!localModel||!llm.autoEnabled())b.append(E('p',pick(CHAT_FALLBACK.short,'short')));
+  localAiOffer(b,q,lookInBooks);
+  if(hits&&llm.available())quickReplies(b);
+  if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});
+  return;
+ }
+ lastQ=q;tries=0;
  if(r.terms.length){const row=E('div',undefined,'termrow');for(const t of r.terms)row.append(E('span',t.en+' = '+t.bn,'termchip'));b.append(row)}
  if(r.confident){
   b.append(E('p',OPENERS[q.length%OPENERS.length],'lead'));
@@ -160,6 +200,7 @@ function localAiOffer(b,q,auto,mode=null){
  const btn=E('button','✨ AI-কে দিয়ে বুঝিয়ে নাও','btn sm soft');btn.type='button';btn.onclick=()=>{btn.remove();localAi(b,q,mode)};b.append(btn);
 }
 function localAi(b,q,mode=null){
+ // mode: null (new question), {kind,attempt} ("বুঝিনি" rounds) or {chat:true} (talking, not asking).
  const box=E('div',undefined,'aibox'),out=E('div','অপেক্ষা করছি…','out typing'),meta=E('div','','meta');
  box.append(E('b','✨ AI শিক্ষক · '+localModel.label+' (ফোনের ভেতরে)'),out);b.append(box);
  const stop=E('button','⏹ থামাও','btn sm ghost');stop.type='button';stop.onclick=()=>llm.stop();
@@ -167,27 +208,36 @@ function localAi(b,q,mode=null){
   try{
    if(isDoseQuestion(q)){out.className='out';out.textContent=DOSE_NOTE;return}
    let ctx=retrieve(q,null);
-   if(!ctx.topic){out.textContent='📚 বই প্রস্তুত হচ্ছে…';if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));ctx=retrieve(q,ragIndex)}
-   if(!ctx.grounded){out.className='out';out.textContent=NOT_FOUND;return}
+   const chat=mode?.chat?'personal':!mode&&chatLike(q);
+   if(!ctx.topic&&chat!=='personal'){out.textContent='📚 বই প্রস্তুত হচ্ছে…';if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));ctx=retrieve(q,ragIndex)}
+   const asChat=!ctx.topic&&(chat==='personal'||(chat==='short'&&!ctx.grounded));
+   if(!asChat&&!ctx.grounded){out.className='out';out.textContent=NOT_FOUND;return}
    out.textContent='🧠 AI চালু হচ্ছে… (প্রথমবার একটু সময় লাগে)';
    await llm.load(localModel);
    out.textContent='ভাবছি…';box.append(stop);
    let text='';const t0=performance.now();
-   const res=await llm.generate(buildMessages(q,ctx,{followUp:mode}),{maxTokens:320,onToken:t=>{text+=t;out.className='out';out.textContent=text}});
+   const kind=mode?.kind||null,attempt=mode?.attempt||0;
+   const messages=asChat?buildChatMessages(q):buildMessages(q,ctx,{followUp:kind,attempt});
+   // Greedy decoding keeps facts steady. Chat, book-passage rounds (same text every time) and rounds after every
+   // style was used once get some sampling, so "বুঝিনি" never returns the same answer.
+   const temperature=asChat?0.7:!kind?0:attempt>=FOLLOW_STYLES[kind].length?0.6:ctx.topic?0:0.3;
+   const res=await llm.generate(messages,{maxTokens:asChat?120:kind?260:320,temperature,onToken:t=>{text+=t;out.className='out';out.textContent=text}});
    if(!text.trim()){out.className='out';out.textContent=NOT_FOUND}
    const secs=(performance.now()-t0)/1000,speed=res.generateMs?res.generatedTokens/(res.generateMs/1000):0;
-   meta.textContent='⏱ '+bn(secs.toFixed(1))+' সেকেন্ড · '+bn(speed.toFixed(1))+' টোকেন/সেকেন্ড'+(res.stopped?' · থামানো হয়েছে':'')+'\n⚠️ AI ভুল করতে পারে। ওপরের যাচাই করা ব্যাখ্যা বা বইয়ের সঙ্গে মিলিয়ে নাও।';
+   meta.textContent='⏱ '+bn(secs.toFixed(1))+' সেকেন্ড · '+bn(speed.toFixed(1))+' টোকেন/সেকেন্ড'+(res.stopped?' · থামানো হয়েছে':'')+(asChat?'':'\n⚠️ AI ভুল করতে পারে। ওপরের যাচাই করা ব্যাখ্যা বা বইয়ের সঙ্গে মিলিয়ে নাও।');
    meta.style.whiteSpace='pre-line';box.append(meta);
   }catch(e){out.className='out';out.textContent='AI চালানো যায়নি ('+(e?.message||e)+')। সেটিংসে মডেল ও ফোনের ফাঁকা RAM দেখো।'}
   finally{stop.remove()}
  });
 }
-async function bookHits(b,q){
+async function bookHits(b,q,{quiet=false}={}){
   const wait=E('p','📚 ৪টি বইয়ের মূল ইংরেজিতে খুঁজছি…','typing');b.append(wait);
   try{const hits=await searchBooks(q);wait.remove();
+   if(quiet&&!hits.length)return 0;
    if(hits.length){b.append(E('p','বইয়ে এই অংশগুলো পেয়েছি (মূল ইংরেজি):','fine'));for(const h of hits){const s=E('div',undefined,'source');s.append(E('b',h.bookTitle+' · '+h.chapter),E('p',h.excerpt.slice(0,300)+(h.excerpt.length>300?'…':'')));const a=E('a','মূল অধ্যায় ↗');a.href=h.sourceUrl;a.target='_blank';a.rel='noopener noreferrer';s.append(a);b.append(s)}}
    else b.append(E('p','বইয়েও মিল পাইনি। ইংরেজি শব্দ লিখে আবার চেষ্টা করো (যেমন: diabetes), অথবা শিক্ষককে জিজ্ঞেস করো।','fine'));
-  }catch{wait.textContent='বই খুলতে পারিনি। অ্যাপটি একবার ইন্টারনেটসহ খুলে নাও।'}
+   return hits.length;
+  }catch{wait.textContent='বই খুলতে পারিনি। অ্যাপটি একবার ইন্টারনেটসহ খুলে নাও।';return 0}
 }
 async function ask(text,{remember=true}={}){
  const q=String(text||'').trim().slice(0,200);if(q.length<2)return;

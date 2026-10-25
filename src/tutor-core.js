@@ -41,11 +41,12 @@ const CHAT=[
  ['thanks','ধন্যবাদ শুকরিয়া thanks thank thanku thankyou thx tnx ty dhonnobad dhonnobaad'],
  ['who','তুমি তোমার কে নাম tumi tomar ke nam who your name'],
  ['how','কেমন আছো আছেন আছ kemon acho achen how'],
+ ['friend','বন্ধু bondhu bondu friend dost দোস্ত'],
  ['bye','bye বাই আল্লাহ হাফেজ allah hafez খোদা khoda টাটা tata night নাইট শুভরাত্রি রাত্রি'],
  ['ok','ok okay ওকে আচ্ছা accha acha হুম hmm জি ji হ্যাঁ ha haa yes বুঝেছি বুঝলাম বুঝছি bujhechi bujhlam bujhsi got it understood দারুণ darun nice great ভালো valo bhalo আছি achi'],
  ['greet','hi hello hey hlw helo hii hiii হাই হ্যালো হেলো salam assalamualaikum আসসালামু আলাইকুম সালাম নমস্কার nomoskar good গুড morning evening afternoon শুভ সকাল সন্ধ্যা']
 ].map(([kind,words])=>[kind,new Set(tokens(words))]);
-const FOLLOW=new Set(tokens('বুঝিনি বুঝি বুঝলাম বুঝতে পারিনি পারলাম পারছি নাই নি আরো আরও আরেকটু একটু সহজ সহজে আবার উদাহরণ বিস্তারিত বোঝাও বুঝাও বুঝিয়ে দিয়ে বলো দাও করে ক্লিয়ার clear bujhi bujhini bujhinai bujhlam buji nai aro arektu ektu aktu sohoj abar udahoron diye example examples again more simple simpler easy easier explain detail details bolo dao kore bujhao'));
+const FOLLOW=new Set(tokens('বুঝিনি বুঝি বুঝলাম বুঝতে পারিনি পারলাম পারছি নাই নি আরো আরও আরেকটু একটু সহজ সহজে আবার আরেকবার এখনো এখনও কিছু অন্যভাবে ধাপে উদাহরণ বিস্তারিত বোঝাও বুঝাও বুঝিয়ে দিয়ে বলো দাও করে ক্লিয়ার clear bujhi bujhini bujhinai bujhlam buji nai aro arektu ektu aktu sohoj abar arekbar ekhono ekhno kichu onnovabe udahoron diye example examples again more simple simpler easy easier explain detail details bolo dao kore bujhao'));
 const EXAMPLE=new Set(tokens('উদাহরণ udahoron example examples'));
 const NOT_UNDERSTOOD=new Set(tokens('বুঝিনি নাই নি না bujhini bujhinai nai na'));
 export function smallTalk(text){
@@ -64,6 +65,21 @@ export function followUpKind(text){
  for(const w of ws){if(FOLLOW.has(w)){hit=true;continue}if(!FILLER.has(w)&&!STOP.has(w))return null}
  if(!hit)return null;
  return ws.some(w=>EXAMPLE.has(w))?'example':'simpler';
+}
+// Free conversation ("ami khub tired", "পড়তে ভালো লাগছে না") is answered as chat, not searched as a fact question.
+const QUESTION=new Set(tokens('কী কি কেন কীভাবে কিভাবে কোন কোনটি কোনটা কত কতটা কয়টি কয়টা কে কাকে কাদের কোথায় কখন মানে বলো বোঝাও বুঝাও বুঝিয়ে লেখো দাও what why how which who whom when where explain define tell ki keno kivabe kibhabe koto kon ke kothay kokhon mane bolo bujhao'));
+const FIRST_PERSON=new Set(tokens('আমি আমার আমাকে ami amar amake amr i im me my লাগছে লাগে লাগতেছে লাগসে lagche lagtese lagse lagtase ক্লান্ত klanto tired sad bored ভয় voy bhoy টেনশন tension মন mon খারাপ kharap কষ্ট kosto বিরক্ত পারবো পারব parbo parbona ঘুম ghum'));
+export function isQuestion(text){return /[?？]/.test(String(text||''))||tokens(text).some(w=>QUESTION.has(w))}
+export function chatLike(text){
+ const ws=tokens(text);if(!ws.length||ws.length>12||isQuestion(text))return null;
+ // About herself or her feelings ("আমি", "ভয় লাগছে") is chat even when a word also appears in the books.
+ return ws.some(w=>FIRST_PERSON.has(w))?'personal':ws.length<=2?'short':null;
+}
+// The topic points that best match a question, e.g. the artery/vein line for "ধমনি আর শিরার পার্থক্য".
+export function relevantPoints(question,points,n=2){
+ const qs=questionTokens(question);
+ return points.map((p,i)=>{const set=new Set(tokens(p));let s=0;for(const q of qs)s+=best(q,set);return {p,i,s}})
+  .filter(x=>x.s>0).sort((a,b)=>b.s-a.s||a.i-b.i).slice(0,n).sort((a,b)=>a.i-b.i).map(x=>x.p);
 }
 export function askTutor(question,{limit=3}={}){
  const qs=questionTokens(question);

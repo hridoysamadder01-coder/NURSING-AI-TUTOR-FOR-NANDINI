@@ -1,6 +1,6 @@
 // Local RAG for the on-device Tutor: BM25 search over the four Open RN books plus the simple-Bangla topics.
 // Runs in the WebView (and in Node for tests); the retrieved text is what the local model may use.
-import {askTutor,isStopword,tokens as bnTokens} from './tutor-core.js';
+import {askTutor,isStopword,relevantPoints,tokens as bnTokens} from './tutor-core.js';
 import {TOPICS} from './easy-topics.js';
 const EN_STOP=new Set(('a an the and or of to in on at for with by from is are was were be been being it its this that these those as can may '+
  'will would should could not no but if then than so such into about over under between their there they them he she his her you your we our '+
@@ -89,19 +89,48 @@ export function isDoseQuestion(q){
 // Small models stay most faithful when they reuse verified sentences, so the instruction asks for that.
 // A desktop test showed that asking the model itself for a chatty opener and closing made it add wrong facts,
 // so the prompt only sets a warm tone; greetings and "বুঝিনি / উদাহরণ দাও" buttons are handled by the app.
-const FOLLOW_UP={
- simpler:'নন্দিনী আগের ব্যাখ্যাটা বুঝতে পারেনি। আরো সহজ করে, খুব ছোট ছোট বাক্যে আবার বোঝাও।',
- example:'নন্দিনী একটা উদাহরণ চাইছে। "তথ্য"-এ থাকা উদাহরণ বা "মনে রাখার কৌশল" দিয়ে সহজ করে বোঝাও। নতুন কোনো তথ্য বা উদাহরণ বানাবে না।'};
-export function buildMessages(question,ctx,{passageWords=90,followUp=null}={}){
- const sources=[];
- if(ctx.topic){const t=ctx.topic;sources.push(t.title+' ('+t.en+'): '+t.gist+'\n'+t.points.map(p=>'- '+p).join('\n')+(followUp==='example'?'\nমনে রাখার কৌশল: '+t.trick:''))}
+// "বুঝিনি" can be pressed many times. Each round gives the model a different part of the verified topic or a different
+// way of explaining, so the answers differ by construction. Desktop tests with Gemma 3 4B: pasting the previous answer
+// into the prompt made it copy that answer; two "example" rounds on the same text gave identical answers; and asking it
+// to explain term meanings or an MCQ in its own words produced wrong facts, so the app shows terms and MCQs itself.
+export const FOLLOW_STYLES={
+ simpler:[
+  {use:'core',say:'নন্দিনী আগের ব্যাখ্যাটা বুঝতে পারেনি। শুধু মূল কথাটা ২–৩টি খুব সহজ বাক্যে বলো। শব্দ সহজ করবে, কিন্তু অর্থ একদম বদলাবে না।'},
+  {use:'points',say:'নন্দিনী এখনো বোঝেনি। এবার ধাপে ধাপে (১, ২, ৩…) বোঝাও, প্রতিটি ধাপে "তথ্য"-এর একটা কথা।'},
+  {use:'points',say:'নন্দিনী এখনো বোঝেনি। এবার নিজে ছোট ছোট প্রশ্ন করে তার উত্তর দিয়ে বোঝাও, যেমন: "এটা কী? → …", "কেন দরকার? → …"। উত্তরগুলো শুধু "তথ্য" থেকে।'}],
+ example:[
+  {use:'core',say:'নন্দিনী একটা উদাহরণ চাইছে। "মনে রাখার কৌশল"-টা দিয়ে সহজ করে বোঝাও। নতুন কোনো তথ্য বানাবে না।'},
+  {use:'match',say:'নন্দিনী আরেকটা উদাহরণ চাইছে। রোজকার জীবনের একটা ছোট তুলনা দিয়ে বোঝাও, কিন্তু "তথ্য"-এর বাইরের কোনো তথ্য যোগ করবে না।'}]};
+export function followUpStyle(kind,attempt=0){const list=FOLLOW_STYLES[kind]||FOLLOW_STYLES.simpler;return list[attempt%list.length]}
+// Every slice keeps the gist and the points that match the question, so the answer to it is never cut out.
+function topicSource(t,use,question){
+ const list=ps=>ps.map(p=>'\n- '+p).join('');
+ const head=t.title+' ('+t.en+'): '+t.gist,match=list(relevantPoints(question,t.points,use==='core'?2:3));
+ if(use==='core')return head+match+'\nমনে রাখার কৌশল: '+t.trick;
+ // Only the matching points, so another concept's example (diffusion's perfume) is not lent to this one.
+ if(use==='match')return head+match;
+ return head+list(t.points);
+}
+export function buildMessages(question,ctx,{passageWords=90,followUp=null,attempt=0}={}){
+ const style=followUp?followUpStyle(followUp,attempt):null,sources=[];
+ if(ctx.topic)sources.push(topicSource(ctx.topic,style?.use||'points',question));
  else for(const p of ctx.passages)sources.push(p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,passageWords));
- const system='তুমি নন্দিনীর বন্ধুর মতো নার্সিং শিক্ষক। তাকে "তুমি" বলে আন্তরিক, সহজ কথ্য বাংলায় বলবে। নিয়ম:\n'+
+ const system='তুমি নন্দিনীর বন্ধুর মতো, ধৈর্যশীল নার্সিং শিক্ষক। তাকে "তুমি" বলে আন্তরিক, সহজ কথ্য বাংলায় বলবে। নিয়ম:\n'+
   '১) শুধু "তথ্য" অংশে যা লেখা আছে, তা থেকেই উত্তর দেবে। নিজের থেকে কোনো তথ্য যোগ করবে না।\n'+
   '২) তথ্যের বাক্যগুলো যতটা সম্ভব হুবহু ব্যবহার করবে। সংখ্যা, "কম/বেশি", "থেকে/দিকে" একদম বদলাবে না।\n'+
-  '৩) প্রথমে এক লাইনে মূল কথাটা বলবে, তারপর ৩–৫টি ছোট পয়েন্ট। ইংরেজি পরিভাষা বন্ধনীতে রাখবে।\n'+
+  '৩) অন্য ধরন বলা না থাকলে: প্রথমে এক লাইনে মূল কথাটা বলবে, তারপর ৩–৫টি ছোট পয়েন্ট। ইংরেজি পরিভাষা (যেমন Artery) বন্ধনীতে রাখবে, কিন্তু পুরো বাক্য ইংরেজিতে অনুবাদ করবে না।\n'+
   '৪) "তথ্য"-এ উত্তর না থাকলে শুধু লিখবে: '+NOT_FOUND+'\n'+
   '৫) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত দেবে না।';
- const user='তথ্য:\n'+(sources.length?sources.join('\n\n'):'(কিছু নেই)')+'\n\nপ্রশ্ন: '+String(question).trim()+(FOLLOW_UP[followUp]?'\n\n'+FOLLOW_UP[followUp]:'');
+ const user='তথ্য:\n'+(sources.length?sources.join('\n\n'):'(কিছু নেই)')+'\n\nপ্রশ্ন: '+String(question).trim()+(style?'\n\n'+style.say:'');
  return [{role:'system',content:system},{role:'user',content:user}];
+}
+// Free conversation (no study question): warm, short, no facts, then back to studying.
+export function buildChatMessages(message){
+ const system='তুমি নন্দিনীর পড়ার বন্ধু, একজন ধৈর্যশীল আর আন্তরিক নার্সিং শিক্ষক। নন্দিনী Diploma Nursing ১ম বর্ষে পড়ে। সে এখন পড়ার প্রশ্ন না করে এমনি কথা বলছে। নিয়ম:\n'+
+  '১) "তুমি" বলে ২–৩টি ছোট, উষ্ণ বাক্যে উত্তর দেবে।\n'+
+  '২) কোনো তথ্য, সংখ্যা, রোগ, ওষুধ বা চিকিৎসার কথা বলবে না। পড়ার বাইরের কিছু জানতে চাইলে বলবে, তুমি শুধু পড়ায় সাহায্য করো।\n'+
+  '৩) মন খারাপ, ক্লান্তি বা ভয়ের কথা বললে আগে সহানুভূতি দেখাবে, দরকার হলে একটু বিরতি নিতে বলবে, আর সাহস দেবে।\n'+
+  '৪) শরীর খারাপ, খুব কষ্ট বা নিজের ক্ষতির কথা বললে সঙ্গে সঙ্গে পরিবারের কাউকে বা কাছের বড় কাউকে জানাতে বলবে।\n'+
+  '৫) শেষে আলতো করে পড়ায় ফেরাবে, যেমন জিজ্ঞেস করবে আজ কোন টপিকটা কঠিন লাগছে।';
+ return [{role:'system',content:system},{role:'user',content:String(message).trim()}];
 }

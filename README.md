@@ -104,7 +104,20 @@ How the model was chosen (desktop CPU, 4 threads, same RAG prompts, greedy decod
 | Gemma 3n E2B | 3.0 GB | Fluent, but 3 of 10 answers had factual errors |
 | **Gemma 3 4B** | 2.4 GB | 10 of 10 faithful in the first set; in a second set of 8, one wrong answer (PPE order presented for sterile gloves) and it correctly refused a medicine-dose question |
 
-**Talking to the Tutor like a person.** Greetings and everyday replies ("hi mama", "কেমন আছো", "ধন্যবাদ", "বুঝেছি") get a friendly reply from the app itself, without the model. "বুঝিনি", "আরো সহজ করে বলো" or "উদাহরণ দাও" (typed, or the one-tap buttons under each answer) explain the previous question again: the verified gist and memory trick first, then the local AI with a "simpler" or "example" instruction. The model prompt only sets a warm "তুমি" tone; a desktop test of a chattier prompt (opener, closing line, trick in every answer) made Gemma 3 4B add wrong facts (for example "ভাল্‌ভ থাকে ধমনিতে") and refuse a vital-signs question, so the friendly framing is done by the app, not the model.
+**Talking to the Tutor like a patient friend.**
+- Everyday replies get an instant friendly answer from the app, in rotating wordings so it does not repeat itself: "hi mama", "কেমন আছো", "bondhu", "ধন্যবাদ", "বুঝেছি".
+- Talk about herself or her feelings ("ami khub tired", "পরীক্ষার ভয় লাগছে") goes to a separate chat prompt: 2–3 warm sentences, no facts or medicines, a suggestion to tell family when she is unwell, then back to studying.
+- **"বুঝিনি" can be pressed as often as needed and never returns the same answer.** Asking the same question again counts as "বুঝিনি" too. Each round:
+  - shows a different verified view: gist + memory trick, then step-by-step points, then term meanings, then a tap-to-answer MCQ;
+  - asks the local AI for a different style of explanation: short core idea, then step by step, then question-and-answer.
+  - After all three styles are used, the AI repeats them with light sampling (temperature 0.6), so the wording changes each time.
+
+Desktop tests with Gemma 3 4B shaped this design:
+- Pasting the previous answer into the prompt made the model copy it.
+- Two "example" rounds over the same text gave identical answers.
+- Asking it to explain term meanings or an MCQ in its own words produced wrong facts (for example "ধমনি শরীরের বাইরে থেকে রক্ত আনে").
+
+So terms and MCQs are shown by the app, and the AI only gets the short slices it explained correctly. Each slice keeps the topic points that match the question.
 
 Desktop check of the warm prompt (13 questions including two follow-ups, Gemma 3 4B, greedy): vital signs, osmosis, RAM/ROM, Sims position and hypoxia answers were exact, numbers included. Two answers had a wrong fact: "ভাল্‌ভ থাকে ধমনিতে", and "ধমনি রক্ত ফুসফুসে নেয়" in a "simpler" re-explanation. The old prompt made the same valve error, so the topic sentence now says where valves are; in a recheck the model still reversed it once in three answers. A stricter "one source sentence per point" prompt was worse (a wrong "পাইনি", a reversed privacy rule). **So the 4B model is a helper, not a source of truth**: its answer always sits under the verified card with the "AI ভুল করতে পারে" note, and "প্রতিটি প্রশ্নে AI নিজে থেকে উত্তর দেবে" can be switched off in Settings. Patient dose questions ("কত mg দেব", "dose") are answered by the app with a fixed safety note and never reach the model.
 
