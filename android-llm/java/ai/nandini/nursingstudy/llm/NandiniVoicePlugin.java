@@ -3,8 +3,11 @@ package ai.nandini.nursingstudy.llm;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -110,6 +113,26 @@ public class NandiniVoicePlugin extends Plugin {
     }
 
     /** Opens the system screen where the Bangla voice data can be downloaded. */
+    // Earphones or a headset (wired, USB or Bluetooth): then talk mode lets her interrupt the Tutor by speaking.
+    @PluginMethod
+    public void audioRoute(PluginCall call) {
+        boolean headset = false;
+        AudioManager audio = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        if (audio != null) {
+            for (AudioDeviceInfo device : audio.getDevices(AudioManager.GET_DEVICES_OUTPUTS)) {
+                int type = device.getType();
+                if (type == AudioDeviceInfo.TYPE_WIRED_HEADSET || type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES
+                        || type == AudioDeviceInfo.TYPE_USB_HEADSET || type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+                        || type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || (Build.VERSION.SDK_INT >= 31 && type == AudioDeviceInfo.TYPE_BLE_HEADSET)) {
+                    headset = true;
+                }
+            }
+        }
+        JSObject out = new JSObject();
+        out.put("headset", headset);
+        call.resolve(out);
+    }
+
     // Talk mode keeps the screen on, so the phone does not lock (and cut off the microphone) in the middle of a conversation.
     @PluginMethod
     public void keepAwake(PluginCall call) {

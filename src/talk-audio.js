@@ -5,13 +5,14 @@ const AC=globalThis.AudioContext||globalThis.webkitAudioContext;
 const MIC={audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}};
 const rmsOf=f=>{let s=0;for(let i=0;i<f.length;i++)s+=f[i]*f[i];return Math.sqrt(s/f.length)};
 
-// Streams the microphone as base64 16 kHz PCM chunks (~85 ms each). setMuted(true) stops sending (the level still updates).
+// Streams the microphone as base64 16 kHz PCM chunks (~85 ms each), with each chunk's loudness: onChunk(b64, level).
+// setMuted(true) stops sending (the level still updates).
 export async function openMic(onChunk,{onLevel}={}){
  const stream=await navigator.mediaDevices.getUserMedia(MIC);
  const ctx=new AC(),src=ctx.createMediaStreamSource(stream),proc=ctx.createScriptProcessor(4096,1,1);
  let muted=false;
- proc.onaudioprocess=e=>{const input=e.inputBuffer.getChannelData(0);onLevel?.(rmsOf(input));if(muted)return;
-  const pcm=floatTo16kPcm(input,ctx.sampleRate);onChunk(toBase64(new Uint8Array(pcm.buffer)))};
+ proc.onaudioprocess=e=>{const input=e.inputBuffer.getChannelData(0),level=rmsOf(input);onLevel?.(level);if(muted)return;
+  const pcm=floatTo16kPcm(input,ctx.sampleRate);onChunk(toBase64(new Uint8Array(pcm.buffer)),level)};
  // A ScriptProcessor only runs while connected; its output stays silent because nothing is written to it.
  src.connect(proc);proc.connect(ctx.destination);
  await ctx.resume();

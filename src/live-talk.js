@@ -90,6 +90,31 @@ export class LiveTalk{
 }
 async function blobText(data){return typeof data.text==='function'?data.text():new TextDecoder().decode(data)}
 
+// Data saver: the microphone goes to Live only while she is speaking (with a short lead-in, so the first syllable is
+// kept, and a tail, so Live hears that she stopped), then audioStreamEnd tells Live the stream paused. Silence while she
+// thinks is not sent. level is the chunk's loudness (RMS). The bar follows the room's quiet level, learnt only while the
+// stream is closed, so it never rises during her speech and cuts her off; it stays below normal speech (0.025). A room
+// too loud for the bar just keeps the stream open, as before.
+export function speechGate({send,end,preRoll=6,hangMs=1400,minLevel=0.01,maxLevel=0.025,now=()=>Date.now()}){
+ let open=false,lastLoud=0,floor=0.004;const lead=[];
+ return {
+  push(b64,level){
+   const t=now(),loud=level>Math.min(maxLevel,Math.max(minLevel,floor*2.5));
+   if(!open&&!loud)floor+=(level-floor)*(level<floor?0.2:0.05);
+   if(loud)lastLoud=t;
+   if(!open){
+    if(!loud){lead.push(b64);if(lead.length>preRoll)lead.shift();return}
+    open=true;for(const c of lead.splice(0))send(c);
+   }
+   send(b64);
+   if(t-lastLoud>hangMs){open=false;end()}
+  },
+  // The Tutor started speaking (on the loudspeaker) or the mic was muted: close the stream now.
+  reset(){lead.length=0;if(open){open=false;end()}},
+  get open(){return open}
+ };
+}
+
 // PCM helpers shared by the app and the check script.
 export function floatTo16kPcm(input,inRate){
  const ratio=inRate/16000,len=Math.floor(input.length/ratio),out=new Int16Array(len);

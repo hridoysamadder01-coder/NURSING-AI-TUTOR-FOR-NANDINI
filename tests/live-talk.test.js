@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {LiveTalk,LIVE_URL,TALK_SYSTEM,REDO_IN_BANGLA,otherScript,floatTo16kPcm,toBase64,fromBase64,pcm16ToFloat,wav} from '../src/live-talk.js';
+import {LiveTalk,LIVE_URL,TALK_SYSTEM,REDO_IN_BANGLA,otherScript,speechGate,floatTo16kPcm,toBase64,fromBase64,pcm16ToFloat,wav} from '../src/live-talk.js';
 class FakeWS{static last;constructor(url){FakeWS.last=this;this.url=url;this.sent=[];this.readyState=1;setTimeout(()=>this.onopen?.(),0)}
  send(d){this.sent.push(JSON.parse(d))}close(){this.onclose?.({code:1000,reason:''})}server(m){this.onmessage?.({data:JSON.stringify(m)})}}
 test('microphone audio becomes 16 kHz 16-bit PCM and back',()=>{
@@ -51,4 +51,23 @@ test('talk mode speaks only Bangla: a reply in Hindi is cut off and asked again 
  ws.server({serverContent:{modelTurn:{parts:[{inlineData:{data:'H3'}}]},outputTranscription:{text:'फिर से हिंदी'}}});ws.server({serverContent:{turnComplete:true}});
  ws.server({serverContent:{modelTurn:{parts:[{inlineData:{data:'H4'}}]},outputTranscription:{text:'फिर से हिंदी'}}});ws.server({serverContent:{turnComplete:true}});
  assert.equal(ws.sent.length,sent+1,'the second slip in a row is the last one asked again');assert.deepEqual(got.audio,['B1','H4']);
+});
+test('data saver: only her speech (with a short lead-in and tail) is sent, not the silence around it',()=>{
+ let t=0;const sent=[],ends=[];const gate=speechGate({send:c=>sent.push(c),end:()=>ends.push(t),now:()=>t});
+ // 85 ms chunks: 10 s of a quiet room, 2 s of speech, 10 s of quiet again.
+ const feed=(n,level,tag)=>{for(let i=0;i<n;i++){gate.push(tag+i,level);t+=85}};
+ feed(118,0.004,'q');feed(24,0.08,'s');feed(118,0.004,'r');
+ assert.deepEqual(sent.slice(0,6),['q112','q113','q114','q115','q116','q117'],'the half second before she spoke is kept');
+ assert.ok(sent.includes('s0')&&sent.includes('s23'));
+ assert.equal(ends.length,1,'Live is told the stream paused once');
+ const tail=sent.filter(c=>c.startsWith('r')).length;assert.ok(tail>=16&&tail<=18,'about 1.4 s of tail: '+tail);
+ assert.ok(sent.length<60,'260 chunks of microphone, about 48 sent: '+sent.length);
+ // A fan in the room raises the bar, so its hum alone does not open the stream; her voice still does.
+ const g2=[];const noisy=speechGate({send:c=>g2.push(c),end:()=>{},now:()=>t});
+ for(let i=0;i<200;i++){noisy.push('n',0.008);t+=85}assert.equal(g2.length,0);
+ noisy.push('v',0.05);assert.ok(noisy.open);
+ // A long explanation in her own words is never cut off: the bar does not rise while she speaks.
+ for(let i=0;i<700;i++){noisy.push('v',i%10?0.06:0.03);t+=85}assert.ok(noisy.open);
+ // The Tutor starts speaking on the loudspeaker: the stream is closed at once.
+ noisy.reset();assert.equal(noisy.open,false);
 });

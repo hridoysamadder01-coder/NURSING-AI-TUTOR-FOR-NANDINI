@@ -88,7 +88,7 @@ import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,lookupTex
 import * as llm from './src/local-llm.js';
 import * as voice from './src/voice.js';
 import * as cloud from './src/cloud-ai.js';
-import {LiveTalk} from './src/live-talk.js';
+import {LiveTalk,speechGate} from './src/live-talk.js';
 import {openMic,recordUtterance,pcmPlayer,playWav,stopWav} from './src/talk-audio.js';
 const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
@@ -409,9 +409,13 @@ function talkUsage(addSeconds=0){
 // same conversation, so she can keep talking as long as she likes. Two failed reconnects in a row end it.
 async function startLive(player){
  await player.resume();
- let mic=null,session=null,closed=false,userTurn='',aiTurn='',muted=false,handle=null,failures=0,long=true,since=Date.now();
+ let mic=null,session=null,closed=false,userTurn='',aiTurn='',muted=false,handle=null,failures=0,long=true,since=Date.now(),headset=false;
  const save=()=>{logTurn(userTurn.trim(),aiTurn.trim());userTurn='';aiTurn=''};
- const tick=setInterval(()=>{const now=Date.now();T.engine.textContent='🌐 Gemini Live · আজ '+bn(talkUsage((now-since)/1000))+' মিনিট';since=now},15000);
+ const engine=seconds=>{T.engine.textContent='🌐 Gemini Live · আজ '+bn(talkUsage(seconds))+' মিনিট'+(headset?' · 🎧 মুখে বলে থামাতে পারো':'')};
+ // Every 15 s: the minutes meter, and whether earphones were plugged in or out.
+ const tick=setInterval(async()=>{const now=Date.now(),s=(now-since)/1000;since=now;headset=await voice.headsetOn();engine(s)},15000);
+ // Data saver: only her speech is sent, not the silence while she thinks.
+ const gate=speechGate({send:b64=>session?.sendAudio(b64),end:()=>session?.endAudio()});
  const connect=async()=>{
   const s=new LiveTalk({key:cloud.keys().gemini,resume:handle,long,
    lookup:async q=>{talkState('thinking');if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));return lookupText(q,ragIndex)},
@@ -440,13 +444,15 @@ async function startLive(player){
   if(['key_rejected','limit','network','timeout'].includes(e.message))throw e;
   long=false;await connect();
  }
- // While the Tutor is speaking the microphone is not sent, so it cannot hear itself; tapping the ball cuts it off.
- mic=await openMic(b64=>{if(player.remaining()>0.05||!session)return;session.sendAudio(b64)},{onLevel:l=>T.orb.style.setProperty('--lvl',Math.min(1,l*10).toFixed(2))});
- T.engine.textContent='🌐 Gemini Live · আজ '+bn(talkUsage())+' মিনিট';talkState('listening');
+ // On the loudspeaker the microphone is not sent while the Tutor speaks, so it cannot hear itself (tapping the ball cuts
+ // it off). With earphones its voice does not reach the microphone, so she can interrupt it just by speaking.
+ headset=await voice.headsetOn();
+ mic=await openMic((b64,level)=>{if(!session)return;if(player.remaining()>0.05&&!headset){gate.reset();return}gate.push(b64,level)},{onLevel:l=>T.orb.style.setProperty('--lvl',Math.min(1,l*10).toFixed(2))});
+ engine(0);talkState('listening');
  talk={muted:false,
   stop(){closed=true;stopAll()},
   tap(){player.clear();if(!muted)talkState('listening')},
-  setMuted(m){this.muted=muted=m;mic?.setMuted(m);talkState(m?'muted':'listening')}};
+  setMuted(m){this.muted=muted=m;mic?.setMuted(m);if(m)gate.reset();talkState(m?'muted':'listening')}};
 }
 // Turn-by-turn talk (levels 2 and 3 after Gemini Live): listen → answer → speak, again and again.
 // Ears: online (Gemini, then Groq's Whisper), which works on phones whose own recognizer fails, else the phone's

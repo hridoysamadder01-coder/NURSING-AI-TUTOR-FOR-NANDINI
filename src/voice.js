@@ -34,6 +34,12 @@ export async function listen(onPartial){
  try{return (await p.listen({lang:'bn-BD',offlineOnly:!onlineAllowed()})).text}finally{h.remove()}
 }
 export function stopListening(){return plugin()?.stopListening()}
+// Earphones or a headset connected? Then she can interrupt the Tutor by speaking: its voice does not reach the microphone.
+// The Android app asks the phone's audio system; a browser guesses from the device names.
+export async function headsetOn(){
+ if(plugin()){try{return Boolean((await plugin().audioRoute()).headset)}catch{return false}}
+ try{return (await navigator.mediaDevices.enumerateDevices()).some(d=>d.kind==='audiooutput'&&/head|ear|bluetooth|buds/i.test(d.label))}catch{return false}
+}
 // Keeps the screen on during talk mode, so the phone does not lock and stop the microphone mid-conversation.
 // The Android app does it natively; a browser uses the Screen Wake Lock API, asked again when the page comes back.
 let lock=null,wanted=false;
