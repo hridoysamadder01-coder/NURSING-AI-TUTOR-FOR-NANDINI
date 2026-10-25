@@ -70,8 +70,90 @@ The source is refreshed by running `python scripts/import_openrn.py` on a machin
 
 A working GitHub Actions build pipeline compiles a personal debug APK with all **four** text-only Open RN books (632 source chapters). See [ANDROID.md](./ANDROID.md) for how to download the latest successful artifact and install it. Verified Chrome mobile-screen automated journey tests cover notes/reload, book search, and chapter reading; real-phone validation remains pending.
 
+The app's logo is `icon.svg` (a nurse's cap). `node scripts/make-icons.mjs` renders it into the Android launcher icons in `android-icons/` (legacy, round, adaptive foreground and background, launch-screen logo); `scripts/add-local-llm.mjs` copies them over Capacitor's default icons and splash, and CI checks they are in the APK.
+
 The offline APK contains an **AI Server Settings** page where a future owner-managed HTTPS Ollama server URL can be saved without rebuilding the app. Only the URL is stored; student access codes are not. Server deployment is optional for static reading, notes and sample MCQs. This is not yet verified live AI on the VPS.
 
 ## October 23: redesigned bilingual book reader
 
 The book reader is now chapter-driven with readable paragraph spacing, original English headings and list structure, mobile book typography, font controls, previous/next chapter, and English / Bangla / both reading modes. Android builds include Google ML Kit's **on-device English-to-Bengali translation** through `@capacitor-mlkit/translation`, using a bundled Capacitor bridge (no paid translation API). Initial language model download requires internet and spare device storage; translated paragraphs are stored in local IndexedDB, 28 at a time per tap. This is *machine-translated on demand*, not pretranslated or medically proofread. Native translation is unavailable in plain web browsers, which show English source only; the source-cited AI Teacher on VPS remains a separate optional future capability. Learn more in `ANDROID.md`.
+
+## October 24: simple-Bangla hard topics (`topics.html`)
+
+Nandini's college is recorded as **Amazan Nursing College** (spelling as given by the owner; not yet independently verified). The owner listed six first-year subjects: Fundamentals of Nursing, Anatomy & Physiology, Basic Science, Microbiology & Parasitology, ICT and English. `topics.html` explains 35 commonly difficult topics across those six subjects in simple Bangla, each with key points, a memory trick, English→Bangla key terms and one self-check MCQ (`src/easy-topics.js`).
+
+These explanations were **written with AI help and have not been reviewed by a nursing teacher**; the page says so. Numbers that also appear in the bundled Open RN Skills text (vital-sign ranges, SpO₂, blood pH) follow that text, and a unit test checks the vital-sign numbers against it. Where an in-app Open RN chapter matches, a "বইয়ে মূল ইংরেজি পড়ো" button opens the library already searched (`library.html?book=…&q=…`). Study Coach tasks link to the matching explanation.
+
+## October 24: Nandini's six subjects and the instant offline Tutor (`ask.html`)
+
+The Study Coach, home page and book list now use exactly the six subjects Nandini gave, in her order: Fundamentals of Nursing, Anatomy & Physiology, Basic Science, Microbiology & Parasitology, ICT, English (36 study tasks). Behavioral Science (BNMC D111) was dropped because it is not in her list; any old progress saved for it is ignored. The Mental Health book stays on the shelf, marked as extra reading.
+
+`ask.html` is a chat-style Tutor that runs fully on the phone (about 0.5 ms per question, no internet). `src/tutor-core.js` matches Bangla, English or Banglish questions to the 35 simple-Bangla topics, shows matching term meanings, and falls back to the four Open RN books. **It is not a generative language model**: it only shows text already in the app, so it cannot invent facts, and it says so when it has no answer. If the owner's own AI server is configured in Settings, each answer also offers the existing source-grounded `/api/books/ask` route.
+
+## October 24: on-device local AI with Bangla RAG (experimental, owner testing first)
+
+The Android app can now run a language model **fully on the phone** (no internet after a one-time download), on top of the Tutor's retrieval:
+
+- **RAG** (`src/rag.js`): BM25 over 6,457 passages of the four Open RN books, a Bangla→English nursing lexicon (including English words typed in Bangla letters), and the verified simple-Bangla topics. Questions with no grounded match never reach the model; the app answers "পাইনি" directly. The prompt asks the model to reuse the verified sentences and not add facts.
+- **Engine** (`android-llm/`): llama.cpp (pinned through the `llama-cpp-python` 0.3.16 sdist, SHA-256 checked in `scripts/add-local-llm.mjs`) behind a small JNI library and the `NandiniLlm` Capacitor plugin. ggml is built with one CPU backend per ARM generation (armv8.0 / 8.2 dotprod / 8.2 fp16 / 8.6 i8mm) and picks the best at runtime, so older chips such as Snapdragon 680 do not crash. Tokens stream as UTF-8 bytes so Bengali characters are never split. CI fails if these libraries are missing from the APK.
+- **Model**: Gemma 3 4B (Q4_0, 2.37 GB, Gemma Terms of Use), downloaded from a pinned Hugging Face revision into app-private storage with resume, size and GGUF checks. Needs a phone with about 6 GB RAM or more.
+
+How the model was chosen (desktop CPU, 4 threads, same RAG prompts, greedy decoding):
+
+| Model | Size | Result on Bangla nursing questions |
+|---|---|---|
+| Gemma 3 1B, Qwen 2.5 1.5B, Llama 3.2 1B | 0.7–1.1 GB | Unusable: mostly English or broken Bangla, frequent invented facts |
+| Gemma 3n E2B | 3.0 GB | Fluent, but 3 of 10 answers had factual errors |
+| **Gemma 3 4B** | 2.4 GB | 10 of 10 faithful in the first set; in a second set of 8, one wrong answer (PPE order presented for sterile gloves) and it correctly refused a medicine-dose question |
+
+**Talking to the Tutor like a patient friend.**
+- Everyday replies get an instant friendly answer from the app, in rotating wordings so it does not repeat itself: "hi mama", "কেমন আছো", "bondhu", "ধন্যবাদ", "বুঝেছি".
+- Talk about herself or her feelings ("ami khub tired", "পরীক্ষার ভয় লাগছে") goes to a separate chat prompt: 2–3 warm sentences, no facts or medicines, a suggestion to tell family when she is unwell, then back to studying.
+- **"বুঝিনি" can be pressed as often as needed and never returns the same answer.** Asking the same question again counts as "বুঝিনি" too. Each round:
+  - shows a different verified view: gist + memory trick, then step-by-step points, then term meanings, then a tap-to-answer MCQ;
+  - asks the local AI for a different style of explanation: short core idea, then step by step, then question-and-answer.
+  - After all three styles are used, the AI repeats them with light sampling (temperature 0.6), so the wording changes each time.
+
+Desktop tests with Gemma 3 4B shaped this design:
+- Pasting the previous answer into the prompt made the model copy it.
+- Two "example" rounds over the same text gave identical answers.
+- Asking it to explain term meanings or an MCQ in its own words produced wrong facts (for example "ধমনি শরীরের বাইরে থেকে রক্ত আনে").
+
+So terms and MCQs are shown by the app, and the AI only gets the short slices it explained correctly. Each slice keeps the topic points that match the question.
+
+**Strong mode (online) and talk mode.**
+- **Strong mode (`src/cloud-ai.js`):** with internet and a key in Settings, the Tutor's AI answer comes from a bigger cloud model, using the same verified RAG prompt.
+  - Route: Gemini 3.5 → 3.1 → 2.5 Flash-Lite (each has its own free quota), then Groq GPT-OSS 120B → Qwen3.8 27B, then the phone's Gemma.
+  - Limits and failures: a model that hits its free limit (429) cools down (Retry-After, else 10 min); a rejected key skips that provider; a model silent for 15 s is skipped.
+  - Keys live only in the phone's storage, never in the repository or the APK.
+  - The online models may ask back when a question is unclear (her reply completes the question), see their previous explanation in "বুঝিনি" rounds, and the friend chat remembers its last turns.
+  - Using several accounts to stretch free quotas is against Google's API terms ("will not attempt to circumvent such limitations"), so the app routes across different models and providers instead.
+- **Talk mode** (the waveform button next to 🎤) is a hands-free spoken conversation, like ChatGPT's voice mode.
+  - **Online with a Gemini key: Gemini Live** (`src/live-talk.js`, `gemini-3.8-live`). It hears 16 kHz PCM from the microphone (`src/talk-audio.js`) and answers with 24 kHz audio.
+  - Before saying a fact it calls the `lookup_nursing` tool, which the app answers from the verified notes and books: doses get the fixed note, off-topic gets NOT_FOUND.
+  - Transcripts show on screen and stay in the chat. The microphone is not sent while the Tutor speaks; tapping the ball cuts it off.
+  - Data saver: only her speech is sent (with a 0.5 s lead-in and 1.4 s tail, then `audioStreamEnd`), not the silence while she thinks. The bar follows the room's quiet level and never rises while she speaks. The Tutor's own voice (24 kHz PCM from Live) is most of the data and cannot be reduced.
+  - With earphones or a headset (Android `AudioManager` outputs: wired, USB, Bluetooth) the microphone stays on while the Tutor speaks, so she can interrupt it by voice; on the loudspeaker it is tap-to-interrupt, so the Tutor does not hear itself.
+  - Only Bangla: the instruction says so first (Live picks its language by itself), and a reply whose transcript comes out in Hindi or another script is cut off and asked again in Bangla (at most twice in a row). English terms are allowed, with their Bangla meaning.
+  - **Offline**, the phone's recognizer and voice run a listen → answer → speak loop, with answers in a short spoken style.
+- **🎤 dictation** online sends a recording that stops after silence to Gemini Flash-Lite to be written down word for word (JSON reply, Bangla script, her English terms in English), then Groq `whisper-large-v3` (`bn`, with a spelling prompt), then the phone's own recognizer. The same ears serve talk mode's level 2. Answers are read aloud with Gemini TTS (`gemini-3.8-flash-lite-tts`) when online, else the phone's Bangla voice.
+- **Proof run with real keys:** `GEMINI_API_KEY=… GROQ_API_KEY=… node scripts/cloud-live-check.mjs out/`. It runs:
+  - every model on Bangla questions;
+  - a TTS → listening round trip through each Gemini model and Whisper;
+  - a Gemini Live turn from a recorded Bangla question, with the spoken answer written back as text and checked to be Bangla.
+
+**Voice to voice (Android app).**
+- The 🎤 button in the Tutor listens in Bangla and shows the words while she talks. The answer is then read aloud: the AI answer once it is complete, or the verified card when there is no AI part. Every AI answer and topic card also has a 🔊 button.
+- It uses the phone's own engines through a small `NandiniVoice` plugin (`android-llm/`): Android `SpeechRecognizer` with `bn-BD`, and `TextToSpeech` with a Bangla voice.
+- **Recognition is on-device only by default** (`EXTRA_PREFER_OFFLINE`), so her voice does not leave the phone. If the phone has no offline Bangla pack, Settings → "কণ্ঠে কথা বলা" explains how to get one. It also has an opt-in switch for online recognition, which sends the audio to Google.
+- Settings also shows whether a Bangla voice is installed, has a button to install one, and a test button.
+- First phone test (vivo V2266A): every 🎤 press failed with errors 5 ("client") and 11 ("server disconnected"), the signs of an engine that cannot serve the request. The plugin now:
+  - binds to Google's recognition service when it is installed, instead of the phone's default engine;
+  - gives every session a fresh recognizer and releases it afterwards;
+  - opens the system speech dialog if the in-app recognizer still fails.
+
+  Settings shows which engine is used. Not yet confirmed on the phone.
+
+Desktop check of the warm prompt (13 questions including two follow-ups, Gemma 3 4B, greedy): vital signs, osmosis, RAM/ROM, Sims position and hypoxia answers were exact, numbers included. Two answers had a wrong fact: "ভাল্‌ভ থাকে ধমনিতে", and "ধমনি রক্ত ফুসফুসে নেয়" in a "simpler" re-explanation. The old prompt made the same valve error, so the topic sentence now says positively where valves are (heart, and veins of the arms and legs). The model still gets this wrong sometimes: in the latest run one of six artery/vein answers said valves are in both. A stricter "one source sentence per point" prompt was worse (a wrong "পাইনি", a reversed privacy rule). **So the 4B model is a helper, not a source of truth**: its answer always sits under the verified card with the "AI ভুল করতে পারে" note, and "প্রতিটি প্রশ্নে AI নিজে থেকে উত্তর দেবে" can be switched off in Settings. Patient dose questions ("কত mg দেব", "dose") are answered by the app with a fixed safety note and never reach the model.
+
+On the desktop CPU, Gemma 3 4B produced a full answer in roughly 4–13 seconds. **Speed on a real phone has not been measured yet**; expect it to be several times slower on a mid-range phone. Settings has a speed test for this. The Tutor always shows the instant verified card first and labels the AI answer "AI ভুল করতে পারে". Nothing here has been tested on a physical Android device yet.

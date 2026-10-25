@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#11998a"><meta name="description" content="নার্সিং প্রথম বর্ষের কঠিন টপিক সহজ বাংলায়"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./src/app.css"><title>সহজ বাংলা · নন্দিনীর Nursing Study</title>
+<style>
+.prog{margin-top:18px}
+.prog b{display:block;font-size:14.5px;margin-bottom:9px}
+.prog .bar{background:rgba(255,255,255,.22)}.prog .bar>div{background:#ffd27a}
+.pills{position:relative;display:flex;gap:8px;overflow-x:auto;margin:14px -16px 4px;padding:2px 16px 8px;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pill{white-space:nowrap;border:1.5px solid var(--line-2);background:#fff;color:var(--ink-2);border-radius:999px;padding:9px 14px;font-size:13px;font-weight:680}
+.pill.selected{background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;border-color:transparent;box-shadow:0 6px 14px -8px rgba(11,116,104,.8)}
+.ai-note{font-size:12.5px;margin:10px 2px 0}
+#searchState{margin:8px 2px 0}#searchState:empty{display:none}
+.tcard{background:#fff;border-radius:20px;box-shadow:var(--shadow-sm);border:1px solid rgba(222,234,229,.8);margin:0 0 12px;scroll-margin-top:12px}
+.tcard summary{list-style:none;display:flex;gap:12px;align-items:flex-start;padding:15px 16px;cursor:pointer}
+.tcard summary::-webkit-details-marker{display:none}
+.tnum{width:36px;height:36px;flex:none;border-radius:12px;display:grid;place-items:center;background:var(--amber-soft);color:#8a5a0c;font-weight:800;font-size:14px}
+.tcard.done .tnum{background:linear-gradient(135deg,#22bfa4,#0b7468);color:#fff}
+.ttxt{flex:1;min-width:0}
+.ttxt b{display:block;font-size:15.5px;line-height:1.45}
+.ttxt small{display:block;font-size:12px;color:var(--brand);font-weight:700;margin-top:1px}
+.preview{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;color:var(--ink-2);line-height:1.6;margin-top:5px}
+.tcard[open] .preview{display:none}
+.chev{flex:none;width:9px;height:9px;margin-top:12px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(45deg);transition:transform .2s}
+.tcard[open] .chev{transform:rotate(-135deg)}
+.tbody{padding:0 16px 16px}
+.gist{background:var(--brand-soft);color:var(--brand-ink);padding:12px 14px;border-radius:14px;line-height:1.75;font-size:14.5px;margin:0}
+.tbody h4{font-size:13.5px;margin:18px 0 8px;color:var(--ink-2)}
+.pts{margin:0;padding-left:20px}
+.pts li{line-height:1.8;font-size:14.5px;margin-bottom:6px}
+.pts li::marker{color:var(--brand)}
+.trick{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--amber-soft);color:#6b4a12}
+.trick b{display:block;font-size:13px;margin-bottom:3px}
+.trick p{margin:0;line-height:1.7;font-size:14px}
+.terms{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.term{padding:9px 11px;border-radius:12px;background:#f5f9fc;border:1px solid #e2edf5;line-height:1.45}
+.term b{display:block;font-size:13px;color:#1b62a3}
+.term span{font-size:12.5px;color:var(--ink-2)}
+.qcheck .question{font-size:15px;margin-top:0}
+.tbody .btn-row{margin-top:14px}
+</style></head>
+<body>
+<header class="hero"><div class="wrap">
+<div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">সহজ বাংলা</span></div>
+<h1>💡 কঠিন টপিক, সহজ বাংলায়</h1><p>নার্সিং ১ম বর্ষের যে টপিকগুলো সবাই কঠিন বলে, সেগুলো ছোট ছোট করে বোঝানো।</p>
+<div class="glass prog"><b id="doneLine">৩৫টির মধ্যে ০টি বুঝেছি</b><div class="bar"><div id="doneFill"></div></div></div>
+</div></header>
+<main>
+<label class="field" for="topicSearch">🔍 টপিক বা শব্দ খোঁজো</label>
+<input id="topicSearch" type="search" placeholder="যেমন: osmosis, ধমনি, ADPIE, RAM" maxlength="60" autocomplete="off">
+<p id="searchState" class="fine" aria-live="polite"></p>
+<div id="subjectPills" class="pills" role="group" aria-label="বিষয় বেছে নাও"></div>
+<p class="fine ai-note">⚠️ ব্যাখ্যাগুলো AI-এর সাহায্যে লেখা, শিক্ষক এখনো যাচাই করেননি। ক্লাস নোটের সঙ্গে মিলিয়ে পড়ো।</p>
+<div id="topicList"></div>
+<details class="info"><summary>ℹ️ এই ব্যাখ্যাগুলো সম্পর্কে</summary><p>এই সহজ ব্যাখ্যাগুলো পড়া বুঝতে ও মনে রাখতে সাহায্য করার জন্য AI-এর সাহায্যে বাংলায় লেখা। কোনো নার্সিং শিক্ষক এখনো এগুলো যাচাই করেননি, আর এগুলো কলেজের নির্ধারিত বইয়ের বিকল্প নয়। পরীক্ষার আগে ক্লাসের নোট, কলেজের বই ও শিক্ষকের সঙ্গে মিলিয়ে নাও।</p><p>ভাইটাল সাইন, রক্তের pH ও SpO₂-এর মতো সংখ্যা অ্যাপের Open RN বইয়ের লেখার সঙ্গে মিলিয়ে দেওয়া। "বইয়ে মূল ইংরেজি পড়ো" চাপলে বইয়ের সংশ্লিষ্ট অংশ খুলবে। শুধু শিক্ষার জন্য; রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে এগুলো ব্যবহার করবে না।</p></details>
+</main>
+<nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
+<a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
+<a href="./library.html" data-tab="books"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
+<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>Tutor</a>
+<a href="./topics.html" data-tab="easy" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.8.7 1 1.5 1 2.4h6c0-.9.2-1.7 1-2.4a6.5 6.5 0 0 0-4-11.6z"/></svg></span>সহজ বাংলা</a>
+<a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
+</div></nav>
+<script type="module">
+import {SUBJECTS} from './src/study-plan.js';
+import {TOPICS,EASY_SUBJECT_CODES} from './src/easy-topics.js';
+const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
+const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+const KEY='nandini-easy-v1';
+let done={};try{const o=JSON.parse(localStorage.getItem(KEY)||'{}');if(o&&typeof o==='object'&&!Array.isArray(o))done=o}catch{}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(done))}catch{}}
+const subjects=EASY_SUBJECT_CODES.map(code=>SUBJECTS.find(s=>s.code===code));
+let filter='all',query='';
+function progress(){const n=TOPICS.filter(t=>done[t.id]).length;$('doneLine').textContent=bn(TOPICS.length)+'টির মধ্যে '+bn(n)+'টি বুঝেছি'+(n===TOPICS.length?' 🎉':'');$('doneFill').style.width=Math.round(n/TOPICS.length*100)+'%'}
+function card(t,i){
+ const d=E('details',undefined,'tcard'+(done[t.id]?' done':''));d.id=t.id;
+ const head=E('summary'),num=E('span',done[t.id]?'✓':bn(i+1),'tnum'),txt=E('span',undefined,'ttxt');
+ txt.append(E('b',t.title),E('small',t.en),E('span',t.gist,'preview'));head.append(num,txt,E('span',undefined,'chev'));d.append(head);
+ const body=E('div',undefined,'tbody');
+ body.append(E('p','💬 '+t.gist,'gist'),E('h4','📖 সহজ ব্যাখ্যা'));
+ const ul=E('ul',undefined,'pts');for(const p of t.points)ul.append(E('li',p));body.append(ul);
+ const trick=E('div',undefined,'trick');trick.append(E('b','🧠 মনে রাখার কৌশল'),E('p',t.trick));body.append(trick);
+ body.append(E('h4','🔤 দরকারি শব্দ'));const terms=E('div',undefined,'terms');
+ for(const [en,meaning] of t.terms){const c=E('div',undefined,'term');c.append(E('b',en),E('span',meaning));terms.append(c)}body.append(terms);
+ const qc=E('div',undefined,'qcheck'),why=E('div',undefined,'explain');qc.append(E('h4','🎯 নিজেকে যাচাই করো'),E('p',t.check.q,'question'));
+ t.check.options.forEach((o,k)=>{const b=E('button',undefined,'option');b.type='button';b.append(E('span',String.fromCharCode(65+k),'letter'),document.createTextNode(o));
+  b.onclick=()=>{qc.querySelectorAll('.option').forEach((x,j)=>{x.disabled=true;if(j===t.check.answer)x.classList.add('correct');else if(j===k)x.classList.add('wrong')});why.textContent=(k===t.check.answer?'✓ সঠিক! ':'✗ সঠিক উত্তরটা সবুজ রঙে। ')+t.check.why;why.classList.toggle('bad',k!==t.check.answer)};qc.append(b)});
+ qc.append(why);body.append(qc);
+ const acts=E('div',undefined,'btn-row'),mark=E('button',undefined,'btn sm');mark.type='button';
+ const paint=()=>{const on=Boolean(done[t.id]);d.classList.toggle('done',on);num.textContent=on?'✓':bn(i+1);mark.textContent=on?'✓ বুঝেছি':'বুঝেছি, চিহ্ন দিই';mark.classList.toggle('soft',on)};
+ mark.onclick=()=>{if(done[t.id])delete done[t.id];else done[t.id]=1;save();paint();progress()};paint();acts.append(mark);
+ if(t.book){const a=E('a','📖 বইয়ে মূল ইংরেজি পড়ো','btn sm ghost');a.href='./library.html?book='+t.book.id+'&q='+encodeURIComponent(t.book.q);acts.append(a)}
+ body.append(acts);d.append(body);return d;
+}
+function pills(){$('subjectPills').replaceChildren();
+ for(const [code,label] of [['all','✨ সব ('+bn(TOPICS.length)+')'],...subjects.map(s=>[s.code,s.emoji+' '+s.name])]){const b=E('button',label,'pill'+(filter===code?' selected':''));b.type='button';b.setAttribute('aria-pressed',String(filter===code));b.onclick=()=>{filter=code;pills();render()};$('subjectPills').append(b)}}
+function render(){
+ const list=$('topicList'),q=query.trim().toLowerCase();list.replaceChildren();
+ const match=t=>!q||[t.title,t.en,t.gist,t.trick,...t.points,...t.terms.flat()].join(' ').toLowerCase().includes(q);
+ let count=0;
+ for(const s of subjects){
+  if(filter!=='all'&&filter!==s.code)continue;
+  const shown=TOPICS.filter(t=>t.subject===s.code).map((t,i)=>[t,i]).filter(([t])=>match(t));if(!shown.length)continue;count+=shown.length;
+  const h=E('h2',undefined,'section-title');h.append(E('span',s.emoji+' '+s.bn),E('span',bn(shown.length)+'টি টপিক','chip'));list.append(h);
+  for(const [t,i] of shown)list.append(card(t,i));
+ }
+ $('searchState').textContent=q?(count?bn(count)+'টি টপিক পাওয়া গেছে।':'মিলে এমন টপিক পাওয়া যায়নি। অন্য ইংরেজি বা বাংলা শব্দে খোঁজো।'):'';
+}
+$('topicSearch').addEventListener('input',e=>{query=e.target.value;render()});
+progress();pills();render();
+// Deep link from the Study Coach (topics.html#vital-signs) opens that topic.
+function openFromHash(){const target=location.hash?document.getElementById(decodeURIComponent(location.hash.slice(1))):null;
+ if(target?.classList.contains('tcard')){target.open=true;target.scrollIntoView({block:'start'})}}
+openFromHash();addEventListener('hashchange',openFromHash);
+</script></body></html>

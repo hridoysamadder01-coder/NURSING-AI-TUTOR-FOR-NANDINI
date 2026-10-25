@@ -6,12 +6,17 @@ on:
       - scripts/prepare-android.mjs
       - scripts/import_openrn.py
       - capacitor.config.json
+      - android-llm/**
+      - scripts/add-local-llm.mjs
+      - android-signing/**
       - .github/workflows/build-android.yml
       - index.html
       - library.html
       - tutor.html
       - coach.html
       - settings.html
+      - topics.html
+      - ask.html
       - src/**
       - data/books/**
 permissions:
@@ -19,7 +24,7 @@ permissions:
 jobs:
   android:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -61,11 +66,37 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+      - name: Add on-device LLM (llama.cpp + NandiniLlm plugin)
+        run: node scripts/add-local-llm.mjs
       - name: Compile debug APK for personal device testing
         working-directory: android
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon assembleDebug
+      - name: Verify native LLM libraries are packaged for every ARM CPU generation
+        run: |
+          unzip -l android/app/build/outputs/apk/debug/app-debug.apk | grep 'lib/arm64-v8a/' | tee native-libs.txt
+          for lib in libnandini_llm.so libllama.so libggml.so libggml-base.so libc++_shared.so libggml-cpu-android_armv8.0_1.so libggml-cpu-android_armv8.2_1.so; do
+            grep -q "lib/arm64-v8a/$lib" native-libs.txt || { echo "missing $lib"; exit 1; }
+          done
+      - name: Verify the APK is signed with the fixed key (so updates install over the old app)
+        run: |
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | tee signer.txt
+          grep -qi 'SHA-256 digest: f7e1b16c422ba0b5c0c0ca965e1970798ce6ac4f4da6fbb21632bc9f9f940a1a' signer.txt
+      - name: Verify the microphone permission for voice questions is in the APK
+        run: |
+          aapt=$(ls "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -1)
+          "$aapt" dump permissions android/app/build/outputs/apk/debug/app-debug.apk | tee permissions.txt
+          grep -q 'android.permission.RECORD_AUDIO' permissions.txt
+          grep -q 'android.permission.MODIFY_AUDIO_SETTINGS' permissions.txt
+      - name: Verify the app's own logo (not Capacitor's) is the launcher icon
+        run: |
+          aapt=$(ls "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -1)
+          "$aapt" dump resources android/app/build/outputs/apk/debug/app-debug.apk > resources.txt
+          grep 'mipmap/ic_launcher_bg\|drawable/splash_logo\|drawable/splash' resources.txt
+          grep -q 'mipmap/ic_launcher_bg' resources.txt
+          grep -q 'drawable/splash_logo' resources.txt
       - uses: actions/upload-artifact@v4
         with:
           name: nandini-nursing-study-android-debug
