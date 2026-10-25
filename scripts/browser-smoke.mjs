@@ -121,9 +121,10 @@ try{
  assert.match(await app.locator('#chat .msg.bot').last().innerText(),/ধাপে ধাপে দেখো/);
  await app.locator('#q').fill('bondhu');await app.locator('#askForm button').click();
  await app.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('বন্ধু'));
- await app.locator('#q').fill('ami khub tired');await app.locator('#askForm button').click();
+ await app.locator('#q').fill('amar khub tens hoitase');await app.locator('#askForm button').click();
  await app.waitForFunction(()=>window.__gen.length===4,null,{timeout:10000});
  assert.match(await app.evaluate(()=>window.__gen[3][0].content),/পড়ার বন্ধু/,'feelings get the friendly chat prompt, not a book search');
+ assert.doesNotMatch(await app.locator('#chat .msg.bot').last().innerText(),/Tense|ভালো প্রশ্ন/,'"tens" (tension) must not show the grammar topic');
  await app.locator('#q').fill('hi mama');await app.locator('#askForm button').click();
  await app.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('হ্যালো নন্দিনী'));
  assert.equal(await app.locator('#chat .quick').count(),1,'only the latest answer keeps the quick replies');
