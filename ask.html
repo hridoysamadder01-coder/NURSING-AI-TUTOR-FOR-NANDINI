@@ -64,6 +64,7 @@ import {apiUrl} from './src/api-config.js';
 import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion} from './src/rag.js';
 import * as llm from './src/local-llm.js';
 import * as voice from './src/voice.js';
+import * as cloud from './src/cloud-ai.js';
 const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
 let asked=[];try{const h=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(h))asked=h.filter(x=>typeof x==='string').slice(-20)}catch{}
@@ -170,6 +171,8 @@ function aiButton(b,q){
 // Returns the bot bubble, so a spoken question can have its answer read aloud.
 async function answer(q,{scroll=true,lookInBooks=true}={}){
  const talk=smallTalk(q);
+ // The online AI asked what she meant ("তুমি কি X নাকি Y?"): her reply completes that question.
+ if(askedBack&&!talk&&!followUpKind(q)){q=askedBack+' ('+q+')';askedBack=null}
  // Asking the same question again means it was not clear yet: explain it a new way instead of repeating.
  const follow=!talk&&(followUpKind(q)||(lastQ&&q.trim().toLowerCase()===lastQ.trim().toLowerCase()&&'simpler'));
  if(talk||follow){const b=talk?chatReply(talk):followUp(follow,lookInBooks);if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return b}
@@ -184,14 +187,14 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
  if(chat&&!r.topics.length){
   // One or two words ("bondhu", "diabetes"): show book passages if there are any, otherwise just chat.
   const hits=lookInBooks?await bookHits(b,q,{quiet:true}):0;
-  if(hits){lastQ=q;tries=0}
+  if(hits){lastQ=q;tries=0;lastAi=''}
   else if(!localModel||!llm.autoEnabled())b.append(E('p',pick(CHAT_FALLBACK.short,'short')));
   localAiOffer(b,q,lookInBooks);
   if(hits&&llm.available())quickReplies(b);
   if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});
   return b;
  }
- lastQ=q;tries=0;
+ lastQ=q;tries=0;lastAi='';
  if(r.terms.length){const row=E('div',undefined,'termrow');for(const t of r.terms)row.append(E('span',t.en+' = '+t.bn,'termchip'));b.append(row)}
  if(r.confident){
   b.append(E('p',isQuestion(q)?OPENERS[q.length%OPENERS.length]:OPENERS[0],'lead'));
@@ -210,19 +213,25 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
  if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});
  return b;
 }
-// On-device AI (Android app only): RAG over the verified Bangla explanation or the books, streamed under the instant card.
+// AI answer under the instant card: the online strong mode (src/cloud-ai.js) when there is internet and a key, otherwise
+// the phone's own model. Both get the same verified RAG prompt; off-topic and dose questions reach neither.
+const aiReady=()=>cloud.ready()||Boolean(localModel);
 function localAiOffer(b,q,auto,mode=null){
- if(!llm.available())return;
- if(!localModel){if(!localHinted){localHinted=true;const a=E('a','✨ ফোনের ভেতরের AI চালু করো (একবার ডাউনলোড)','btn sm soft');a.href='./settings.html#local-ai';b.append(a)}return}
+ if(!aiReady()){
+  if(!localHinted){localHinted=true;const a=E('a',llm.available()?'✨ AI চালু করো (ফোনের ভেতরে, বা নেট থাকলে শক্তিশালী AI)':'✨ শক্তিশালী AI চালু করো (নেট লাগবে)','btn sm soft');a.href=llm.available()?'./settings.html#local-ai':'./settings.html#cloud';b.append(a)}
+  return;
+ }
  if(auto&&llm.autoEnabled()){localAi(b,q,mode);return}
  const btn=E('button','✨ AI-কে দিয়ে বুঝিয়ে নাও','btn sm soft');btn.type='button';btn.onclick=()=>{btn.remove();localAi(b,q,mode)};b.append(btn);
 }
+// The friend chat remembers its last few turns, and the online AI's last explanation feeds the next "বুঝিনি".
+let chatHistory=[],lastAi='',askedBack=null;
 function localAi(b,q,mode=null){
  const speakIt=voiceTurn&&voice.autoSpeak();
  // mode: null (new question), {kind,attempt} ("বুঝিনি" rounds) or {chat:true} (talking, not asking).
- const box=E('div',undefined,'aibox'),out=E('div','অপেক্ষা করছি…','out typing'),meta=E('div','','meta');
- box.append(E('b','✨ AI শিক্ষক · '+localModel.label+' (ফোনের ভেতরে)'),out);b.append(box);
- const stop=E('button','⏹ থামাও','btn sm ghost');stop.type='button';stop.onclick=()=>llm.stop();
+ const box=E('div',undefined,'aibox'),title=E('b','✨ AI শিক্ষক'),out=E('div','অপেক্ষা করছি…','out typing'),meta=E('div','','meta');
+ box.append(title,out);b.append(box);
+ const ctl=new AbortController(),stop=E('button','⏹ থামাও','btn sm ghost');stop.type='button';stop.onclick=()=>{ctl.abort();llm.stop()};
  aiChain=aiChain.then(async()=>{
   try{
    if(isDoseQuestion(q)){out.className='out';out.textContent=DOSE_NOTE;return}
@@ -231,24 +240,47 @@ function localAi(b,q,mode=null){
    if(!ctx.topic&&chat!=='personal'){out.textContent='📚 বই প্রস্তুত হচ্ছে…';if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));ctx=retrieve(q,ragIndex)}
    const asChat=!ctx.topic&&(chat==='personal'||(chat==='short'&&!ctx.grounded));
    if(!asChat&&!ctx.grounded){out.className='out';out.textContent=NOT_FOUND;return}
-   out.textContent='🧠 AI চালু হচ্ছে… (প্রথমবার একটু সময় লাগে)';
-   await llm.load(localModel);
-   out.textContent='ভাবছি…';box.append(stop);
-   let text='';const t0=performance.now();
    const kind=mode?.kind||null,attempt=mode?.attempt||0;
-   const messages=asChat?buildChatMessages(q):buildMessages(q,ctx,{followUp:kind,attempt});
-   // Greedy decoding keeps facts steady. Chat, book-passage rounds (same text every time) and rounds after every
-   // style was used once get some sampling, so "বুঝিনি" never returns the same answer.
-   const temperature=asChat?0.7:!kind?0:attempt>=FOLLOW_STYLES[kind].length?0.6:ctx.topic?0:0.3;
-   const res=await llm.generate(messages,{maxTokens:asChat?120:kind?260:320,temperature,onToken:t=>{text+=t;out.className='out';out.textContent=text}});
-   if(!text.trim()){out.className='out';out.textContent=NOT_FOUND}
-   const secs=(performance.now()-t0)/1000,speed=res.generateMs?res.generatedTokens/(res.generateMs/1000):0;
-   meta.textContent='⏱ '+bn(secs.toFixed(1))+' সেকেন্ড · '+bn(speed.toFixed(1))+' টোকেন/সেকেন্ড'+(res.stopped?' · থামানো হয়েছে':'')+(asChat?'':'\n⚠️ AI ভুল করতে পারে। ওপরের যাচাই করা ব্যাখ্যা বা বইয়ের সঙ্গে মিলিয়ে নাও।');
+   let text='',where='',stats='',cloudError=null;const t0=performance.now();
+   const show=t=>{text+=t;out.className='out';out.textContent=text};
+   box.append(stop);
+   if(cloud.ready()){
+    out.textContent='🌐 শক্তিশালী AI ভাবছে…';
+    const messages=asChat?buildChatMessages(q,{history:chatHistory}):buildMessages(q,ctx,{followUp:kind,attempt,cloud:true,previous:kind&&q===lastQ?lastAi:''});
+    try{
+     const r=await cloud.generate(messages,{onToken:show,signal:ctl.signal,maxTokens:asChat?300:kind?700:900,temperature:asChat?0.8:kind?0.6:0.3,onRoute:route=>{title.textContent='✨ শক্তিশালী AI · '+route.label+' (অনলাইন)'}});
+     where='cloud';stats=r.route.label;
+    }catch(e){if(e.message==='stopped'||e.message==='cut_off'){where='cloud';stats=e.message==='stopped'?'থামানো হয়েছে':'সংযোগ কেটে গেছে'}else cloudError=e}
+   }
+   if(!where&&localModel){
+    title.textContent='✨ AI শিক্ষক · '+localModel.label+' (ফোনের ভেতরে)';
+    out.className='out typing';out.textContent=cloudError?'🌐 অনলাইন AI এখন পাওয়া গেল না, ফোনের AI দিয়ে বলছি…':'🧠 AI চালু হচ্ছে… (প্রথমবার একটু সময় লাগে)';
+    await llm.load(localModel);
+    if(!text)out.textContent='ভাবছি…';
+    const messages=asChat?buildChatMessages(q):buildMessages(q,ctx,{followUp:kind,attempt});
+    // Greedy decoding keeps facts steady. Chat, book-passage rounds (same text every time) and rounds after every
+    // style was used once get some sampling, so "বুঝিনি" never returns the same answer.
+    const temperature=asChat?0.7:!kind?0:attempt>=FOLLOW_STYLES[kind].length?0.6:ctx.topic?0:0.3;
+    const res=await llm.generate(messages,{maxTokens:asChat?120:kind?260:320,temperature,onToken:show});
+    where='local';stats=bn((res.generateMs?res.generatedTokens/(res.generateMs/1000):0).toFixed(1))+' টোকেন/সেকেন্ড'+(res.stopped?' · থামানো হয়েছে':'');
+   }
+   if(!where){out.className='out';out.textContent='অনলাইন AI এখন উত্তর দিতে পারছে না ('+cloudReason(cloudError)+')। ওপরের যাচাই করা ব্যাখ্যাটা দেখো, একটু পরে আবার চেষ্টা করো।';return}
+   if(!text.trim()){out.className='out';out.textContent=NOT_FOUND;return}
+   if(asChat){chatHistory.push({role:'user',content:q},{role:'assistant',content:text});chatHistory=chatHistory.slice(-6)}
+   else if(q===lastQ)lastAi=text;
+   // A short answer ending in a question is the AI asking what she meant: her next message completes the question.
+   askedBack=where==='cloud'&&!asChat&&text.trim().length<240&&/[?？]\s*$/.test(text.trim())?q:null;
+   const secs=(performance.now()-t0)/1000;
+   meta.textContent='⏱ '+bn(secs.toFixed(1))+' সেকেন্ড · '+stats+(asChat?'':'\n⚠️ AI ভুল করতে পারে। ওপরের যাচাই করা ব্যাখ্যা বা বইয়ের সঙ্গে মিলিয়ে নাও।');
    meta.style.whiteSpace='pre-line';box.append(meta);
    if(voice.available()&&text.trim())box.append(speakButton(()=>text));
   }catch(e){out.className='out';out.textContent='AI চালানো যায়নি ('+(e?.message||e)+')। সেটিংসে মডেল ও ফোনের ফাঁকা RAM দেখো।'}
   finally{stop.remove();if(speakIt)voice.speak(out.textContent).catch(()=>{})}
  });
+}
+function cloudReason(e){
+ const codes=(e?.tried||[]).map(t=>t.error);
+ return codes.includes('key_rejected')?'key ঠিক নেই, সেটিংসে দেখো':codes.every(c=>c==='limit')&&codes.length?'আজকের ফ্রি সীমা শেষ':codes.some(c=>c==='network'||c==='timeout')?'ইন্টারনেট দুর্বল':'সাময়িক সমস্যা';
 }
 async function bookHits(b,q,{quiet=false}={}){
   const wait=E('p','📚 ৪টি বইয়ের মূল ইংরেজিতে খুঁজছি…','typing');b.append(wait);

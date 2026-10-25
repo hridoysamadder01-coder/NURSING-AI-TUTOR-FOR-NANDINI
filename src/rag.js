@@ -111,7 +111,10 @@ function topicSource(t,use,question){
  if(use==='match')return head+match;
  return head+list(t.points);
 }
-export function buildMessages(question,ctx,{passageWords=90,followUp=null,attempt=0}={}){
+// cloud: the bigger online models (src/cloud-ai.js) also get longer book passages, may ask back when a question is unclear,
+// and see their previous explanation in "বুঝিনি" rounds (unlike the phone model, they do not just copy it).
+export function buildMessages(question,ctx,{passageWords,followUp=null,attempt=0,cloud=false,previous=''}={}){
+ passageWords??=cloud?150:90;
  const style=followUp?followUpStyle(followUp,attempt):null,sources=[];
  if(ctx.topic)sources.push(topicSource(ctx.topic,style?.use||'points',question));
  else for(const p of ctx.passages)sources.push(p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,passageWords));
@@ -120,17 +123,23 @@ export function buildMessages(question,ctx,{passageWords=90,followUp=null,attemp
   '২) তথ্যের বাক্যগুলো যতটা সম্ভব হুবহু ব্যবহার করবে। সংখ্যা, "কম/বেশি", "থেকে/দিকে" একদম বদলাবে না।\n'+
   '৩) অন্য ধরন বলা না থাকলে: প্রথমে এক লাইনে মূল কথাটা বলবে, তারপর ৩–৫টি ছোট পয়েন্ট। ইংরেজি পরিভাষা (যেমন Artery) বন্ধনীতে রাখবে, কিন্তু পুরো বাক্য ইংরেজিতে অনুবাদ করবে না।\n'+
   '৪) "তথ্য"-এ উত্তর না থাকলে শুধু লিখবে: '+NOT_FOUND+'\n'+
-  '৫) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত দেবে না।';
- const user='তথ্য:\n'+(sources.length?sources.join('\n\n'):'(কিছু নেই)')+'\n\nপ্রশ্ন: '+String(question).trim()+(style?'\n\n'+style.say:'');
+  '৫) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত দেবে না।'+
+  (cloud?'\n৬) প্রশ্নটা অস্পষ্ট হলে বা দুই রকম মানে হতে পারলে আন্দাজ করবে না; ছোট একটা প্রশ্ন করে জেনে নেবে সে কোনটা জানতে চায়।':'');
+ let user='তথ্য:\n'+(sources.length?sources.join('\n\n'):'(কিছু নেই)')+'\n\nপ্রশ্ন: '+String(question).trim();
+ if(style){
+  if(cloud&&previous)user+='\n\nআগে তুমি এভাবে বলেছিলে (এটা আবার বলবে না, অন্যভাবে বলবে):\n'+trim(previous,120);
+  user+='\n\n'+style.say;
+ }
  return [{role:'system',content:system},{role:'user',content:user}];
 }
 // Free conversation (no study question): warm, short, no facts, then back to studying.
-export function buildChatMessages(message){
+export function buildChatMessages(message,{history=[]}={}){
  const system='তুমি নন্দিনীর পড়ার বন্ধু, একজন ধৈর্যশীল আর আন্তরিক নার্সিং শিক্ষক। নন্দিনী Diploma Nursing ১ম বর্ষে পড়ে। সে এখন পড়ার প্রশ্ন না করে এমনি কথা বলছে। নিয়ম:\n'+
   '১) "তুমি" বলে ২–৩টি ছোট, উষ্ণ বাক্যে উত্তর দেবে।\n'+
   '২) কোনো তথ্য, সংখ্যা, রোগ, ওষুধ বা চিকিৎসার কথা বলবে না। পড়ার বাইরের কিছু জানতে চাইলে বলবে, তুমি শুধু পড়ায় সাহায্য করো।\n'+
   '৩) মন খারাপ, ক্লান্তি বা ভয়ের কথা বললে আগে সহানুভূতি দেখাবে, দরকার হলে একটু বিরতি নিতে বলবে, আর সাহস দেবে।\n'+
   '৪) শরীর খারাপ, খুব কষ্ট বা নিজের ক্ষতির কথা বললে সঙ্গে সঙ্গে পরিবারের কাউকে বা কাছের বড় কাউকে জানাতে বলবে।\n'+
   '৫) শেষে আলতো করে পড়ায় ফেরাবে, যেমন জিজ্ঞেস করবে আজ কোন টপিকটা কঠিন লাগছে।';
- return [{role:'system',content:system},{role:'user',content:String(message).trim()}];
+ // history: the last few turns of this chat ({role:'user'|'assistant',content}), so a friend remembers what was just said.
+ return [{role:'system',content:system},...history.slice(-4),{role:'user',content:String(message).trim()}];
 }

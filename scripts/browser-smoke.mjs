@@ -146,6 +146,44 @@ try{
  assert.match(await app.locator('#chat .msg.me').last().innerText(),/🎤 হৃদ্‌যন্ত্র কীভাবে কাজ করে/);
  assert.ok(await app.locator('#chat .msg.bot').last().locator('.aibox button',{hasText:'শোনো'}).count());
  await nativeCtx.close();
+ // Strong mode on the website (no phone model): fake Gemini/Groq servers. The first Gemini model is at its free limit,
+ // the second answers; then all of Gemini is down and Groq answers.
+ const webCtx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
+ const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'POST, OPTIONS'};
+ let geminiDown=false;const seen=[];
+ const stream=(chunks)=>chunks.map(c=>'data: '+JSON.stringify(c)+'\n\n').join('');
+ await webCtx.route(/generativelanguage\.googleapis\.com/,async route=>{const r=route.request();if(r.method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+  const body=JSON.parse(r.postData()||'{}');seen.push({url:r.url(),body,key:r.headers()['x-goog-api-key']});
+  const tiny=JSON.stringify(body).includes('শুধু লেখো');
+  if(geminiDown)return route.fulfill({status:503,headers:cors,body:'{}'});
+  if(r.url().includes('gemini-3.5-flash-lite')&&!tiny)return route.fulfill({status:429,headers:{...cors,'retry-after':'60'},body:'{"error":{"code":429}}'});
+  return route.fulfill({status:200,headers:{...cors,'content-type':'text/event-stream'},body:stream([{candidates:[{content:{parts:[{text:tiny?'ঠিক আছে':'শক্তিশালী উত্তর: ধমনি রক্ত '}]}}]},{candidates:[{content:{parts:[{text:tiny?'':'হৃদ্‌যন্ত্র থেকে দূরে নেয়।'}]}}]}])})});
+ await webCtx.route(/api\.groq\.com/,async route=>{const r=route.request();if(r.method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+  seen.push({url:r.url(),body:JSON.parse(r.postData()||'{}'),auth:r.headers()['authorization']});
+  return route.fulfill({status:200,headers:{...cors,'content-type':'text/event-stream'},body:stream([{choices:[{delta:{content:'Groq-এর উত্তর।'}}]}])+'data: [DONE]\n\n'})});
+ const web=await webCtx.newPage();web.on('pageerror',e=>errors.push(String(e)));
+ await web.goto(base+'/settings.html#cloud',{waitUntil:'networkidle'});
+ await web.locator('#geminiKey').fill('AIza-test-key');await web.locator('#groqKey').fill('gsk_test');
+ await web.locator('#cloudSave').click();assert.match(await web.locator('#cloudResult').innerText(),/সেভ হয়েছে/);
+ await web.locator('#cloudTest').click();
+ await web.waitForFunction(()=>/Gemini[^]*কাজ করছে[^]*Groq[^]*কাজ করছে/.test(document.querySelector('#cloudResult')?.textContent||''),null,{timeout:10000});
+ await web.goto(base+'/ask.html',{waitUntil:'networkidle'});
+ await web.locator('#q').fill('ধমনি আর শিরার পার্থক্য কী?');await web.locator('#askForm button[type=submit]').click();
+ await web.waitForFunction(()=>document.querySelector('.aibox .meta')&&document.querySelector('.aibox .out')?.textContent.includes('দূরে নেয়'),null,{timeout:10000});
+ assert.match(await web.locator('.aibox b').innerText(),/শক্তিশালী AI · Gemini 3\.1 Flash-Lite/);
+ const asked=seen.filter(s=>s.body?.systemInstruction);
+ assert.ok(asked.length>=2&&asked[0].url.includes('gemini-3.5-flash-lite')&&asked.at(-1).url.includes('gemini-3.1-flash-lite'),'429 moved the question to the next model');
+ assert.equal(asked[0].key,'AIza-test-key');assert.match(asked[0].body.systemInstruction.parts[0].text,/আন্দাজ করবে না/);
+ assert.match(asked[0].body.contents[0].parts[0].text,/ধমনি \(Artery\) হৃদ্‌যন্ত্র থেকে রক্ত দূরে নেয়/,'the cloud model gets the verified topic text');
+ geminiDown=true;
+ await web.locator('#q').fill('Osmosis কী?');await web.locator('#askForm button[type=submit]').click();
+ await web.waitForFunction(()=>document.querySelectorAll('.aibox .meta').length===2,null,{timeout:10000});
+ assert.match(await web.locator('.aibox b').last().innerText(),/Groq/);assert.match(await web.locator('.aibox .out').last().innerText(),/Groq-এর উত্তর/);
+ assert.equal(seen.at(-1).auth,'Bearer gsk_test');
+ await web.locator('#q').fill('বাংলাদেশের ক্রিকেট অধিনায়ক কে?');await web.locator('#askForm button[type=submit]').click();
+ await web.waitForFunction(()=>[...document.querySelectorAll('.aibox .out')].some(o=>o.textContent.includes('পাইনি')),null,{timeout:20000});
+ const cloudCalls=seen.length;await web.waitForTimeout(300);assert.equal(seen.length,cloudCalls,'off-topic questions do not reach the online AI either');
+ await webCtx.close();
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines)');
+ console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq (fake servers)');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}
