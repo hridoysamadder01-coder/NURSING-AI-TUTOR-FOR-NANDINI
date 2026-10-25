@@ -42,7 +42,7 @@ test('repeated "বুঝিনি" never asks the model the same thing twice',(
 test('every prompt says who the Tutor is; only the online models get everyday comparisons and the beyond-notes rule',()=>{
  const ctx=retrieve('Osmosis কী?',index);
  const local=buildMessages('Osmosis কী?',ctx)[0].content,online=buildMessages('Osmosis কী?',ctx,{cloud:true})[0].content,chat=buildChatMessages('hi')[0].content;
- for(const s of [local,online,chat])assert.match(s,/তোমার নাম শায়নি[^]*হৃদয় সামাদ্দার স্যার/);
+ for(const s of [local,online,chat]){assert.match(s,/তোমার নাম শায়নি[^]*হৃদয় সমাদ্দার স্যার/);assert.match(s,/নিজে থেকে নিজের নাম/)}
  assert.match(online,/বাস্তব উদাহরণ/);assert.doesNotMatch(local,/বাস্তব উদাহরণ/);
  assert.match(online,/সাধারণ জ্ঞান থেকে বলছি/);assert.ok(local.includes(NOT_FOUND));
 });

@@ -194,7 +194,7 @@ try{
  await web.waitForFunction(()=>document.querySelectorAll('.aibox .meta').length===3,null,{timeout:20000});
  const offTopic=seen.at(-1).body;assert.match(offTopic.messages[0].content,/বিষয়ের বাইরে হলে[^]*পড়ায় ফেরাবে/);assert.match(offTopic.messages[1].content,/\(কিছু নেই\)/);
  await web.locator('#q').fill('তোমাকে মূলত তৈরি করেছে কে?');await web.locator('#askForm button[type=submit]').click();
- await web.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('হৃদয় সামাদ্দার স্যার'));
+ await web.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('হৃদয় সমাদ্দার স্যার'));
  // Talk mode with a fake Gemini Live server: setup, microphone audio, a lookup_nursing tool call answered from the
  // verified notes, spoken audio back, transcripts on screen and kept in the chat.
  const live={setup:null,setups:[],audio:0,toolResult:null,quota:false};
@@ -218,7 +218,7 @@ try{
  assert.deepEqual(live.setup.contextWindowCompression,{slidingWindow:{}},'long sessions are allowed');
  for(let i=0;i<50&&live.setups.length<2;i++)await web.waitForTimeout(100);
  assert.equal(live.setups.length,2,'after goAway the app reconnects');assert.deepEqual(live.setups[1].sessionResumption,{handle:'h1'},'and resumes the same conversation');
- assert.match(live.setup.systemInstruction.parts[0].text,/শায়নি[^]*হৃদয় সামাদ্দার স্যার/);assert.match(await web.locator('#talkEngine').innerText(),/আজ/);
+ assert.match(live.setup.systemInstruction.parts[0].text,/শায়নি[^]*হৃদয় সমাদ্দার স্যার/);assert.match(await web.locator('#talkEngine').innerText(),/আজ/);
  assert.match(live.toolResult.response.result,/ধমনি \(Artery\) হৃদ্‌যন্ত্র থেকে রক্ত দূরে নেয়/,'facts come from the verified notes');
  assert.match(await web.locator('#capUser').innerText(),/ধমনি আর শিরার পার্থক্য/);
  await web.locator('#talkEnd').click();assert.ok(await web.locator('#talkView').isHidden());
