@@ -40,7 +40,8 @@ const FILLER=new Set(tokens('মামা mama ভাই bhai আপু apu ন�
 // Checked in this order, so "how are you" is "how" and "good night" is "bye".
 const CHAT=[
  ['thanks','ধন্যবাদ শুকরিয়া thanks thank thanku thankyou thx tnx ty dhonnobad dhonnobaad'],
- ['who','তুমি তোমার কে নাম tumi tomar ke nam who your name'],
+ ['maker','তৈরি বানিয়েছে বানিয়েছেন বানাইছে বানাইসে বানালো করেছে করেছেন মূলত toiri tairi banaise banaiche banailo banaisen creator create created made make developer owner মালিক'],
+ ['who','তুমি তোমার তোমাকে কে নাম tumi tomar tomake ke nam who your name'],
  ['how','কেমন আছো আছেন আছ kemon acho achen how'],
  ['friend','বন্ধু bondhu bondu friend dost দোস্ত'],
  ['bye','bye বাই আল্লাহ হাফেজ allah hafez খোদা khoda টাটা tata night নাইট শুভরাত্রি রাত্রি'],

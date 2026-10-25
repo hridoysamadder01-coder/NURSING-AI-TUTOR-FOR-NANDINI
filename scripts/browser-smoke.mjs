@@ -189,18 +189,23 @@ try{
  await web.waitForFunction(()=>document.querySelectorAll('.aibox .meta').length===2,null,{timeout:10000});
  assert.match(await web.locator('.aibox b').last().innerText(),/Groq/);assert.match(await web.locator('.aibox .out').last().innerText(),/Groq-এর উত্তর/);
  assert.equal(seen.at(-1).auth,'Bearer gsk_test');
+ // Not in the notes: the online model decides (her subjects from general knowledge, saying so; others back to study).
  await web.locator('#q').fill('বাংলাদেশের ক্রিকেট অধিনায়ক কে?');await web.locator('#askForm button[type=submit]').click();
- await web.waitForFunction(()=>[...document.querySelectorAll('.aibox .out')].some(o=>o.textContent.includes('পাইনি')),null,{timeout:20000});
- const cloudCalls=seen.length;await web.waitForTimeout(300);assert.equal(seen.length,cloudCalls,'off-topic questions do not reach the online AI either');
+ await web.waitForFunction(()=>document.querySelectorAll('.aibox .meta').length===3,null,{timeout:20000});
+ const offTopic=seen.at(-1).body;assert.match(offTopic.messages[0].content,/বিষয়ের বাইরে হলে[^]*পড়ায় ফেরাবে/);assert.match(offTopic.messages[1].content,/\(কিছু নেই\)/);
+ await web.locator('#q').fill('তোমাকে মূলত তৈরি করেছে কে?');await web.locator('#askForm button[type=submit]').click();
+ await web.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('হৃদয় সামাদ্দার স্যার'));
  // Talk mode with a fake Gemini Live server: setup, microphone audio, a lookup_nursing tool call answered from the
  // verified notes, spoken audio back, transcripts on screen and kept in the chat.
- const live={setup:null,audio:0,toolResult:null};
+ const live={setup:null,setups:[],audio:0,toolResult:null};
  await webCtx.routeWebSocket(/BidiGenerateContent/,ws=>{ws.onMessage(raw=>{const m=JSON.parse(String(raw));
-  if(m.setup){live.setup=m.setup;ws.send(JSON.stringify({setupComplete:{}}));return}
+  if(m.setup){live.setup??=m.setup;live.setups.push(m.setup);ws.send(JSON.stringify({setupComplete:{}}));if(live.setups.length===1)ws.send(JSON.stringify({sessionResumptionUpdate:{resumable:true,newHandle:'h1'}}));return}
   if(m.realtimeInput?.audio){live.audio++;if(live.audio===4){ws.send(JSON.stringify({serverContent:{inputTranscription:{text:'ধমনি আর শিরার পার্থক্য কী?'}}}));ws.send(JSON.stringify({toolCall:{functionCalls:[{id:'c1',name:'lookup_nursing',args:{query:'ধমনি আর শিরার পার্থক্য'}}]}}))}}
   if(m.toolResponse){live.toolResult=m.toolResponse.functionResponses[0];
    ws.send(JSON.stringify({serverContent:{modelTurn:{parts:[{inlineData:{mimeType:'audio/pcm;rate=24000',data:Buffer.alloc(4800).toString('base64')}}]},outputTranscription:{text:'ধমনি রক্ত হৃদ্‌যন্ত্র থেকে দূরে নেয়। বুঝেছ?'}}}));
-   ws.send(JSON.stringify({serverContent:{turnComplete:true}}))}
+   ws.send(JSON.stringify({serverContent:{turnComplete:true}}));
+   // The server's ~10 minute connection limit: it warns, and the app must continue the same conversation.
+   setTimeout(()=>ws.send(JSON.stringify({goAway:{timeLeft:'5s'}})),200)}
  })});
  await web.goto(base+'/ask.html',{waitUntil:'networkidle'});
  assert.ok(await web.locator('#talk').isVisible(),'talk mode button is shown with a Gemini key');
@@ -209,6 +214,10 @@ try{
  assert.equal(live.setup.model,'models/gemini-3.8-live');assert.deepEqual(live.setup.generationConfig.responseModalities,['AUDIO']);
  assert.equal(live.setup.tools[0].functionDeclarations[0].name,'lookup_nursing');assert.match(live.setup.systemInstruction.parts[0].text,/lookup_nursing/);
  assert.ok(live.audio>=4,'microphone audio is streamed');
+ assert.deepEqual(live.setup.contextWindowCompression,{slidingWindow:{}},'long sessions are allowed');
+ for(let i=0;i<50&&live.setups.length<2;i++)await web.waitForTimeout(100);
+ assert.equal(live.setups.length,2,'after goAway the app reconnects');assert.deepEqual(live.setups[1].sessionResumption,{handle:'h1'},'and resumes the same conversation');
+ assert.match(live.setup.systemInstruction.parts[0].text,/শায়নি[^]*হৃদয় সামাদ্দার স্যার/);assert.match(await web.locator('#talkEngine').innerText(),/আজ/);
  assert.match(live.toolResult.response.result,/ধমনি \(Artery\) হৃদ্‌যন্ত্র থেকে রক্ত দূরে নেয়/,'facts come from the verified notes');
  assert.match(await web.locator('#capUser').innerText(),/ধমনি আর শিরার পার্থক্য/);
  await web.locator('#talkEnd').click();assert.ok(await web.locator('#talkView').isHidden());

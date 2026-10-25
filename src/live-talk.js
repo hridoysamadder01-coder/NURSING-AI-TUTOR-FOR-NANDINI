@@ -1,13 +1,14 @@
 // Gemini Live (WebSocket, voice in → voice out) for the Tutor's talk mode. Protocol only: audio capture and playback live
 // in src/talk-audio.js, so the same code also runs in Node for scripts/cloud-live-check.mjs.
 // Docs: ai.google.dev/gemini-api/docs/live-api (16 kHz PCM in, 24 kHz PCM out, Bengali "bn" supported, 15 min per session).
+import {IDENTITY,EXAMPLES,SUBJECTS_BN} from './persona.js';
 export const LIVE_MODEL='gemini-3.8-live';
 export const LIVE_URL='wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
 export const LOOKUP={name:'lookup_nursing',description:'Search Nandini\'s verified nursing notes and Open RN nursing textbooks. Call this before saying any nursing, anatomy, microbiology or science fact. Returns the text to answer from, or NOT_FOUND.',
  parameters:{type:'OBJECT',properties:{query:{type:'STRING',description:'The question or topic, in Bangla or English, e.g. "ধমনি আর শিরার পার্থক্য"'}},required:['query']}};
-export const TALK_SYSTEM='তুমি নন্দিনীর বন্ধুর মতো, ধৈর্যশীল নার্সিং শিক্ষক। নন্দিনী Diploma Nursing ১ম বর্ষে পড়ে। তোমরা কণ্ঠে কথা বলছ, তাই:\n'+
+export const TALK_SYSTEM=IDENTITY+' তুমি নন্দিনীর বন্ধুর মতো, ধৈর্যশীল নার্সিং শিক্ষক। নন্দিনী Diploma Nursing ১ম বর্ষে পড়ে। '+EXAMPLES+' তোমরা কণ্ঠে কথা বলছ, তাই:\n'+
  '১) সবসময় বাংলায়, "তুমি" বলে, আন্তরিক সুরে, ছোট ছোট বাক্যে বলবে। একবারে ২–৪টি বাক্য, তারপর থেমে জিজ্ঞেস করবে বুঝেছে কি না।\n'+
- '২) নার্সিং, শরীর, রোগ, জীবাণু বা বিজ্ঞানের কোনো তথ্য বলার আগে অবশ্যই lookup_nursing দিয়ে খুঁজবে, আর শুধু সেখানে যা পাবে তা থেকেই বলবে। NOT_FOUND পেলে বলবে বইয়ে পাওয়া যায়নি, শিক্ষককে জিজ্ঞেস করতে।\n'+
+ '২) নার্সিং, শরীর, রোগ, জীবাণু, বিজ্ঞান, কম্পিউটার বা ইংরেজির কোনো তথ্য বলার আগে অবশ্যই lookup_nursing দিয়ে খুঁজবে, আর যা পাবে সেটাই আগে ব্যবহার করবে; তার সঙ্গে মেলে না এমন কিছু বলবে না। NOT_FOUND পেলে: প্রশ্নটা তার বিষয়গুলোর ('+SUBJECTS_BN+') মধ্যে হলে বলবে "এটা অ্যাপের বইয়ে নেই, সাধারণ জ্ঞান থেকে বলছি", সহজ করে বোঝাবে আর শিক্ষকের সঙ্গে মিলিয়ে নিতে বলবে; বাইরে হলে আলতো করে পড়ায় ফেরাবে।\n'+
  '৩) কী জানতে চায় পরিষ্কার না হলে আন্দাজ করবে না; ছোট করে জিজ্ঞেস করে নেবে।\n'+
  '৪) না বুঝলে আগের মতো করে না বলে অন্যভাবে বলবে: উদাহরণ দিয়ে, ধাপে ধাপে, বা ছোট প্রশ্ন করে।\n'+
  '৫) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত বলবে না।\n'+
@@ -16,8 +17,10 @@ export const TALK_SYSTEM='তুমি নন্দিনীর বন্ধু�
 // One conversation. Events: onState('connecting'|'ready'|'closed'), onAudio(base64 pcm24k), onUserText(t), onAiText(t),
 // onTurnEnd(), onInterrupted(), onError(code). lookup(query) answers the model's tool calls.
 export class LiveTalk{
- constructor({key,model=LIVE_MODEL,system=TALK_SYSTEM,voice='Aoede',lookup,WebSocketImpl=globalThis.WebSocket,...events}){
-  Object.assign(this,{key,model,system,voice,lookup,WebSocketImpl,events});this.ws=null;this.ready=false;
+ // resume: a handle from an earlier connection (sessionResumptionUpdate), so the conversation continues after a
+ // reconnect; long: context window compression, which lets an audio session run past 15 minutes.
+ constructor({key,model=LIVE_MODEL,system=TALK_SYSTEM,voice='Aoede',lookup,WebSocketImpl=globalThis.WebSocket,resume=null,long=true,...events}){
+  Object.assign(this,{key,model,system,voice,lookup,WebSocketImpl,events,handle:resume,long});this.ws=null;this.ready=false;
  }
  emit(name,...args){try{this.events[name]?.(...args)}catch{}}
  connect(){
@@ -31,7 +34,8 @@ export class LiveTalk{
     generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:this.voice}}}},
     systemInstruction:{parts:[{text:this.system}]},
     tools:this.lookup?[{functionDeclarations:[LOOKUP]}]:[],
-    inputAudioTranscription:{},outputAudioTranscription:{}}}));
+    inputAudioTranscription:{},outputAudioTranscription:{},
+    ...(this.long?{contextWindowCompression:{slidingWindow:{}},sessionResumption:this.handle?{handle:this.handle}:{}}:{})}}));
    ws.onmessage=async ev=>{
     let msg;try{msg=JSON.parse(typeof ev.data==='string'?ev.data:await blobText(ev.data))}catch{return}
     if(msg.setupComplete){clearTimeout(timer);this.ready=true;settled=true;this.emit('onState','ready');resolve(this);return}
@@ -44,7 +48,9 @@ export class LiveTalk{
      for(const p of sc.modelTurn?.parts||[])if(p.inlineData?.data)this.emit('onAudio',p.inlineData.data);
      if(sc.turnComplete)this.emit('onTurnEnd');
     }
-    if(msg.goAway)this.emit('onError','session_ending');
+    if(msg.sessionResumptionUpdate?.resumable&&msg.sessionResumptionUpdate.newHandle)this.handle=msg.sessionResumptionUpdate.newHandle;
+    // The server closes each connection after about 10 minutes and warns first; the caller reconnects with the handle.
+    if(msg.goAway)this.emit('onGoAway',msg.goAway.timeLeft);
    };
    ws.onerror=()=>fail('network');
    ws.onclose=ev=>{clearTimeout(timer);this.ready=false;

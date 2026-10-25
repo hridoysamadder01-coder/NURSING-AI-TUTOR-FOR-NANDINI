@@ -2,6 +2,7 @@
 // Runs in the WebView (and in Node for tests); the retrieved text is what the local model may use.
 import {askTutor,isStopword,relevantPoints,tokens as bnTokens} from './tutor-core.js';
 import {TOPICS} from './easy-topics.js';
+import {IDENTITY,EXAMPLES,BEYOND_NOTES} from './persona.js';
 const EN_STOP=new Set(('a an the and or of to in on at for with by from is are was were be been being it its this that these those as can may '+
  'will would should could not no but if then than so such into about over under between their there they them he she his her you your we our '+
  'i me my what which who whom why how when where do does did done has have had also more most other some any each per via eg ie use used using').split(' '));
@@ -120,12 +121,12 @@ export function buildMessages(question,ctx,{passageWords,followUp=null,attempt=0
  if(ctx.topic)sources.push(topicSource(ctx.topic,style?.use||'points',question));
  // The phone model gets either the Bangla topic or book text (more English pulls it into English); online models get both.
  if(!ctx.topic||cloud)for(const p of ctx.passages)sources.push(p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,passageWords));
- const system='তুমি নন্দিনীর বন্ধুর মতো, ধৈর্যশীল নার্সিং শিক্ষক। তাকে "তুমি" বলে আন্তরিক, সহজ কথ্য বাংলায় বলবে। নিয়ম:\n'+
+ const system=IDENTITY+' তুমি নন্দিনীর বন্ধুর মতো, ধৈর্যশীল নার্সিং শিক্ষক। তাকে "তুমি" বলে আন্তরিক, সহজ কথ্য বাংলায় বলবে।'+(cloud?' '+EXAMPLES:'')+' নিয়ম:\n'+
   '১) শুধু "তথ্য" অংশে যা লেখা আছে, তা থেকেই উত্তর দেবে। নিজের থেকে কোনো তথ্য যোগ করবে না।\n'+
   '২) তথ্যের বাক্যগুলো যতটা সম্ভব হুবহু ব্যবহার করবে। সংখ্যা, "কম/বেশি", "থেকে/দিকে" একদম বদলাবে না।\n'+
   (spoken?'৩) এটা কণ্ঠে পড়ে শোনানো হবে: ২–৪টি ছোট, সহজ বাক্যে বলবে; কোনো তালিকা, চিহ্ন বা বন্ধনী লিখবে না; শেষে জিজ্ঞেস করবে বুঝেছে কি না।\n'
    :'৩) অন্য ধরন বলা না থাকলে: প্রথমে এক লাইনে মূল কথাটা বলবে, তারপর ৩–৫টি ছোট পয়েন্ট। ইংরেজি পরিভাষা (যেমন Artery) বন্ধনীতে রাখবে, কিন্তু পুরো বাক্য ইংরেজিতে অনুবাদ করবে না।\n')+
-  '৪) "তথ্য"-এ উত্তর না থাকলে শুধু লিখবে: '+NOT_FOUND+'\n'+
+  (cloud?'৪) '+BEYOND_NOTES+'\n':'৪) "তথ্য"-এ উত্তর না থাকলে শুধু লিখবে: '+NOT_FOUND+'\n')+
   '৫) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত দেবে না।'+
   (cloud?'\n৬) প্রশ্নটা অস্পষ্ট হলে বা দুই রকম মানে হতে পারলে আন্দাজ করবে না; ছোট একটা প্রশ্ন করে জেনে নেবে সে কোনটা জানতে চায়।':'');
  let user='তথ্য:\n'+(sources.length?sources.join('\n\n'):'(কিছু নেই)')+'\n\nপ্রশ্ন: '+String(question).trim();
@@ -137,7 +138,7 @@ export function buildMessages(question,ctx,{passageWords,followUp=null,attempt=0
 }
 // Free conversation (no study question): warm, short, no facts, then back to studying.
 export function buildChatMessages(message,{history=[]}={}){
- const system='তুমি নন্দিনীর পড়ার বন্ধু, একজন ধৈর্যশীল আর আন্তরিক নার্সিং শিক্ষক। নন্দিনী Diploma Nursing ১ম বর্ষে পড়ে। সে এখন পড়ার প্রশ্ন না করে এমনি কথা বলছে। নিয়ম:\n'+
+ const system=IDENTITY+' তুমি নন্দিনীর পড়ার বন্ধু, একজন ধৈর্যশীল আর আন্তরিক নার্সিং শিক্ষক। নন্দিনী Diploma Nursing ১ম বর্ষে পড়ে। সে এখন পড়ার প্রশ্ন না করে এমনি কথা বলছে। নিয়ম:\n'+
   '১) "তুমি" বলে ২–৩টি ছোট, উষ্ণ বাক্যে উত্তর দেবে।\n'+
   '২) কোনো তথ্য, সংখ্যা, রোগ, ওষুধ বা চিকিৎসার কথা বলবে না। পড়ার বাইরের কিছু জানতে চাইলে বলবে, তুমি শুধু পড়ায় সাহায্য করো।\n'+
   '৩) মন খারাপ, ক্লান্তি বা ভয়ের কথা বললে আগে সহানুভূতি দেখাবে, দরকার হলে একটু বিরতি নিতে বলবে, আর সাহস দেবে।\n'+

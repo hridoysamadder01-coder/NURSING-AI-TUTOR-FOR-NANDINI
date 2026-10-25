@@ -59,7 +59,7 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 <body>
 <header class="hero"><div class="wrap">
 <div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">অফলাইন · সঙ্গে সঙ্গে উত্তর</span></div>
-<h1>🤖 নন্দিনীর Tutor</h1><p>বাংলা বা ইংরেজিতে প্রশ্ন লেখো। উত্তর আসবে ফোনের ভেতর থেকেই, ইন্টারনেট লাগবে না।</p>
+<h1>🤖 শায়নি · নন্দিনীর Tutor</h1><p>বাংলা বা ইংরেজিতে প্রশ্ন লেখো। উত্তর আসবে ফোনের ভেতর থেকেই, ইন্টারনেট লাগবে না।</p>
 </div></header>
 <main>
 <div id="chat" aria-live="polite"></div>
@@ -111,7 +111,8 @@ const CHAT_REPLY={
  greet:['হ্যালো নন্দিনী! 😊 আজ কোন টপিকটা কঠিন লাগছে? বাংলা, ইংরেজি বা Banglish-এ প্রশ্ন লেখো, আমি সহজ করে বুঝিয়ে দেবো।','আবার দেখা হলো! 🌸 চলো, আজ একটা টপিক একসাথে জয় করি। কী দিয়ে শুরু করবে?','হাই! 👋 যা কঠিন লাগে নির্দ্বিধায় জিজ্ঞেস করো, যতবার দরকার ততবার বোঝাবো।'],
  how:['আমি ভালো আছি, ধন্যবাদ! 😊 তুমি কেমন আছো? চলো, আজ একটা টপিক একসাথে শিখি।','তোমার সাথে পড়তে পারলে আমি সবসময় ভালো থাকি! 😄 তোমার দিন কেমন যাচ্ছে?'],
  friend:['হ্যাঁ, আমি তোমার পড়ার বন্ধু! 😊 যতবার দরকার, ততবার বুঝিয়ে দেবো। কোন টপিক দিয়ে শুরু করবে?','বন্ধু সবসময় পাশে আছে 🤝 যেটা কঠিন লাগে জিজ্ঞেস করো, আমি একটুও বিরক্ত হবো না।'],
- who:['আমি নন্দিনীর Tutor 🤖 তোমার ৬টি বিষয়ের কঠিন টপিক সহজ বাংলায় বুঝিয়ে দিই। উত্তর দিই অ্যাপের যাচাই করা ব্যাখ্যা আর বই থেকে।','আমি তোমার পড়ার বন্ধু Tutor 😊 না বোঝা পর্যন্ত নানাভাবে বুঝিয়ে দেওয়াই আমার কাজ।'],
+ who:['আমার নাম শায়নি 😊 হৃদয় সামাদ্দার স্যার শুধুমাত্র তোমার পড়ালেখায় সাহায্যের জন্য আমাকে তৈরি করেছেন। তোমার ৬টি বিষয়ের যেকোনো টপিক সহজ করে বুঝিয়ে দেবো।','আমি শায়নি, তোমার পড়ার বন্ধু 🤖 না বোঝা পর্যন্ত নানাভাবে বুঝিয়ে দেওয়াই আমার কাজ।'],
+ maker:['আমাকে হৃদয় সামাদ্দার স্যার তৈরি করেছেন, শুধুমাত্র তোমার পড়ালেখায় সাহায্যের জন্য 😊 আমার নাম শায়নি। বলো, আজ কোন টপিকটা বুঝতে চাও?','হৃদয় সামাদ্দার স্যার আমাকে বানিয়েছেন, শুধু তোমার পড়ার জন্য 🌸 তাই যা কঠিন লাগে নির্দ্বিধায় জিজ্ঞেস করো।'],
  thanks:['তোমাকেও ধন্যবাদ! 🌸 আরো কিছু জানতে চাইলে নির্দ্বিধায় জিজ্ঞেস করো।','এটা তো আমার আনন্দ! 😊 তুমি খুব ভালো করছ, এভাবেই চালিয়ে যাও।'],
  ok:['দারুণ! 🎉 চাইলে MCQ দিয়ে নিজেকে একবার যাচাই করে নাও।','বাহ, খুব ভালো! 👏 একটা ছোট MCQ দিয়ে পাকা করে নেবে?','চমৎকার! ⭐ পরের টপিকে যাবে, নাকি এটাই আরেকবার ঝালিয়ে নেবে?'],
  bye:['ঠিক আছে, ভালো থেকো! 🌙 পড়ার ফাঁকে বিশ্রামও নিও। আবার দেখা হবে।','বিদায় বন্ধু! 👋 আজ যা শিখলে সেটা ঘুমানোর আগে একবার মনে করে নিও।']};
@@ -128,7 +129,7 @@ function chatReply(kind){
  const b=bubble('bot');b.append(E('p',pick(CHAT_REPLY[kind],kind)));
  const last=lastQ&&askTutor(lastQ);
  if(kind==='ok'&&last?.confident){const a=E('a','📝 '+last.topics[0].topic.title+' · MCQ','btn sm soft');a.href='./topics.html#'+last.topics[0].topic.id;b.append(a)}
- else if(kind==='greet'||kind==='how'||kind==='who'||kind==='friend')suggestions(SUGGEST.slice(0,3),b);
+ else if(kind==='greet'||kind==='how'||kind==='who'||kind==='maker'||kind==='friend')suggestions(SUGGEST.slice(0,3),b);
  return b;
 }
 // A small MCQ inside the chat: tap an option to see if it is right.
@@ -156,7 +157,7 @@ function followUp(kind,auto){
  quickReplies(b);
  return b;
 }
-function greet(){const b=bubble('bot');b.append(E('p','আমি নন্দিনীর Tutor 🤖 তোমার ৬ বিষয়ের যেকোনো কঠিন টপিক নিয়ে প্রশ্ন করো। বাংলা, ইংরেজি বা Banglish, সব চলবে।'));suggestions(SUGGEST,b)}
+function greet(){const b=bubble('bot');b.append(E('p','আমি শায়নি, তোমার পড়ার Tutor 🤖 তোমার ৬ বিষয়ের যেকোনো কঠিন টপিক নিয়ে প্রশ্ন করো। বাংলা, ইংরেজি বা Banglish, সব চলবে।'));suggestions(SUGGEST,b)}
 function topicCard(b,t){
  const s=subjectByCode(t.subject);b.append(E('span',(s?.emoji||'📘')+' '+(s?.name||''),'chip'),E('h3',t.title),E('span',t.en,'en'),E('p',t.gist,'gist'));
  const ul=E('ul');for(const p of t.points.slice(0,4))ul.append(E('li',p));b.append(ul);
@@ -263,7 +264,7 @@ let chatHistory=[],lastAi='',askedBack=null;
 function localAi(b,q,mode=null){
  const speakIt=voiceTurn&&voice.autoSpeak();
  // mode: null (new question), {kind,attempt} ("বুঝিনি" rounds) or {chat:true} (talking, not asking).
- const box=E('div',undefined,'aibox'),title=E('b','✨ AI শিক্ষক'),out=E('div','অপেক্ষা করছি…','out typing'),meta=E('div','','meta');
+ const box=E('div',undefined,'aibox'),title=E('b','✨ শায়নি'),out=E('div','অপেক্ষা করছি…','out typing'),meta=E('div','','meta');
  box.append(title,out);b.append(box);
  const ctl=new AbortController(),stop=E('button','⏹ থামাও','btn sm ghost');stop.type='button';stop.onclick=()=>{ctl.abort();llm.stop()};
  aiChain=aiChain.then(async()=>{
@@ -273,7 +274,9 @@ function localAi(b,q,mode=null){
    const chat=mode?.chat?'personal':!mode&&chatLike(q);
    if(!ctx.topic&&chat!=='personal'){out.textContent='📚 বই প্রস্তুত হচ্ছে…';if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));ctx=retrieve(q,ragIndex)}
    const asChat=!ctx.topic&&(chat==='personal'||(chat==='short'&&!ctx.grounded));
-   if(!asChat&&!ctx.grounded){out.className='out';out.textContent=NOT_FOUND;return}
+   // Not in the notes or books: the phone model must not guess, but the online models may explain within her six
+   // subjects (saying it is not from the app's books) and steer other questions back to studying.
+   if(!asChat&&!ctx.grounded&&!cloud.ready()){out.className='out';out.textContent=NOT_FOUND;return}
    const kind=mode?.kind||null,attempt=mode?.attempt||0;
    let text='',where='',stats='',cloudError=null;const t0=performance.now();
    const show=t=>{text+=t;out.className='out';out.textContent=text};
@@ -282,12 +285,13 @@ function localAi(b,q,mode=null){
     out.textContent='🌐 শক্তিশালী AI ভাবছে…';
     const messages=asChat?buildChatMessages(q,{history:chatHistory}):buildMessages(q,ctx,{followUp:kind,attempt,cloud:true,previous:kind&&q===lastQ?lastAi:''});
     try{
-     const r=await cloud.generate(messages,{onToken:show,signal:ctl.signal,maxTokens:asChat?300:kind?700:900,temperature:asChat?0.8:kind?0.6:0.3,onRoute:route=>{title.textContent='✨ শক্তিশালী AI · '+route.label+' (অনলাইন)'}});
+     const r=await cloud.generate(messages,{onToken:show,signal:ctl.signal,maxTokens:asChat?300:kind?700:900,temperature:asChat?0.8:kind?0.6:0.3,onRoute:route=>{title.textContent='✨ শায়নি · শক্তিশালী AI · '+route.label+' (অনলাইন)'}});
      where='cloud';stats=r.route.label;
     }catch(e){if(e.message==='stopped'||e.message==='cut_off'){where='cloud';stats=e.message==='stopped'?'থামানো হয়েছে':'সংযোগ কেটে গেছে'}else cloudError=e}
    }
+   if(!where&&!asChat&&!ctx.grounded){out.className='out';out.textContent=NOT_FOUND;return}
    if(!where&&localModel){
-    title.textContent='✨ AI শিক্ষক · '+localModel.label+' (ফোনের ভেতরে)';
+    title.textContent='✨ শায়নি · '+localModel.label+' (ফোনের ভেতরে)';
     out.className='out typing';out.textContent=cloudError?'🌐 অনলাইন AI এখন পাওয়া গেল না, ফোনের AI দিয়ে বলছি…':'🧠 AI চালু হচ্ছে… (প্রথমবার একটু সময় লাগে)';
     await llm.load(localModel);
     if(!text)out.textContent='ভাবছি…';
@@ -362,7 +366,7 @@ $('mic').onclick=async()=>{
 // hears her and answers by voice, looking facts up in the verified notes and books (lookup_nursing). Otherwise the phone
 // listens, the Tutor answers (online text AI, phone model or the verified card) and the phone's voice speaks, in a loop.
 const T={view:$('talkView'),state:$('talkState'),user:$('capUser'),ai:$('capAi'),engine:$('talkEngine'),orb:$('orb'),mute:$('talkMute')};
-const TALK_STATE={connecting:'চালু হচ্ছে…',listening:'শুনছি… বলো 🙂',thinking:'ভাবছি…',speaking:'বলছি… থামাতে বলটা চাপো',paused:'বলটা চাপলে আবার শুনব',muted:'মাইক বন্ধ আছে'};
+const TALK_STATE={connecting:'শায়নি আসছে…',listening:'শায়নি শুনছে… বলো 🙂',thinking:'শায়নি ভাবছে…',speaking:'শায়নি বলছে… থামাতে বলটা চাপো',paused:'বলটা চাপলে আবার শুনব',muted:'মাইক বন্ধ আছে'};
 let talk=null;
 function talkState(s){T.view.dataset.state=s;T.state.textContent=TALK_STATE[s]||s}
 function liveError(code){return ({key_rejected:'Gemini key কাজ করছে না। সেটিংসে key দেখো।',limit:'Gemini Live-এর আজকের ফ্রি সীমা শেষ।',network:'ইন্টারনেট দুর্বল, Gemini Live-এ যোগাযোগ হলো না।',timeout:'Gemini Live সাড়া দিচ্ছে না।'})[code]||'Gemini Live চালু হলো না ('+code+')।'}
@@ -383,27 +387,52 @@ function endTalk(){talk?.stop();talk=null;stopSaying();T.view.hidden=true}
 $('talkEnd').onclick=endTalk;$('talkClose').onclick=endTalk;
 T.orb.onclick=()=>talk?.tap();
 T.mute.onclick=()=>{if(!talk)return;const m=!talk.muted;talk.setMuted(m);T.mute.textContent=m?'🎙️ মাইক চালু':'🔇 মাইক বন্ধ'};
-async function startLive(player,retries=1){
+// Minutes of Gemini Live talk today, kept on the phone, so the real free allowance can be seen over days.
+const USAGE='nandini-talk-usage';
+function talkUsage(addSeconds=0){
+ const today=new Date().toISOString().slice(0,10);let u={day:today,seconds:0};
+ try{const v=JSON.parse(localStorage.getItem(USAGE)||'null');if(v?.day===today)u=v}catch{}
+ u.seconds+=addSeconds;try{localStorage.setItem(USAGE,JSON.stringify(u))}catch{}
+ return Math.round(u.seconds/60);
+}
+// Gemini Live closes each connection after about 10 minutes; with the resumption handle the next one continues the
+// same conversation, so she can keep talking as long as she likes. Two failed reconnects in a row end it.
+async function startLive(player){
  await player.resume();
- let mic=null,closed=false,userTurn='',aiTurn='',muted=false;
+ let mic=null,session=null,closed=false,userTurn='',aiTurn='',muted=false,handle=null,failures=0,long=true,since=Date.now();
  const save=()=>{logTurn(userTurn.trim(),aiTurn.trim());userTurn='';aiTurn=''};
- const session=new LiveTalk({key:cloud.keys().gemini,
-  lookup:async q=>{talkState('thinking');if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));return lookupText(q,ragIndex)},
-  onAudio:b64=>{player.play(b64);talkState('speaking')},
-  onUserText:t=>{if(aiTurn)save();if(!userTurn){T.user.textContent='';T.ai.textContent=''}userTurn+=t;T.user.textContent=userTurn},
-  onAiText:t=>{aiTurn+=t;T.ai.textContent=aiTurn},
-  onInterrupted:()=>{player.clear();talkState('listening')},
-  onTurnEnd:()=>{save();setTimeout(()=>{if(!closed&&!muted)talkState('listening')},player.remaining()*1000)},
-  onState:(s,code)=>{if(s!=='closed'||closed)return;
-   // A session lasts up to 15 minutes; start a fresh one without making her do anything.
-   mic?.close();save();if(retries>0&&code!=='key_rejected'){talkState('connecting');startLive(player,retries-1).catch(e=>{T.ai.textContent=liveError(e?.message);talkState('paused')})}
-   else{T.ai.textContent=liveError(code);talkState('paused')}}});
- await session.connect();
+ const tick=setInterval(()=>{const now=Date.now();T.engine.textContent='🌐 Gemini Live · আজ '+bn(talkUsage((now-since)/1000))+' মিনিট';since=now},15000);
+ const connect=async()=>{
+  const s=new LiveTalk({key:cloud.keys().gemini,resume:handle,long,
+   lookup:async q=>{talkState('thinking');if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));return lookupText(q,ragIndex)},
+   onAudio:b64=>{player.play(b64);talkState('speaking')},
+   onUserText:t=>{if(aiTurn)save();if(!userTurn){T.user.textContent='';T.ai.textContent=''}userTurn+=t;T.user.textContent=userTurn},
+   onAiText:t=>{aiTurn+=t;T.ai.textContent=aiTurn},
+   onInterrupted:()=>{player.clear();talkState('listening')},
+   onTurnEnd:()=>{save();setTimeout(()=>{if(!closed&&!muted)talkState('listening')},player.remaining()*1000)},
+   onGoAway:()=>{if(!closed)reconnect()},
+   onState:(state,code)=>{if(state==='closed'&&!closed&&session===s)reconnect(code)}});
+  await s.connect();session=s;failures=0;
+ };
+ const reconnect=async code=>{
+  const old=session;session=null;handle=old?.handle||handle;old?.close();
+  if(code==='key_rejected'||code==='limit'||++failures>2){closed=true;stopAll();T.ai.textContent=liveError(code||'closed');
+   // The free limit ran out mid-conversation: carry on with the phone's own voice instead of stopping.
+   if(voice.available()){talk=null;T.ai.textContent+=' ফোনের কণ্ঠে চালিয়ে যাচ্ছি।';startPhoneTalk()}else talkState('paused');return}
+  try{await connect();if(!muted)talkState('listening')}catch(e){reconnect(e.message)}
+ };
+ const stopAll=()=>{clearInterval(tick);talkUsage((Date.now()-since)/1000);since=Date.now();mic?.close();session?.close();player.close();save()};
+ try{await connect()}
+ catch(e){
+  // If this model refuses the long-session settings, talk without them (sessions then last up to 15 minutes).
+  if(['key_rejected','limit','network','timeout'].includes(e.message))throw e;
+  long=false;await connect();
+ }
  // While the Tutor is speaking the microphone is not sent, so it cannot hear itself; tapping the ball cuts it off.
- mic=await openMic(b64=>{if(player.remaining()>0.05)return;session.sendAudio(b64)},{onLevel:l=>T.orb.style.setProperty('--lvl',Math.min(1,l*10).toFixed(2))});
- T.engine.textContent='🌐 Gemini Live (অনলাইন)';talkState('listening');
+ mic=await openMic(b64=>{if(player.remaining()>0.05||!session)return;session.sendAudio(b64)},{onLevel:l=>T.orb.style.setProperty('--lvl',Math.min(1,l*10).toFixed(2))});
+ T.engine.textContent='🌐 Gemini Live · আজ '+bn(talkUsage())+' মিনিট';talkState('listening');
  talk={muted:false,
-  stop(){closed=true;mic?.close();session.close();player.close();save()},
+  stop(){closed=true;stopAll()},
   tap(){player.clear();if(!muted)talkState('listening')},
   setMuted(m){this.muted=muted=m;mic?.setMuted(m);talkState(m?'muted':'listening')}};
 }

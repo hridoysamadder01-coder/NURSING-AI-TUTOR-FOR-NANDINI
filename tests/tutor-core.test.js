@@ -24,3 +24,7 @@ test('friendly chat is told apart from study questions',()=>{
  for(const q of ['বাংলাদেশের ক্রিকেট অধিনায়ক কে?','শ্বাসকষ্ট কী?','osmosis ki','how does the heart work'])assert.equal(chatLike(q),null,q);
  assert.equal(isQuestion('bp normal koto'),true);assert.equal(isQuestion('ami tired'),false);
 });
+test('"who made you" gets the owner\'s answer',()=>{
+ for(const q of ['তোমাকে মূলত তৈরি করেছে কে?','who made you','কে বানিয়েছে তোমাকে'])assert.equal(smallTalk(q),'maker',q);
+ assert.equal(smallTalk('তোমার নাম কী'),'who');
+});
