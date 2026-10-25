@@ -68,3 +68,28 @@ test('a model that no longer exists is not tried first on every question',async(
  await cloud.generate(msgs);serve([['gemini-3.1-flash-lite',()=>sse([geminiChunk('আবার')])]]);
  assert.equal((await cloud.generate(msgs)).text,'আবার');assert.equal(calls.length,1);
 });
+test('her voice is written down by Gemini first, then Whisper large-v3; both down means the phone listens',async()=>{
+ cloud.setKeys({gemini:'g-ears',groq:'q-ears'});
+ const voice=new Blob([new Uint8Array(3000)],{type:'audio/webm;codecs=opus'});
+ const geminiSaid=t=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:'ভাবছি',thought:true},{text:JSON.stringify({transcript:t})}]}}]}),{status:200});
+ serve([['gemini-3.5-flash-lite',()=>new Response('{}',{status:429})],['gemini-3.1-flash-lite',()=>geminiSaid(' Osmosis কী? ')]]);
+ const r=await cloud.transcribe(voice);
+ assert.deepEqual(r,{text:'Osmosis কী?',by:'Gemini 3.1 Flash-Lite'});
+ const sent=calls.at(-1).body;assert.ok(calls.at(-1).url.endsWith('gemini-3.1-flash-lite:generateContent'));
+ assert.equal(sent.contents[0].parts[0].inlineData.mimeType,'audio/webm');assert.ok(sent.contents[0].parts[0].inlineData.data.length>3000);
+ assert.match(sent.systemInstruction.parts[0].text,/হুবহু লেখো[^]*উত্তর দেবে না, অনুবাদ করবে না/);assert.equal(sent.generationConfig.responseMimeType,'application/json');assert.equal(sent.generationConfig.temperature,0);
+ // The model at its limit for listening is also skipped for answers (one shared free quota).
+ serve([['gemini-3.1-flash-lite',()=>sse([geminiChunk('উত্তর')])]]);assert.equal((await cloud.generate(msgs)).route.id,'gemini-3.1-flash-lite');assert.equal(calls.length,1);
+ // Gemini cannot take the audio: Whisper large-v3 writes it, in Bangla script with her English terms.
+ cloud.setKeys({gemini:'g-ears2',groq:'q-ears'});
+ serve([['generativelanguage',()=>new Response('{"error":{"message":"unsupported audio"}}',{status:400})]]);
+ // Whisper gets a form (the audio file and settings), recorded here without the file.
+ globalThis.fetch=(f=>async(url,opts)=>{if(opts.body instanceof FormData){const form=opts.body;calls.push({url:String(url),form:Object.fromEntries([...form.entries()].filter(([k])=>k!=='file')),headers:opts.headers});return new Response(JSON.stringify({text:'ধমনি কী?'}),{status:200})}return f(url,opts)})(globalThis.fetch);
+ assert.deepEqual(await cloud.transcribe(voice),{text:'ধমনি কী?',by:'Groq Whisper'});
+ const w=calls.at(-1);assert.equal(w.form.model,'whisper-large-v3');assert.equal(w.form.language,'bn');assert.match(w.form.prompt,/নার্সিং/);assert.equal(w.headers.Authorization,'Bearer q-ears');
+ // The Gemini models that refused this audio are not asked again for listening, but still answer questions.
+ calls.length=0;await cloud.transcribe(voice);assert.equal(calls.filter(c=>c.url.includes('generativelanguage')).length,0);
+ // Everything down: the app's own fallback (the phone's recognizer) takes over.
+ cloud.setKeys({gemini:'g3',groq:'q3'});serve([]);
+ await assert.rejects(cloud.transcribe(voice),e=>e.message==='ears_unavailable'&&e.tried.length===cloud.EARS.length);
+});

@@ -182,6 +182,7 @@ const speechOf=b=>[...b.querySelectorAll('p:not(.fine),h3,li,.trick')].filter(x=
 function voiceError(code){
  return ({no_match:'কিছু শুনতে পাইনি 🙂 আবার 🎤 চেপে একটু জোরে বলো।',no_ears:'নেট বা ফোনের কণ্ঠ-বোঝার ব্যবস্থা ছাড়া শুনতে পারছি না।',timeout:'কিছু শুনতে পাইনি 🙂 আবার 🎤 চেপে বলো।',mic_denied:'মাইক্রোফোনের অনুমতি লাগবে। আবার 🎤 চেপে "Allow" দাও।',busy:'একটু পরে আবার 🎤 চাপো।',
   bangla_voice_missing:'ফোনে বাংলা কণ্ঠ নেই। সেটিংস → "কণ্ঠে কথা বলা" থেকে বাংলা কণ্ঠ নামাও।',tts_not_ready:'কণ্ঠ এখনো চালু হচ্ছে, একটু পরে আবার চাপো।',
+  ears_unavailable:'অনলাইনে শোনার ব্যবস্থা এখন কাজ করছে না (ফ্রি সীমা বা দুর্বল নেট)। একটু পরে আবার 🎤 চাপো, বা লিখে জিজ্ঞেস করো।',
   dialog_cancelled:'শোনা বন্ধ হয়ে গেছে। আবার 🎤 চাপো। বারবার এমন হলে সেটিংস → "কণ্ঠে কথা বলা" দেখো।'})[code]
   ||(['network','network_timeout','server','language','client','disconnected'].includes(code)?(voice.onlineAllowed()?'ফোনের কণ্ঠ-বোঝার ব্যবস্থা বাংলা চালাতে পারছে না ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।':'ফোনে অফলাইনে বাংলা শোনার ব্যবস্থা পাওয়া যায়নি ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।'):'কণ্ঠ চালানো যায়নি ('+code+')।');
 }
@@ -338,12 +339,14 @@ async function ask(text,{remember=true,spoken=false}={}){
  try{const b=await answer(q);if(spoken&&voice.autoSpeak()&&b&&!b.querySelector('.aibox'))say(speechOf(b)).catch(()=>{})}
  finally{voiceTurn=false}
 }
-// 🎤 dictation: online with a Groq key, the recording is written by Whisper (works on any phone); otherwise the phone's own
-// recognizer. The words appear in the box, then the question is asked and the answer read aloud.
-const canDictate=()=>voice.available()||(cloud.ready()&&cloud.hasKey('groq')&&Boolean(navigator.mediaDevices?.getUserMedia));
+// 🎤 dictation: online, the recording is written down by Gemini (then Groq's Whisper), which works on any phone and
+// understands Bangla better than most phones' own recognizers; offline, or if both fail, the phone's own recognizer listens.
+// The words appear in the box, then the question is asked and the answer read aloud.
+const cloudEars=()=>cloud.ready()&&Boolean(navigator.mediaDevices?.getUserMedia);
+const canDictate=()=>voice.available()||cloudEars();
 const canTalk=()=>voice.available()||((cloud.hasKey('gemini')||cloud.hasKey('groq'))&&Boolean(navigator.mediaDevices?.getUserMedia));
-// The turn-by-turn talk loop works with Whisper ears (online, Groq key) or the phone's own recognizer.
-const canStepTalk=()=>voice.available()||(cloud.ready()&&cloud.hasKey('groq')&&Boolean(navigator.mediaDevices?.getUserMedia));
+// The turn-by-turn talk loop works with online ears or the phone's own recognizer.
+const canStepTalk=()=>voice.available()||cloudEars();
 function refreshVoiceButtons(){$('mic').hidden=!canDictate();$('talk').hidden=!canTalk()}
 refreshVoiceButtons();addEventListener('online',refreshVoiceButtons);addEventListener('offline',refreshVoiceButtons);
 let listening=null;
@@ -353,11 +356,16 @@ $('mic').onclick=async()=>{
  stopSaying();mic.classList.add('on');mic.textContent='■';input.value='';input.placeholder='🎤 শুনছি… বাংলায় বলো';
  try{
   let heard='';
-  if(cloud.ready()&&cloud.hasKey('groq')&&navigator.mediaDevices?.getUserMedia){
+  const phoneEars=async()=>{listening={stop:()=>voice.stopListening()};return voice.listen(t=>{input.value=t})};
+  if(cloudEars()){
    const rec=recordUtterance({onLevel:l=>mic.style.boxShadow='0 0 0 '+Math.round(Math.min(1,l*12)*10)+'px rgba(229,72,77,.25)'});listening=rec;
    const blob=await rec.done;if(!blob)throw new Error('no_match');
-   input.placeholder='✍️ লিখছি…';heard=await cloud.transcribe(blob);
-  }else{listening={stop:()=>voice.stopListening()};heard=await voice.listen(t=>{input.value=t})}
+   input.placeholder='✍️ লিখছি…';
+   try{heard=(await cloud.transcribe(blob)).text}
+   catch(e){if(!voice.available())throw e;
+    // The online ears are at their limit or unreachable: the phone's own recognizer listens instead.
+    input.placeholder='🎤 আবার বলো তো, এবার ফোন শুনছে…';heard=await phoneEars()}
+  }else heard=await phoneEars();
   if(!heard.trim())throw new Error('no_match');
   input.value='';await ask(heard,{spoken:true});
  }catch(e){input.value='';const b=bubble('bot');b.append(E('p',voiceError(e?.name==='NotAllowedError'?'mic_denied':e?.message)));b.scrollIntoView({behavior:'smooth',block:'start'})}
@@ -411,7 +419,9 @@ async function startLive(player){
    onUserText:t=>{if(aiTurn)save();if(!userTurn){T.user.textContent='';T.ai.textContent=''}userTurn+=t;T.user.textContent=userTurn},
    onAiText:t=>{aiTurn+=t;T.ai.textContent=aiTurn},
    onInterrupted:()=>{player.clear();talkState('listening')},
-   onTurnEnd:()=>{save();setTimeout(()=>{if(!closed&&!muted)talkState('listening')},player.remaining()*1000)},
+   // The reply came out in Hindi or another language: it is cut off and the Tutor says it again in Bangla.
+   onWrongLanguage:()=>{player.clear();aiTurn='';T.ai.textContent='';talkState('thinking')},
+   onTurnEnd:({redo}={})=>{if(redo)return;save();setTimeout(()=>{if(!closed&&!muted)talkState('listening')},player.remaining()*1000)},
    onGoAway:()=>{if(!closed)reconnect()},
    onState:(state,code)=>{if(state==='closed'&&!closed&&session===s)reconnect(code)}});
   await s.connect();session=s;failures=0;
@@ -439,19 +449,19 @@ async function startLive(player){
   setMuted(m){this.muted=muted=m;mic?.setMuted(m);talkState(m?'muted':'listening')}};
 }
 // Turn-by-turn talk (levels 2 and 3 after Gemini Live): listen → answer → speak, again and again.
-// Ears: Groq Whisper while online with a Groq key (it works on phones whose own recognizer fails), else the phone's
+// Ears: online (Gemini, then Groq's Whisper), which works on phones whose own recognizer fails, else the phone's
 // recognizer. Brain: talkReply (online text AI, then the phone model, then the verified card). Mouth: the phone's
-// Bangla voice, or Gemini's voice in a browser. If Whisper's free limit runs out, the phone's ears take over.
+// Bangla voice, or Gemini's voice in a browser. If the online ears' free limits run out, the phone's ears take over.
 function startPhoneTalk(){
- let stopped=false,quiet=0,wake=null,rec=null,whisperOff=false;
+ let stopped=false,quiet=0,wake=null,rec=null,earsOff=false;
  const wait=()=>new Promise(r=>{wake=r});
- const whisper=()=>!whisperOff&&cloud.ready()&&cloud.hasKey('groq')&&Boolean(navigator.mediaDevices?.getUserMedia);
- const label=()=>{T.engine.textContent=whisper()?'🎧 স্তর ২ · Groq Whisper + অনলাইন AI':'📱 স্তর ৩ · ফোনের কণ্ঠ'+(cloud.ready()?' + অনলাইন AI':' (অফলাইন)')};
+ const online=()=>!earsOff&&cloudEars();
+ const label=()=>{T.engine.textContent=online()?'🎧 স্তর ২ · অনলাইন কান + অনলাইন AI':'📱 স্তর ৩ · ফোনের কণ্ঠ'+(cloud.ready()?' + অনলাইন AI':' (অফলাইন)')};
  const hear=async()=>{
-  if(whisper()){
+  if(online()){
    rec=recordUtterance({onLevel:l=>T.orb.style.setProperty('--lvl',Math.min(1,l*10).toFixed(2))});
    const blob=await rec.done;rec=null;if(!blob)throw new Error('no_match');
-   talkState('thinking');return cloud.transcribe(blob);
+   talkState('thinking');return (await cloud.transcribe(blob)).text;
   }
   if(!voice.available())throw new Error('no_ears');
   return voice.listen(t=>{T.user.textContent=t});
@@ -470,8 +480,8 @@ function startPhoneTalk(){
    label();talkState('listening');let heard='';
    try{heard=String(await hear()||'').trim();if(!heard)throw new Error('no_match')}
    catch(e){if(stopped)break;
-    // Whisper's free limit or key failed: the phone's own ears take over for the rest of the talk.
-    if(['limit','key_rejected'].includes(e?.message)&&whisper()){whisperOff=true;if(voice.available())continue}
+    // The online ears' free limits or keys failed: the phone's own ears take over for the rest of the talk.
+    if(e?.message==='ears_unavailable'&&online()){earsOff=true;if(voice.available())continue}
     // Two silent tries in a row: wait for a tap instead of listening forever.
     if(['no_match','timeout'].includes(e?.message)&&++quiet<2)continue;
     if(!['no_match','timeout'].includes(e?.message))T.ai.textContent=voiceError(e?.name==='NotAllowedError'?'mic_denied':e?.message);

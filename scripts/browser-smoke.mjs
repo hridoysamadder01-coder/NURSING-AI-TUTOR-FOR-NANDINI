@@ -164,6 +164,8 @@ try{
   const body=JSON.parse(r.postData()||'{}');seen.push({url:r.url(),body,key:r.headers()['x-goog-api-key']});
   const tiny=JSON.stringify(body).includes('শুধু লেখো');
   if(geminiDown)return route.fulfill({status:503,headers:cors,body:'{}'});
+  // Listening: a recording sent to Gemini to be written down (not streamed, JSON reply).
+  if(body.contents?.[0]?.parts?.[0]?.inlineData&&!r.url().includes('gemini-3.5-flash-lite'))return route.fulfill({status:200,headers:{...cors,'content-type':'application/json'},body:JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify({transcript:'Osmosis কী?'})}]}}]})});
   if(r.url().includes('gemini-3.5-flash-lite')&&!tiny)return route.fulfill({status:429,headers:{...cors,'retry-after':'60'},body:'{"error":{"code":429}}'});
   return route.fulfill({status:200,headers:{...cors,'content-type':'text/event-stream'},body:stream([{candidates:[{content:{parts:[{text:tiny?'ঠিক আছে':'শক্তিশালী উত্তর: ধমনি রক্ত '}]}}]},{candidates:[{content:{parts:[{text:tiny?'':'হৃদ্‌যন্ত্র থেকে দূরে নেয়।'}]}}]}])})});
  await webCtx.route(/api\.groq\.com/,async route=>{const r=route.request();if(r.method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
@@ -202,7 +204,11 @@ try{
   if(m.setup&&live.quota){ws.close({code:1011,reason:'Quota exceeded'});return}
   if(m.setup){live.setup??=m.setup;live.setups.push(m.setup);ws.send(JSON.stringify({setupComplete:{}}));if(live.setups.length===1)ws.send(JSON.stringify({sessionResumptionUpdate:{resumable:true,newHandle:'h1'}}));return}
   if(m.realtimeInput?.audio){live.audio++;if(live.audio===4){ws.send(JSON.stringify({serverContent:{inputTranscription:{text:'ধমনি আর শিরার পার্থক্য কী?'}}}));ws.send(JSON.stringify({toolCall:{functionCalls:[{id:'c1',name:'lookup_nursing',args:{query:'ধমনি আর শিরার পার্থক্য'}}]}}))}}
+  // The first reply slips into Hindi: the app must cut it off and ask for it again in Bangla.
   if(m.toolResponse){live.toolResult=m.toolResponse.functionResponses[0];
+   ws.send(JSON.stringify({serverContent:{modelTurn:{parts:[{inlineData:{mimeType:'audio/pcm;rate=24000',data:Buffer.alloc(4800).toString('base64')}}]},outputTranscription:{text:'धमनी रक्त को दूर ले जाती है'}}}));
+   ws.send(JSON.stringify({serverContent:{turnComplete:true}}));return}
+  if(m.realtimeInput?.text){live.redo=m.realtimeInput.text;
    ws.send(JSON.stringify({serverContent:{modelTurn:{parts:[{inlineData:{mimeType:'audio/pcm;rate=24000',data:Buffer.alloc(4800).toString('base64')}}]},outputTranscription:{text:'ধমনি রক্ত হৃদ্‌যন্ত্র থেকে দূরে নেয়। বুঝেছ?'}}}));
    ws.send(JSON.stringify({serverContent:{turnComplete:true}}));
    // The server's ~10 minute connection limit: it warns, and the app must continue the same conversation.
@@ -224,10 +230,23 @@ try{
  await web.locator('#talkEnd').click();assert.ok(await web.locator('#talkView').isHidden());
  assert.match(await web.locator('#chat .msg.me').last().innerText(),/🗣️ ধমনি আর শিরার পার্থক্য/);
  assert.match(await web.locator('#chat .msg.bot.talklog').last().innerText(),/দূরে নেয়/);
- // 🎤 dictation online: the recording goes to (fake) Whisper and the written question is asked.
+ assert.match(live.redo,/বাংলায় বলো/,'a Hindi reply is asked again in Bangla');assert.doesNotMatch(await web.locator('#chat').innerText(),/[\u0900-\u0963]/,'no Hindi is shown');
+ // 🎤 dictation online: the recording goes to (fake) Gemini, which writes it down (the first model is at its limit), and
+ // the written question is asked; with Gemini down, Whisper writes it.
+ const dictated=()=>web.evaluate(()=>[...document.querySelectorAll('#chat .msg.me')].filter(m=>m.textContent.includes('🎤 Osmosis কী?')).length);
+ geminiDown=false;
  await web.locator('#mic').click();await web.waitForTimeout(1500);await web.locator('#mic').click();
  await web.waitForFunction(()=>[...document.querySelectorAll('#chat .msg.me')].some(m=>m.textContent.includes('🎤 Osmosis কী?')),null,{timeout:15000});
- const w=seen.find(s=>s.whisper);assert.ok(w&&w.whisper>1000&&w.auth==='Bearer gsk_test','the recorded audio is sent to Whisper');
+ const ears=seen.filter(s=>s.body?.contents?.[0]?.parts?.[0]?.inlineData);
+ assert.ok(ears.length===2&&ears[0].url.includes('gemini-3.5-flash-lite')&&ears[1].url.includes('gemini-3.1-flash-lite:generateContent'),'Gemini writes it down, the next model when one is at its limit');
+ assert.ok(ears[1].body.contents[0].parts[0].inlineData.data.length>1000);assert.match(ears[1].body.systemInstruction.parts[0].text,/শ্রুতিলেখক/);
+ assert.ok(!seen.some(s=>s.whisper),'Whisper is not needed while Gemini listens');
+ await web.waitForFunction(()=>[...document.querySelectorAll('.aibox')].at(-1)?.querySelector('.meta'),null,{timeout:15000});
+ geminiDown=true;
+ await web.locator('#mic').click();await web.waitForTimeout(1500);await web.locator('#mic').click();
+ await web.waitForFunction(n=>[...document.querySelectorAll('#chat .msg.me')].filter(m=>m.textContent.includes('🎤 Osmosis কী?')).length>n,1,{timeout:15000});
+ assert.equal(await dictated(),2);
+ const w=seen.find(s=>s.whisper);assert.ok(w&&w.whisper>1000&&w.auth==='Bearer gsk_test','with Gemini down the recorded audio is sent to Whisper');
  // Gemini Live's free limit is used up: talk mode goes on at level 2 (Whisper ears + online text AI) instead of stopping.
  live.quota=true;
  await web.locator('#talk').click();

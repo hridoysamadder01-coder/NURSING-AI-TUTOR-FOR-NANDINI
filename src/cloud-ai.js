@@ -108,14 +108,56 @@ export async function testProvider(provider){
  catch(e){return {ok:false,error:e.message,status:e.status,label:route.label}}
 }
 
-// Speech to text for the 🎤 button when online: Groq's Whisper understands Bangla.
-export async function transcribe(blob,{signal}={}){
- const key=keys().groq;if(!key)throw new Error('no_key');
- const form=new FormData();form.append('file',blob,'speech.'+(blob.type.includes('mp4')?'mp4':blob.type.includes('ogg')?'ogg':'webm'));
- form.append('model','whisper-large-v3-turbo');form.append('language','bn');form.append('response_format','json');form.append('temperature','0');
+// Speech to text for the 🎤 button and talk mode when online. Gemini usually writes Bangla speech better than Whisper, so it
+// goes first (the same Flash-Lite models, sharing their limits with the answers); then Groq's Whisper large-v3 (more
+// accurate than turbo for Bangla); the caller falls back to the phone's own recognizer when both fail.
+// Returns {text, by} (by: the model that wrote it); throws 'ears_unavailable' (with .tried) when no model could.
+const EARS_SYSTEM='তুমি শুধু একজন শ্রুতিলেখক। রেকর্ডিংয়ে নন্দিনী যা বলেছে ঠিক সেটাই হুবহু লেখো। উত্তর দেবে না, অনুবাদ করবে না, কিছু যোগ বা বাদ দেবে না। '+
+ 'বাংলা কথা বাংলা অক্ষরে লেখো; সে যে শব্দগুলো ইংরেজিতে বলেছে (যেমন nursing, osmosis, pulse, artery) সেগুলো ইংরেজি অক্ষরে। '+
+ 'সে নার্সিংয়ের ছাত্রী, তাই কথাগুলো সাধারণত পড়ার প্রশ্ন বা আলাপ। কোনো কথা না থাকলে বা কিছুই বোঝা না গেলে transcript খালি রাখবে।';
+const EARS_SCHEMA={type:'OBJECT',properties:{transcript:{type:'STRING'}},required:['transcript']};
+// Whisper's prompt only sets the style and spelling: Bangla script, with English terms as she says them.
+const WHISPER_PROMPT='নার্সিং পড়ার প্রশ্ন। যেমন: হৃদ্‌যন্ত্র কীভাবে কাজ করে? Osmosis কী? ধমনি আর শিরার পার্থক্য বলো।';
+async function blobBase64(blob){const u8=new Uint8Array(await blob.arrayBuffer());let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s)}
+const audioType=blob=>{const t=String(blob.type||'').split(';')[0];return t.startsWith('audio/')?t:'audio/webm'};
+async function geminiEars(route,blob,key,signal){
+ const audio=await blobBase64(blob);
+ const body=thinking=>JSON.stringify({systemInstruction:{parts:[{text:EARS_SYSTEM}]},
+  contents:[{role:'user',parts:[{inlineData:{mimeType:audioType(blob),data:audio}},{text:'এই রেকর্ডিংয়ে যা বলা হয়েছে হুবহু লেখো।'}]}],
+  generationConfig:{temperature:0,maxOutputTokens:600,responseMimeType:'application/json',responseSchema:EARS_SCHEMA,...(thinking?{thinkingConfig:{thinkingLevel:thinking}}:{})}});
+ const send=thinking=>fetch(GEMINI+route.model+':generateContent',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},body:body(thinking)});
+ let res=await send(route.thinking);
+ if(res.status===400&&route.thinking){const detail=await res.text();if(/thinking/i.test(detail))res=await send(null);else throw new RouteError('bad_request',400)}
+ if(!res.ok){const retry=Number(res.headers.get('retry-after'))||0;throw new RouteError(res.status===429?'limit':res.status===401||res.status===403?'key_rejected':'http_'+res.status,res.status,retry)}
+ const j=await res.json(),raw=(j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought&&typeof p.text==='string').map(p=>p.text).join('');
+ try{return String(JSON.parse(raw).transcript||'').trim()}catch{throw new RouteError('bad_reply')}
+}
+async function whisperEars(blob,key,signal){
+ const form=new FormData();form.append('file',blob,'speech.'+(blob.type.includes('mp4')?'mp4':blob.type.includes('ogg')?'ogg':blob.type.includes('wav')?'wav':'webm'));
+ form.append('model','whisper-large-v3');form.append('language','bn');form.append('prompt',WHISPER_PROMPT);form.append('response_format','json');form.append('temperature','0');
  const res=await fetch(GROQ+'audio/transcriptions',{method:'POST',signal,headers:{Authorization:'Bearer '+key},body:form});
- if(!res.ok)throw new Error(res.status===429?'limit':res.status===401||res.status===403?'key_rejected':'http_'+res.status);
+ if(!res.ok){const retry=Number(res.headers.get('retry-after'))||0;throw new RouteError(res.status===429?'limit':res.status===401||res.status===403?'key_rejected':'http_'+res.status,res.status,retry)}
  return String((await res.json()).text||'').trim();
+}
+export const EARS=[...ROUTE.filter(r=>r.provider==='gemini'),{id:'groq-whisper-large-v3',provider:'groq',model:'whisper-large-v3',label:'Groq Whisper'}];
+export async function transcribe(blob,{signal}={}){
+ const tried=[];
+ for(const ears of EARS){
+  const key=keys()[ears.provider];
+  // A Gemini model at its limit for answers is at its limit for listening too (same quota), and the other way round.
+  if(!key||(cooldown.get(ears.id)||0)>now()||(cooldown.get('ears:'+ears.id)||0)>now())continue;
+  const ctrl=new AbortController(),abort=()=>ctrl.abort();signal?.addEventListener('abort',abort);const timer=setTimeout(abort,15000);
+  try{const text=ears.provider==='gemini'?await geminiEars(ears,blob,key,ctrl.signal):await whisperEars(blob,key,ctrl.signal);return {text,by:ears.label}}
+  catch(e){
+   if(signal?.aborted)throw new Error('stopped');
+   const code=e instanceof RouteError?e.message:ctrl.signal.aborted?'timeout':'network';tried.push({id:ears.id,error:code});
+   if(code==='limit')cooldown.set(ears.id,now()+(e.retryAfter?e.retryAfter*1000:10*60*1000));
+   else if(code==='key_rejected'){for(const r of [...ROUTE,...EARS])if(r.provider===ears.provider)cooldown.set(r.id,Infinity)}
+   // A model that cannot take this audio still answers questions, so only its listening waits.
+   else if(code!=='network'&&code!=='timeout')cooldown.set('ears:'+ears.id,now()+6*3600*1000);
+  }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}
+ }
+ throw Object.assign(new Error('ears_unavailable'),{tried});
 }
 
 // Natural Bangla voice for reading answers aloud (Gemini TTS, ai.google.dev/gemini-api/docs/speech-generation).

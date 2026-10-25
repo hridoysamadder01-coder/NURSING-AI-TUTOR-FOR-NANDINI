@@ -130,12 +130,13 @@ So terms and MCQs are shown by the app, and the AI only gets the short slices it
   - **Online with a Gemini key: Gemini Live** (`src/live-talk.js`, `gemini-3.8-live`). It hears 16 kHz PCM from the microphone (`src/talk-audio.js`) and answers with 24 kHz audio.
   - Before saying a fact it calls the `lookup_nursing` tool, which the app answers from the verified notes and books: doses get the fixed note, off-topic gets NOT_FOUND.
   - Transcripts show on screen and stay in the chat. The microphone is not sent while the Tutor speaks; tapping the ball cuts it off.
+  - Only Bangla: the instruction says so first (Live picks its language by itself), and a reply whose transcript comes out in Hindi or another script is cut off and asked again in Bangla (at most twice in a row). English terms are allowed, with their Bangla meaning.
   - **Offline**, the phone's recognizer and voice run a listen → answer → speak loop, with answers in a short spoken style.
-- **🎤 dictation** online uses Groq Whisper (`bn`) on a recording that stops after silence. Answers are read aloud with Gemini TTS (`gemini-3.8-flash-lite-tts`) when online, else the phone's Bangla voice.
+- **🎤 dictation** online sends a recording that stops after silence to Gemini Flash-Lite to be written down word for word (JSON reply, Bangla script, her English terms in English), then Groq `whisper-large-v3` (`bn`, with a spelling prompt), then the phone's own recognizer. The same ears serve talk mode's level 2. Answers are read aloud with Gemini TTS (`gemini-3.8-flash-lite-tts`) when online, else the phone's Bangla voice.
 - **Proof run with real keys:** `GEMINI_API_KEY=… GROQ_API_KEY=… node scripts/cloud-live-check.mjs out/`. It runs:
   - every model on Bangla questions;
-  - a TTS → Whisper round trip;
-  - a Gemini Live turn from a recorded Bangla question, with the spoken answer written back by Whisper.
+  - a TTS → listening round trip through each Gemini model and Whisper;
+  - a Gemini Live turn from a recorded Bangla question, with the spoken answer written back as text and checked to be Bangla.
 
 **Voice to voice (Android app).**
 - The 🎤 button in the Tutor listens in Bangla and shows the words while she talks. The answer is then read aloud: the AI answer once it is complete, or the verified card when there is no AI part. Every AI answer and topic card also has a 🔊 button.

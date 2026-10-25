@@ -1,16 +1,16 @@
 // Real-key check of the online strong mode and the voice conversation, using the app's own modules.
 // Run: GEMINI_API_KEY=… GROQ_API_KEY=… node scripts/cloud-live-check.mjs [outDir]
 // A: every model in the route answers verified-RAG Bangla questions (plus a "বুঝিনি" round and a friend chat).
-// B: Gemini TTS speaks a Bangla question; C: Groq Whisper writes it back as text (round trip).
+// B: Gemini TTS speaks a Bangla question; C: each listening model (Gemini Flash-Lite models, Groq Whisper) writes it back.
 // D: Gemini Live hears that recorded question, looks it up with lookup_nursing, and answers by voice;
-//    the spoken answer is written back with Whisper, so the evidence is readable text.
+//    the spoken answer is written back as text, and checked to be Bangla (not Hindi).
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
 const mem=new Map();globalThis.localStorage={getItem:k=>mem.has(k)?mem.get(k):null,setItem:(k,v)=>mem.set(k,String(v)),removeItem:k=>mem.delete(k)};
 const cloud=await import('../src/cloud-ai.js');
 const {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,lookupText}=await import('../src/rag.js');
-const {LiveTalk,toBase64,fromBase64,wav}=await import('../src/live-talk.js');
+const {LiveTalk,toBase64,fromBase64,wav,otherScript}=await import('../src/live-talk.js');
 const out=process.argv[2]||'live-check-out';mkdirSync(out,{recursive:true});
 const G=process.env.GEMINI_API_KEY||'',Q=process.env.GROQ_API_KEY||'';
 if(!G&&!Q){console.error('Set GEMINI_API_KEY and/or GROQ_API_KEY.');process.exit(2)}
@@ -46,12 +46,16 @@ log('### Full route: "বুঝিনি" round and friend chat\n');
  catch(e){log('❌ chat: '+e.message);fail.push('chat')}
 }
 
-log('## B/C. Gemini TTS → Groq Whisper round trip\n');
+log('## B/C. Gemini TTS → listening models round trip\n');
 const spoken='হৃদ্‌যন্ত্র কীভাবে কাজ করে? সহজ করে বলো।';let questionWav=null;
 if(G){try{const t0=Date.now();const r=await cloud.speechAudio(spoken);questionWav=r.wav;writeFileSync(join(out,'question.wav'),r.wav);
  log('- TTS '+r.model+': '+r.wav.length+' bytes in '+secs(Date.now()-t0)+' → question.wav')}catch(e){log('- ❌ TTS: '+e.message+' '+JSON.stringify(e.tried||[]));fail.push('tts')}}
-if(Q&&questionWav){try{const t0=Date.now();const text=await cloud.transcribe(new Blob([questionWav],{type:'audio/wav'}));
- log('- Whisper heard: "'+text+'" ('+secs(Date.now()-t0)+')')}catch(e){log('- ❌ Whisper: '+e.message);fail.push('whisper')}}
+if(questionWav){const ears=[...cloud.EARS];
+ for(const one of ears){if(!cloud.hasKey(one.provider))continue;cloud.EARS.splice(0,cloud.EARS.length,one);
+  try{const t0=Date.now();const r=await cloud.transcribe(new Blob([questionWav],{type:'audio/wav'}));
+   log('- '+r.by+' heard: "'+r.text+'" ('+secs(Date.now()-t0)+')');if(!r.text)fail.push('ears '+one.id+': empty')}
+  catch(e){log('- ❌ '+one.label+': '+e.message+' '+JSON.stringify(e.tried||[]));fail.push('ears '+one.id)}}
+ cloud.EARS.splice(0,cloud.EARS.length,...ears)}
 
 log('\n## D. Gemini Live: voice in → voice out\n');
 if(G&&questionWav){
@@ -64,7 +68,7 @@ if(G&&questionWav){
   const talk=new LiveTalk({key:G,lookup:async query=>{lookups.push(query);return lookupText(query,index)},
    onAudio:b64=>{firstAudioAt||=Date.now();replyChunks.push(fromBase64(b64))},onUserText:t=>userText+=t,onAiText:t=>aiText+=t,onError:c=>log('- live error: '+c)});
   const t0=Date.now();await talk.connect();log('- connected and set up in '+secs(Date.now()-t0));
-  const turn=new Promise((resolve,reject)=>{talk.events.onTurnEnd=resolve;talk.events.onState=(s,code,reason)=>{if(s==='closed')reject(new Error('closed '+code+' '+reason))};setTimeout(()=>reject(new Error('no_reply_in_60s')),60000)});
+  const turn=new Promise((resolve,reject)=>{talk.events.onTurnEnd=({redo}={})=>{if(!redo)resolve()};talk.events.onWrongLanguage=()=>{aiText='';replyChunks.length=0;log('- ⚠️ the reply started in another language; asked again in Bangla')};talk.events.onState=(s,code,reason)=>{if(s==='closed')reject(new Error('closed '+code+' '+reason))};setTimeout(()=>reject(new Error('no_reply_in_60s')),60000)});
   // Stream like a microphone: 100 ms chunks in real time, then a little silence.
   for(let i=0;i<pcm.length;i+=3200){talk.sendAudio(toBase64(pcm.subarray(i,i+3200)));await new Promise(r=>setTimeout(r,100))}
   for(let i=0;i<15;i++){talk.sendAudio(toBase64(new Uint8Array(3200)));await new Promise(r=>setTimeout(r,100))}
@@ -76,7 +80,8 @@ if(G&&questionWav){
   log('- lookup_nursing calls: '+(lookups.length?lookups.map(x=>'"'+x+'"').join(', '):'none'));
   log('- first reply audio '+secs(firstAudioAt-endedAt)+' after she stopped talking; reply '+(reply.length/48000).toFixed(1)+' s of audio → live-reply.wav');
   log('- Live\'s own transcript of its answer: "'+aiText.trim()+'"');
-  if(Q){const heard=await cloud.transcribe(new Blob([wav(reply,24000)],{type:'audio/wav'}));log('- Whisper on the spoken answer: "'+heard+'"')}
+  if(otherScript(aiText)){log('- ❌ the answer was not in Bangla');fail.push('live: language')}
+  try{const heard=await cloud.transcribe(new Blob([wav(reply,24000)],{type:'audio/wav'}));log('- '+heard.by+' on the spoken answer: "'+heard.text+'"')}catch(e){log('- ❌ writing the answer back: '+e.message)}
   if(!reply.length)fail.push('live: no audio');
  }catch(e){log('- ❌ Live: '+e.message);fail.push('live')}
 }else log('- skipped (needs the Gemini key and the TTS recording)');
