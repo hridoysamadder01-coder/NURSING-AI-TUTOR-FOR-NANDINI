@@ -124,7 +124,12 @@ So terms and MCQs are shown by the app, and the AI only gets the short slices it
 - It uses the phone's own engines through a small `NandiniVoice` plugin (`android-llm/`): Android `SpeechRecognizer` with `bn-BD`, and `TextToSpeech` with a Bangla voice.
 - **Recognition is on-device only by default** (`EXTRA_PREFER_OFFLINE`), so her voice does not leave the phone. If the phone has no offline Bangla pack, Settings → "কণ্ঠে কথা বলা" explains how to get one. It also has an opt-in switch for online recognition, which sends the audio to Google.
 - Settings also shows whether a Bangla voice is installed, has a button to install one, and a test button.
-- Not yet tried on a real phone: whether this vivo has offline Bangla recognition, and how the Bangla voice reads English nursing terms.
+- First phone test (vivo V2266A): every 🎤 press failed with errors 5 ("client") and 11 ("server disconnected"), the signs of an engine that cannot serve the request. The plugin now:
+  - binds to Google's recognition service when it is installed, instead of the phone's default engine;
+  - gives every session a fresh recognizer and releases it afterwards;
+  - opens the system speech dialog if the in-app recognizer still fails.
+
+  Settings shows which engine is used. Not yet confirmed on the phone.
 
 Desktop check of the warm prompt (13 questions including two follow-ups, Gemma 3 4B, greedy): vital signs, osmosis, RAM/ROM, Sims position and hypoxia answers were exact, numbers included. Two answers had a wrong fact: "ভাল্‌ভ থাকে ধমনিতে", and "ধমনি রক্ত ফুসফুসে নেয়" in a "simpler" re-explanation. The old prompt made the same valve error, so the topic sentence now says positively where valves are (heart, and veins of the arms and legs). The model still gets this wrong sometimes: in the latest run one of six artery/vein answers said valves are in both. A stricter "one source sentence per point" prompt was worse (a wrong "পাইনি", a reversed privacy rule). **So the 4B model is a helper, not a source of truth**: its answer always sits under the verified card with the "AI ভুল করতে পারে" note, and "প্রতিটি প্রশ্নে AI নিজে থেকে উত্তর দেবে" can be switched off in Settings. Patient dose questions ("কত mg দেব", "dose") are answered by the app with a fixed safety note and never reach the model.
 

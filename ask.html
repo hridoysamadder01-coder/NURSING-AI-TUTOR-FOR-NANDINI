@@ -145,8 +145,9 @@ function speakButton(text){const x=E('button','🔊 শোনো','btn sm ghost'
 const speechOf=b=>[...b.querySelectorAll('p:not(.fine),h3,li,.trick')].filter(x=>!x.closest('.source,.aibox')).map(x=>x.textContent).join('। ');
 function voiceError(code){
  return ({no_match:'কিছু শুনতে পাইনি 🙂 আবার 🎤 চেপে একটু জোরে বলো।',timeout:'কিছু শুনতে পাইনি 🙂 আবার 🎤 চেপে বলো।',mic_denied:'মাইক্রোফোনের অনুমতি লাগবে। আবার 🎤 চেপে "Allow" দাও।',busy:'একটু পরে আবার 🎤 চাপো।',
-  bangla_voice_missing:'ফোনে বাংলা কণ্ঠ নেই। সেটিংস → "কণ্ঠে কথা বলা" থেকে বাংলা কণ্ঠ নামাও।',tts_not_ready:'কণ্ঠ এখনো চালু হচ্ছে, একটু পরে আবার চাপো।'})[code]
-  ||(['network','network_timeout','server','language'].includes(code)&&!voice.onlineAllowed()?'ফোনে অফলাইনে বাংলা শোনার প্যাক নেই। সেটিংস → "কণ্ঠে কথা বলা" দেখো।':'কণ্ঠ চালানো যায়নি ('+code+')।');
+  bangla_voice_missing:'ফোনে বাংলা কণ্ঠ নেই। সেটিংস → "কণ্ঠে কথা বলা" থেকে বাংলা কণ্ঠ নামাও।',tts_not_ready:'কণ্ঠ এখনো চালু হচ্ছে, একটু পরে আবার চাপো।',
+  dialog_cancelled:'শোনা বন্ধ হয়ে গেছে। আবার 🎤 চাপো। বারবার এমন হলে সেটিংস → "কণ্ঠে কথা বলা" দেখো।'})[code]
+  ||(['network','network_timeout','server','language','client','disconnected'].includes(code)?(voice.onlineAllowed()?'ফোনের কণ্ঠ-বোঝার ব্যবস্থা বাংলা চালাতে পারছে না ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।':'ফোনে অফলাইনে বাংলা শোনার ব্যবস্থা পাওয়া যায়নি ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।'):'কণ্ঠ চালানো যায়নি ('+code+')।');
 }
 async function loadBooks(){if(!rawBooks)rawBooks=await Promise.all(['fundamentals','skills','terminology','mentalhealth'].map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}));return rawBooks}
 let books;

@@ -96,7 +96,7 @@ try{
    generate:async({messages})=>{window.__gen.push(messages);for(const t of ['ধমনি ','হৃদ্‌যন্ত্র ','থেকে ','রক্ত ','দূরে ','নেয়।'])emit('token',{text:t});return {promptTokens:300,generatedTokens:6,prefillMs:900,generateMs:600,stopped:false}},
    stop:async()=>{},cancelDownload:async()=>{},deleteModel:async()=>{files=[]},unload:async()=>{}},
    NandiniVoice:{addListener:async(ev,fn)=>{(l[ev]??=[]).push(fn);return {remove:()=>{l[ev]=l[ev].filter(f=>f!==fn)}}},
-    status:async()=>({tts:true,bangla:true,stt:true,onDevice:true,mic:true}),
+    status:async()=>({tts:true,bangla:true,stt:true,onDevice:true,mic:true,engine:'com.google.android.googlequicksearchbox',engines:['com.vivo.voice','com.google.android.googlequicksearchbox']}),
     listen:async()=>{emit('partial',{text:'হৃদ্‌যন্ত্র'});return {text:'হৃদ্‌যন্ত্র কীভাবে কাজ করে?'}},
     speak:async({text})=>{window.__spoken.push(text);return {id:'u1'}},stopSpeaking:async()=>{},stopListening:async()=>{},installVoice:async()=>{}}}};
   window.__spoken=[];
@@ -107,6 +107,7 @@ try{
  await app.locator('#aiModels button',{hasText:'নামাও'}).first().click();
  await app.waitForFunction(()=>document.querySelector('#aiModels h3')?.textContent.includes('✅'));
  await app.waitForFunction(()=>document.querySelector('#voiceStatus')?.textContent.includes('বাংলা কণ্ঠ: আছে'));
+ assert.match(await app.locator('#voiceStatus').innerText(),/শোনার ইঞ্জিন: com\.google\.android\.googlequicksearchbox/);
  assert.ok(await app.locator('#aiAuto').isVisible());
  await app.goto(base+'/ask.html?q='+encodeURIComponent('ধমনি আর শিরার পার্থক্য কী?'),{waitUntil:'networkidle'});
  await app.waitForFunction(()=>document.querySelector('.aibox .out')?.textContent.includes('দূরে নেয়'),null,{timeout:10000});

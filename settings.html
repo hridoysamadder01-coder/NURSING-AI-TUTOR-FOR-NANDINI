@@ -69,6 +69,7 @@ async function renderVoice(retry=true){
  const st=await voice.status();
  if(!st.tts&&retry){setTimeout(()=>renderVoice(false),1500);return}
  $('voiceStatus').textContent=(st.bangla?'🔊 বাংলা কণ্ঠ: আছে ✅':'🔊 বাংলা কণ্ঠ: নেই। নিচের বোতাম চেপে "বাংলা" কণ্ঠ নামাও (একবার, Wi-Fi দিয়ে)।')+'\n'+
+  (st.engine==='default'?'⚙️ Google-এর কণ্ঠ বোঝার ব্যবস্থা পাওয়া যায়নি'+(st.engines?.length?' (আছে: '+st.engines.join(', ')+')':'')+'। Play Store থেকে "Google" অ্যাপ ইনস্টল বা আপডেট করো।\n':st.engine?'⚙️ শোনার ইঞ্জিন: '+st.engine+'\n':'')+
   (!st.stt?'🎤 এই ফোনে কণ্ঠ বোঝার ব্যবস্থা পাওয়া যায়নি।':st.onDevice?'🎤 ফোনের ভেতরে (অফলাইন) কণ্ঠ বোঝার ব্যবস্থা আছে। বাংলা না বুঝলে ফোনের Settings-এ "Offline speech recognition" খুঁজে বাংলা নামাও।':'🎤 এই ফোনে অফলাইন কণ্ঠ বোঝার ব্যবস্থা নেই। নিচের "ইন্টারনেট দিয়ে কণ্ঠ বোঝো" চালু করলে কাজ করবে।');
  const row=$('voiceBtns');row.replaceChildren();
  const test=E('button','🔊 শুনে দেখো','btn sm soft');test.type='button';test.onclick=()=>voice.speak('হ্যালো নন্দিনী! আমি তোমার পড়ার বন্ধু Tutor। যতবার দরকার, ততবার বুঝিয়ে দেবো।').catch(e=>{$('voiceStatus').textContent='🔇 বলা যায়নি ('+(e?.message||e)+')। বাংলা কণ্ঠ নামানো আছে কি না দেখো।'});
