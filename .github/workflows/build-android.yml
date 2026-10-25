@@ -84,6 +84,11 @@ jobs:
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$apksigner" verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | tee signer.txt
           grep -qi 'SHA-256 digest: f7e1b16c422ba0b5c0c0ca965e1970798ce6ac4f4da6fbb21632bc9f9f940a1a' signer.txt
+      - name: Verify the microphone permission for voice questions is in the APK
+        run: |
+          aapt=$(ls "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -1)
+          "$aapt" dump permissions android/app/build/outputs/apk/debug/app-debug.apk | tee permissions.txt
+          grep -q 'android.permission.RECORD_AUDIO' permissions.txt
       - uses: actions/upload-artifact@v4
         with:
           name: nandini-nursing-study-android-debug

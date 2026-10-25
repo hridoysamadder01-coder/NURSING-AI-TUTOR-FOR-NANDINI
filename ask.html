@@ -27,6 +27,8 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 .askbar form{display:flex;gap:8px;max-width:780px;margin:0 auto;background:#fff;border-radius:999px;padding:6px 6px 6px 16px;box-shadow:0 10px 30px -12px rgba(15,58,50,.45);border:1.5px solid var(--line-2)}
 .askbar input{border:0!important;box-shadow:none!important;padding:8px 0;min-height:40px;background:transparent}
 .askbar button{flex:none;width:44px;height:44px;border:0;border-radius:50%;background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;font-size:18px;display:grid;place-items:center}
+.askbar button.mic{background:var(--brand-soft);color:var(--brand-ink)}.askbar button.mic.on{background:#e5484d;color:#fff;animation:micpulse 1.2s ease-in-out infinite}
+@keyframes micpulse{50%{box-shadow:0 0 0 8px rgba(229,72,77,.18)}}
 .clear{border:0;background:none;color:var(--ink-3);font-size:12.5px;font-weight:650;padding:4px;margin:0 auto}
 .ai-code{display:flex;gap:6px;margin-top:8px}
 .aibox{margin-top:12px;padding:12px 13px;border-radius:16px;background:linear-gradient(160deg,#f3f0ff,#fff 70%);border:1px solid #e2dcff}
@@ -45,7 +47,7 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 <p style="text-align:center;margin-top:14px"><button class="clear" id="clearChat" type="button">🗑️ কথোপকথন মুছে দাও</button></p>
 <details class="info"><summary>ℹ️ এই Tutor কীভাবে কাজ করে</summary><p>প্রথম উত্তরটা (কার্ড) পুরোপুরি ফোনেই সঙ্গে সঙ্গে আসে: অ্যাপের ৬ বিষয়ের সহজ বাংলা ব্যাখ্যা আর ৪টি বই থেকে তোমার প্রশ্নের সবচেয়ে কাছের অংশ। এটা নিজে নতুন লেখা বানায় না, তাই ভুল তথ্য বানায় না।</p><p>Android অ্যাপে সেটিংস থেকে "ফোনের ভেতরের AI" (Gemma) নামালে, কার্ডের নিচে AI শিক্ষক ওই যাচাই করা লেখা পড়ে প্রশ্ন অনুযায়ী বুঝিয়ে বলে (RAG)। এটা ইন্টারনেট ছাড়াই চলে, কিন্তু ছোট AI মাঝে মাঝে ভুল করে, আর ফোনভেদে উত্তর আসতে কয়েক সেকেন্ড থেকে এক মিনিট লাগতে পারে। তাই AI-এর উত্তর সবসময় ওপরের কার্ডের সঙ্গে মিলিয়ে নেবে।</p><p>সহজ বাংলা ব্যাখ্যাগুলো AI-এর সাহায্যে লেখা, শিক্ষক এখনো যাচাই করেননি। নিজের AI সার্ভার (সেটিংসে) যুক্ত থাকলে বাড়তি "AI সার্ভারে জিজ্ঞেস করো" বোতাম দেখাবে। শুধু শিক্ষার জন্য; রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে ব্যবহার করবে না।</p></details>
 </main>
-<div class="askbar"><form id="askForm" autocomplete="off"><input id="q" type="search" maxlength="200" placeholder="যেমন: osmosis কী? ধমনি আর শিরার পার্থক্য?" aria-label="তোমার প্রশ্ন" enterkeyhint="send"><button type="submit" aria-label="পাঠাও">➤</button></form></div>
+<div class="askbar"><form id="askForm" autocomplete="off"><input id="q" type="search" maxlength="200" placeholder="যেমন: osmosis কী? ধমনি আর শিরার পার্থক্য?" aria-label="তোমার প্রশ্ন" enterkeyhint="send"><button type="button" id="mic" class="mic" aria-label="কথা বলে প্রশ্ন করো" hidden>🎤</button><button type="submit" aria-label="পাঠাও">➤</button></form></div>
 <nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
 <a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
 <a href="./library.html" data-tab="books"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
@@ -61,6 +63,7 @@ import {rank} from './src/answer-core.js';
 import {apiUrl} from './src/api-config.js';
 import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion} from './src/rag.js';
 import * as llm from './src/local-llm.js';
+import * as voice from './src/voice.js';
 const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
 let asked=[];try{const h=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(h))asked=h.filter(x=>typeof x==='string').slice(-20)}catch{}
@@ -68,6 +71,8 @@ const saveAsked=()=>{try{localStorage.setItem(KEY,JSON.stringify(asked.slice(-20
 let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null;
 // The question "বুঝিনি" refers to, and how many times it has been re-explained.
 let lastQ=null,tries=0;
+// True while answering a question that was asked by voice, so the answer is read aloud.
+let voiceTurn=false;
 const turns={};const pick=(list,key)=>{const i=turns[key]=(turns[key]??-1)+1;return list[i%list.length]};
 const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
 // Answers wait (briefly) for this, otherwise the first question would wrongly say the AI is not installed.
@@ -132,7 +137,16 @@ function topicCard(b,t){
  b.append(E('div','🧠 '+t.trick,'trick'));
  const acts=E('div',undefined,'btn-row');const full=E('a','📖 পুরো টপিক ও MCQ','btn sm');full.href='./topics.html#'+t.id;acts.append(full);
  if(t.book){const a=E('a','বইয়ে মূল ইংরেজি ↗','btn sm ghost');a.href='./library.html?book='+t.book.id+'&q='+encodeURIComponent(t.book.q);acts.append(a)}
+ if(voice.available())acts.append(speakButton(()=>[t.title,t.gist,...t.points.slice(0,4),t.trick].join('। ')));
  b.append(acts);
+}
+function speakButton(text){const x=E('button','🔊 শোনো','btn sm ghost');x.type='button';x.onclick=()=>voice.speak(text()).catch(e=>x.textContent='🔇 '+voiceError(e?.message));return x}
+// What to read aloud from an answer that has no AI part: the friendly line, title, gist, points and trick.
+const speechOf=b=>[...b.querySelectorAll('p:not(.fine),h3,li,.trick')].filter(x=>!x.closest('.source,.aibox')).map(x=>x.textContent).join('। ');
+function voiceError(code){
+ return ({no_match:'কিছু শুনতে পাইনি 🙂 আবার 🎤 চেপে একটু জোরে বলো।',timeout:'কিছু শুনতে পাইনি 🙂 আবার 🎤 চেপে বলো।',mic_denied:'মাইক্রোফোনের অনুমতি লাগবে। আবার 🎤 চেপে "Allow" দাও।',busy:'একটু পরে আবার 🎤 চাপো।',
+  bangla_voice_missing:'ফোনে বাংলা কণ্ঠ নেই। সেটিংস → "কণ্ঠে কথা বলা" থেকে বাংলা কণ্ঠ নামাও।',tts_not_ready:'কণ্ঠ এখনো চালু হচ্ছে, একটু পরে আবার চাপো।'})[code]
+  ||(['network','network_timeout','server','language'].includes(code)&&!voice.onlineAllowed()?'ফোনে অফলাইনে বাংলা শোনার প্যাক নেই। সেটিংস → "কণ্ঠে কথা বলা" দেখো।':'কণ্ঠ চালানো যায়নি ('+code+')।');
 }
 async function loadBooks(){if(!rawBooks)rawBooks=await Promise.all(['fundamentals','skills','terminology','mentalhealth'].map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}));return rawBooks}
 let books;
@@ -152,17 +166,18 @@ function aiButton(b,q){
     for(const s of j.sources||[]){const p=E('p','['+s.id+'] '+s.label+' ','fine');if(s.url){const a=E('a','মূল অধ্যায় ↗');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';p.append(a)}b.append(p)}
    }catch{out.textContent='AI সার্ভারে যোগাযোগ করা যাচ্ছে না।'}finally{go.disabled=false}}};
 }
+// Returns the bot bubble, so a spoken question can have its answer read aloud.
 async function answer(q,{scroll=true,lookInBooks=true}={}){
  const talk=smallTalk(q);
  // Asking the same question again means it was not clear yet: explain it a new way instead of repeating.
  const follow=!talk&&(followUpKind(q)||(lastQ&&q.trim().toLowerCase()===lastQ.trim().toLowerCase()&&'simpler'));
- if(talk||follow){const b=talk?chatReply(talk):followUp(follow,lookInBooks);if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return}
+ if(talk||follow){const b=talk?chatReply(talk):followUp(follow,lookInBooks);if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return b}
  const r=askTutor(q),chat=chatLike(q);
  // Talking about herself or her feelings ("আমি খুব ক্লান্ত"): a friend's reply, not a failed search. Only a strong
  // topic match (the same bar the AI uses) counts as a study question: "amar khub tens hoitase" is not about grammar tenses.
  if(chat==='personal'&&!(r.topics[0]?.score>=6)){
   const b=bubble('bot');if(!localModel||!llm.autoEnabled())b.append(E('p',pick(CHAT_FALLBACK.personal,'personal')));
-  localAiOffer(b,q,lookInBooks,{chat:true});if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return;
+  localAiOffer(b,q,lookInBooks,{chat:true});if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return b;
  }
  const b=bubble('bot');
  if(chat&&!r.topics.length){
@@ -173,7 +188,7 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
   localAiOffer(b,q,lookInBooks);
   if(hits&&llm.available())quickReplies(b);
   if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});
-  return;
+  return b;
  }
  lastQ=q;tries=0;
  if(r.terms.length){const row=E('div',undefined,'termrow');for(const t of r.terms)row.append(E('span',t.en+' = '+t.bn,'termchip'));b.append(row)}
@@ -192,6 +207,7 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
  localAiOffer(b,q,lookInBooks);
  if(r.confident||llm.available())quickReplies(b);
  if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});
+ return b;
 }
 // On-device AI (Android app only): RAG over the verified Bangla explanation or the books, streamed under the instant card.
 function localAiOffer(b,q,auto,mode=null){
@@ -201,6 +217,7 @@ function localAiOffer(b,q,auto,mode=null){
  const btn=E('button','✨ AI-কে দিয়ে বুঝিয়ে নাও','btn sm soft');btn.type='button';btn.onclick=()=>{btn.remove();localAi(b,q,mode)};b.append(btn);
 }
 function localAi(b,q,mode=null){
+ const speakIt=voiceTurn&&voice.autoSpeak();
  // mode: null (new question), {kind,attempt} ("বুঝিনি" rounds) or {chat:true} (talking, not asking).
  const box=E('div',undefined,'aibox'),out=E('div','অপেক্ষা করছি…','out typing'),meta=E('div','','meta');
  box.append(E('b','✨ AI শিক্ষক · '+localModel.label+' (ফোনের ভেতরে)'),out);b.append(box);
@@ -227,8 +244,9 @@ function localAi(b,q,mode=null){
    const secs=(performance.now()-t0)/1000,speed=res.generateMs?res.generatedTokens/(res.generateMs/1000):0;
    meta.textContent='⏱ '+bn(secs.toFixed(1))+' সেকেন্ড · '+bn(speed.toFixed(1))+' টোকেন/সেকেন্ড'+(res.stopped?' · থামানো হয়েছে':'')+(asChat?'':'\n⚠️ AI ভুল করতে পারে। ওপরের যাচাই করা ব্যাখ্যা বা বইয়ের সঙ্গে মিলিয়ে নাও।');
    meta.style.whiteSpace='pre-line';box.append(meta);
+   if(voice.available()&&text.trim())box.append(speakButton(()=>text));
   }catch(e){out.className='out';out.textContent='AI চালানো যায়নি ('+(e?.message||e)+')। সেটিংসে মডেল ও ফোনের ফাঁকা RAM দেখো।'}
-  finally{stop.remove()}
+  finally{stop.remove();if(speakIt)voice.speak(out.textContent).catch(()=>{})}
  });
 }
 async function bookHits(b,q,{quiet=false}={}){
@@ -240,12 +258,26 @@ async function bookHits(b,q,{quiet=false}={}){
    return hits.length;
   }catch{wait.textContent='বই খুলতে পারিনি। অ্যাপটি একবার ইন্টারনেটসহ খুলে নাও।';return 0}
 }
-async function ask(text,{remember=true}={}){
+async function ask(text,{remember=true,spoken=false}={}){
  const q=String(text||'').trim().slice(0,200);if(q.length<2)return;
- const me=bubble('me');me.textContent=q;
+ voice.stopSpeaking();
+ const me=bubble('me');me.textContent=(spoken?'🎤 ':'')+q;
  if(remember){asked.push(q);saveAsked()}
- await answer(q);
+ voiceTurn=spoken;
+ try{const b=await answer(q);if(spoken&&voice.autoSpeak()&&b&&!b.querySelector('.aibox'))voice.speak(speechOf(b)).catch(()=>{})}
+ finally{voiceTurn=false}
 }
+// 🎤 (Android app): speak a question in Bangla; the words appear in the box while she talks.
+let listening=false;
+if(voice.available())$('mic').hidden=false;
+$('mic').onclick=async()=>{
+ if(listening){voice.stopListening();return}
+ const mic=$('mic'),input=$('q'),hint=input.placeholder;
+ voice.stopSpeaking();listening=true;mic.classList.add('on');mic.textContent='■';input.value='';input.placeholder='🎤 শুনছি… বাংলায় বলো';
+ try{const heard=await voice.listen(t=>{input.value=t});input.value='';await ask(heard,{spoken:true})}
+ catch(e){input.value='';const b=bubble('bot');b.append(E('p',voiceError(e?.message)));b.scrollIntoView({behavior:'smooth',block:'start'})}
+ finally{listening=false;mic.classList.remove('on');mic.textContent='🎤';input.placeholder=hint}
+};
 $('askForm').addEventListener('submit',e=>{e.preventDefault();const q=$('q').value;$('q').value='';ask(q)});
 $('clearChat').onclick=()=>{asked=[];saveAsked();$('chat').replaceChildren();greet()};
 greet();

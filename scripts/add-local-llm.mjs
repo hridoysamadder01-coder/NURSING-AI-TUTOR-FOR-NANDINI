@@ -28,23 +28,37 @@ await cp('android-llm/nandini_llm.cpp',join(cppDir,'nandini_llm.cpp'));
 await mkdir(join(javaDir,'llm'),{recursive:true});
 for(const f of await readdir('android-llm/java/ai/nandini/nursingstudy/llm'))await cp(join('android-llm/java/ai/nandini/nursingstudy/llm',f),join(javaDir,'llm',f));
 
-// Register the local plugin (Capacitor only auto-registers npm plugins).
+// Register the local plugins (Capacitor only auto-registers npm plugins).
 const mainActivity=join(javaDir,'MainActivity.java');
 if(!(await readFile(mainActivity,'utf8')).includes('class MainActivity'))throw Error('unexpected MainActivity');
 await writeFile(mainActivity,`package ai.nandini.nursingstudy;
 
 import android.os.Bundle;
 import ai.nandini.nursingstudy.llm.NandiniLlmPlugin;
+import ai.nandini.nursingstudy.llm.NandiniVoicePlugin;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(NandiniLlmPlugin.class);
+        registerPlugin(NandiniVoicePlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
 `);
+
+// Voice: microphone permission, and package visibility (Android 11+) for the speech recognition and TTS services.
+const manifestPath=join(app,'AndroidManifest.xml');
+let manifest=await readFile(manifestPath,'utf8');
+if(!manifest.includes('</manifest>')||manifest.includes('RECORD_AUDIO'))throw Error('unexpected AndroidManifest.xml');
+manifest=manifest.replace('</manifest>',`    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <queries>
+        <intent><action android:name="android.speech.RecognitionService" /></intent>
+        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
+    </queries>
+</manifest>`);
+await writeFile(manifestPath,manifest);
 
 // Native build: arm64 only, Release-optimised even in debug APKs, and the per-CPU ggml libraries
 // extracted to nativeLibraryDir so ggml can pick the right one at runtime.

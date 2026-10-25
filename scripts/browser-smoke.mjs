@@ -82,7 +82,7 @@ try{
  await page.waitForURL(/ask\.html/);
  await page.waitForFunction(()=>document.querySelector('#chat .msg.bot h3')?.textContent.includes('অভিস্রবণ'),null,{timeout:10000});
  await page.locator('#q').fill('ধমনি আর শিরার পার্থক্য কী?');
- await page.locator('#askForm button').click();
+ await page.locator('#askForm button[type=submit]').click();
  await page.waitForFunction(()=>[...document.querySelectorAll('#chat .msg.bot h3')].some(h=>h.textContent.includes('হৃদ্')),null,{timeout:10000});
  // Android app path with a stand-in for the native NandiniLlm plugin (the real engine is checked in the APK build).
  const nativeCtx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
@@ -94,13 +94,19 @@ try{
    download:async({fileName,bytes})=>{for(const r of [.25,.5,1])emit('downloadProgress',{received:bytes*r,total:bytes});files=[{name:fileName,bytes}];localStorage.setItem('test-model-files',JSON.stringify(files));return {done:true}},
    load:async()=>({ms:5,threads:4,system:'test'}),
    generate:async({messages})=>{window.__gen.push(messages);for(const t of ['ধমনি ','হৃদ্‌যন্ত্র ','থেকে ','রক্ত ','দূরে ','নেয়।'])emit('token',{text:t});return {promptTokens:300,generatedTokens:6,prefillMs:900,generateMs:600,stopped:false}},
-   stop:async()=>{},cancelDownload:async()=>{},deleteModel:async()=>{files=[]},unload:async()=>{}}}};
+   stop:async()=>{},cancelDownload:async()=>{},deleteModel:async()=>{files=[]},unload:async()=>{}},
+   NandiniVoice:{addListener:async(ev,fn)=>{(l[ev]??=[]).push(fn);return {remove:()=>{l[ev]=l[ev].filter(f=>f!==fn)}}},
+    status:async()=>({tts:true,bangla:true,stt:true,onDevice:true,mic:true}),
+    listen:async()=>{emit('partial',{text:'হৃদ্‌যন্ত্র'});return {text:'হৃদ্‌যন্ত্র কীভাবে কাজ করে?'}},
+    speak:async({text})=>{window.__spoken.push(text);return {id:'u1'}},stopSpeaking:async()=>{},stopListening:async()=>{},installVoice:async()=>{}}}};
+  window.__spoken=[];
  });
  const app=await nativeCtx.newPage();app.on('pageerror',e=>errors.push(String(e)));
  await app.goto(base+'/settings.html#local-ai',{waitUntil:'networkidle'});
  await app.waitForFunction(()=>document.querySelector('#aiDevice')?.textContent.includes('Test Phone'));
  await app.locator('#aiModels button',{hasText:'নামাও'}).first().click();
  await app.waitForFunction(()=>document.querySelector('#aiModels h3')?.textContent.includes('✅'));
+ await app.waitForFunction(()=>document.querySelector('#voiceStatus')?.textContent.includes('বাংলা কণ্ঠ: আছে'));
  assert.ok(await app.locator('#aiAuto').isVisible());
  await app.goto(base+'/ask.html?q='+encodeURIComponent('ধমনি আর শিরার পার্থক্য কী?'),{waitUntil:'networkidle'});
  await app.waitForFunction(()=>document.querySelector('.aibox .out')?.textContent.includes('দূরে নেয়'),null,{timeout:10000});
@@ -119,21 +125,26 @@ try{
  const third=await app.evaluate(()=>window.__gen[2][1].content);
  assert.match(third,/ধাপে ধাপে/);assert.notEqual(third,again);
  assert.match(await app.locator('#chat .msg.bot').last().innerText(),/ধাপে ধাপে দেখো/);
- await app.locator('#q').fill('bondhu');await app.locator('#askForm button').click();
+ await app.locator('#q').fill('bondhu');await app.locator('#askForm button[type=submit]').click();
  await app.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('বন্ধু'));
- await app.locator('#q').fill('amar khub tens hoitase');await app.locator('#askForm button').click();
+ await app.locator('#q').fill('amar khub tens hoitase');await app.locator('#askForm button[type=submit]').click();
  await app.waitForFunction(()=>window.__gen.length===4,null,{timeout:10000});
  assert.match(await app.evaluate(()=>window.__gen[3][0].content),/পড়ার বন্ধু/,'feelings get the friendly chat prompt, not a book search');
  assert.doesNotMatch(await app.locator('#chat .msg.bot').last().innerText(),/Tense|ভালো প্রশ্ন/,'"tens" (tension) must not show the grammar topic');
- await app.locator('#q').fill('hi mama');await app.locator('#askForm button').click();
+ await app.locator('#q').fill('hi mama');await app.locator('#askForm button[type=submit]').click();
  await app.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('হ্যালো নন্দিনী'));
  assert.equal(await app.locator('#chat .quick').count(),1,'only the latest answer keeps the quick replies');
- await app.locator('#q').fill('বাংলাদেশের ক্রিকেট অধিনায়ক কে?');await app.locator('#askForm button').click();
+ await app.locator('#q').fill('বাংলাদেশের ক্রিকেট অধিনায়ক কে?');await app.locator('#askForm button[type=submit]').click();
  await app.waitForFunction(()=>[...document.querySelectorAll('.aibox .out')].some(o=>o.textContent.includes('পাইনি')),null,{timeout:20000});
- await app.locator('#q').fill('জ্বরের রোগীকে প্যারাসিটামল কত mg দেব?');await app.locator('#askForm button').click();
+ await app.locator('#q').fill('জ্বরের রোগীকে প্যারাসিটামল কত mg দেব?');await app.locator('#askForm button[type=submit]').click();
  await app.waitForFunction(()=>[...document.querySelectorAll('.aibox .out')].some(o=>o.textContent.includes('ডোজ রোগী অনুযায়ী')),null,{timeout:20000});
  assert.equal(await app.evaluate(()=>window.__gen.length),4,'greetings, off-topic and dose questions must not reach the model');
+ // Voice to voice: 🎤 asks the spoken question, and the AI answer is read aloud when it is complete.
+ await app.locator('#mic').click();
+ await app.waitForFunction(()=>window.__gen.length===5&&window.__spoken.some(t=>t.includes('দূরে নেয়')),null,{timeout:10000});
+ assert.match(await app.locator('#chat .msg.me').last().innerText(),/🎤 হৃদ্‌যন্ত্র কীভাবে কাজ করে/);
+ assert.ok(await app.locator('#chat .msg.bot').last().locator('.aibox button',{hasText:'শোনো'}).count());
  await nativeCtx.close();
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up and small talk (stand-in engine)');
+ console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines)');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}

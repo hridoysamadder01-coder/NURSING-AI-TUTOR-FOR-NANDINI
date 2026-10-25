@@ -119,6 +119,13 @@ Desktop tests with Gemma 3 4B shaped this design:
 
 So terms and MCQs are shown by the app, and the AI only gets the short slices it explained correctly. Each slice keeps the topic points that match the question.
 
+**Voice to voice (Android app).**
+- The 🎤 button in the Tutor listens in Bangla and shows the words while she talks. The answer is then read aloud: the AI answer once it is complete, or the verified card when there is no AI part. Every AI answer and topic card also has a 🔊 button.
+- It uses the phone's own engines through a small `NandiniVoice` plugin (`android-llm/`): Android `SpeechRecognizer` with `bn-BD`, and `TextToSpeech` with a Bangla voice.
+- **Recognition is on-device only by default** (`EXTRA_PREFER_OFFLINE`), so her voice does not leave the phone. If the phone has no offline Bangla pack, Settings → "কণ্ঠে কথা বলা" explains how to get one. It also has an opt-in switch for online recognition, which sends the audio to Google.
+- Settings also shows whether a Bangla voice is installed, has a button to install one, and a test button.
+- Not yet tried on a real phone: whether this vivo has offline Bangla recognition, and how the Bangla voice reads English nursing terms.
+
 Desktop check of the warm prompt (13 questions including two follow-ups, Gemma 3 4B, greedy): vital signs, osmosis, RAM/ROM, Sims position and hypoxia answers were exact, numbers included. Two answers had a wrong fact: "ভাল্‌ভ থাকে ধমনিতে", and "ধমনি রক্ত ফুসফুসে নেয়" in a "simpler" re-explanation. The old prompt made the same valve error, so the topic sentence now says positively where valves are (heart, and veins of the arms and legs). The model still gets this wrong sometimes: in the latest run one of six artery/vein answers said valves are in both. A stricter "one source sentence per point" prompt was worse (a wrong "পাইনি", a reversed privacy rule). **So the 4B model is a helper, not a source of truth**: its answer always sits under the verified card with the "AI ভুল করতে পারে" note, and "প্রতিটি প্রশ্নে AI নিজে থেকে উত্তর দেবে" can be switched off in Settings. Patient dose questions ("কত mg দেব", "dose") are answered by the app with a fixed safety note and never reach the model.
 
 On the desktop CPU, Gemma 3 4B produced a full answer in roughly 4–13 seconds. **Speed on a real phone has not been measured yet**; expect it to be several times slower on a mid-range phone. Settings has a speed test for this. The Tutor always shows the instant verified card first and labels the AI answer "AI ভুল করতে পারে". Nothing here has been tested on a physical Android device yet.
