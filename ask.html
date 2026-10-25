@@ -29,6 +29,25 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 .askbar button{flex:none;width:44px;height:44px;border:0;border-radius:50%;background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;font-size:18px;display:grid;place-items:center}
 .askbar button.mic{background:var(--brand-soft);color:var(--brand-ink)}.askbar button.mic.on{background:#e5484d;color:#fff;animation:micpulse 1.2s ease-in-out infinite}
 @keyframes micpulse{50%{box-shadow:0 0 0 8px rgba(229,72,77,.18)}}
+.askbar button.talkbtn{background:#0b3d37;color:#7ff0d9}
+.talk{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;padding:calc(14px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom));background:radial-gradient(120% 80% at 50% 30%,#14463f,#061d1a 72%);color:#eafffa}
+.talk[hidden]{display:none}
+.talk-top{width:100%;max-width:560px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.talk-top .chip{background:rgba(255,255,255,.12);color:#cfeee8;margin:0}
+.talk button.ghosty{border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:15px;padding:12px 20px;min-height:46px}
+.talk .talk-x{width:42px;height:42px;padding:0;font-size:18px}
+.orb-wrap{flex:1;display:grid;place-items:center;width:100%}
+.orb{--lvl:0;width:190px;height:190px;border-radius:50%;border:0;cursor:pointer;background:radial-gradient(circle at 35% 30%,#c4fff3,#2bd4b5 45%,#0d8f7c 76%);box-shadow:0 0 calc(30px + var(--lvl)*90px) rgba(43,212,181,.55);transform:scale(calc(1 + var(--lvl)*.22));transition:transform .08s,box-shadow .08s}
+.talk[data-state=thinking] .orb{animation:breathe 1.2s ease-in-out infinite}
+.talk[data-state=speaking] .orb{background:radial-gradient(circle at 35% 30%,#fff4c9,#ffb84d 45%,#e07b1a 76%);box-shadow:0 0 64px rgba(255,184,77,.6);animation:breathe .7s ease-in-out infinite}
+.talk[data-state=paused] .orb,.talk[data-state=muted] .orb,.talk[data-state=connecting] .orb{filter:grayscale(.75);opacity:.75}
+@keyframes breathe{50%{transform:scale(1.07)}}
+.talk-state{font-size:18px;font-weight:700;margin:6px 0;text-align:center}
+.talk-caps{width:100%;max-width:560px;min-height:110px;max-height:32vh;overflow:auto;text-align:center}
+.cap-user{color:#a8d8cf;font-size:15px;margin:4px 0}.cap-ai{color:#fff;font-size:17px;line-height:1.6;margin:6px 0;white-space:pre-line}
+.talk-btns{display:flex;gap:10px;margin-top:10px}
+.talk button.end{background:#e5484d}
+.msg.bot.talklog p{margin:0}
 .clear{border:0;background:none;color:var(--ink-3);font-size:12.5px;font-weight:650;padding:4px;margin:0 auto}
 .ai-code{display:flex;gap:6px;margin-top:8px}
 .aibox{margin-top:12px;padding:12px 13px;border-radius:16px;background:linear-gradient(160deg,#f3f0ff,#fff 70%);border:1px solid #e2dcff}
@@ -47,7 +66,7 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 <p style="text-align:center;margin-top:14px"><button class="clear" id="clearChat" type="button">🗑️ কথোপকথন মুছে দাও</button></p>
 <details class="info"><summary>ℹ️ এই Tutor কীভাবে কাজ করে</summary><p>প্রথম উত্তরটা (কার্ড) পুরোপুরি ফোনেই সঙ্গে সঙ্গে আসে: অ্যাপের ৬ বিষয়ের সহজ বাংলা ব্যাখ্যা আর ৪টি বই থেকে তোমার প্রশ্নের সবচেয়ে কাছের অংশ। এটা নিজে নতুন লেখা বানায় না, তাই ভুল তথ্য বানায় না।</p><p>Android অ্যাপে সেটিংস থেকে "ফোনের ভেতরের AI" (Gemma) নামালে, কার্ডের নিচে AI শিক্ষক ওই যাচাই করা লেখা পড়ে প্রশ্ন অনুযায়ী বুঝিয়ে বলে (RAG)। এটা ইন্টারনেট ছাড়াই চলে, কিন্তু ছোট AI মাঝে মাঝে ভুল করে, আর ফোনভেদে উত্তর আসতে কয়েক সেকেন্ড থেকে এক মিনিট লাগতে পারে। তাই AI-এর উত্তর সবসময় ওপরের কার্ডের সঙ্গে মিলিয়ে নেবে।</p><p>সহজ বাংলা ব্যাখ্যাগুলো AI-এর সাহায্যে লেখা, শিক্ষক এখনো যাচাই করেননি। নিজের AI সার্ভার (সেটিংসে) যুক্ত থাকলে বাড়তি "AI সার্ভারে জিজ্ঞেস করো" বোতাম দেখাবে। শুধু শিক্ষার জন্য; রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে ব্যবহার করবে না।</p></details>
 </main>
-<div class="askbar"><form id="askForm" autocomplete="off"><input id="q" type="search" maxlength="200" placeholder="যেমন: osmosis কী? ধমনি আর শিরার পার্থক্য?" aria-label="তোমার প্রশ্ন" enterkeyhint="send"><button type="button" id="mic" class="mic" aria-label="কথা বলে প্রশ্ন করো" hidden>🎤</button><button type="submit" aria-label="পাঠাও">➤</button></form></div>
+<div class="askbar"><form id="askForm" autocomplete="off"><input id="q" type="search" maxlength="200" placeholder="যেমন: osmosis কী? ধমনি আর শিরার পার্থক্য?" aria-label="তোমার প্রশ্ন" enterkeyhint="send"><button type="button" id="mic" class="mic" aria-label="কথা বলে প্রশ্ন করো" hidden>🎤</button><button type="button" id="talk" class="talkbtn" aria-label="কথা বলার মোড (ভয়েস টু ভয়েস)" hidden><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><rect x="3" y="9" width="2.6" height="6" rx="1.3"/><rect x="7.4" y="5" width="2.6" height="14" rx="1.3"/><rect x="11.8" y="2.5" width="2.6" height="19" rx="1.3"/><rect x="16.2" y="6.5" width="2.6" height="11" rx="1.3"/><rect x="20.4" y="10" width="2.2" height="4" rx="1.1"/></svg></button><button type="submit" aria-label="পাঠাও">➤</button></form></div>
 <nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
 <a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
 <a href="./library.html" data-tab="books"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
@@ -55,16 +74,22 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 <a href="./topics.html" data-tab="easy"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.8.7 1 1.5 1 2.4h6c0-.9.2-1.7 1-2.4a6.5 6.5 0 0 0-4-11.6z"/></svg></span>সহজ বাংলা</a>
 <a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
 </div></nav>
+<div id="talkView" class="talk" hidden role="dialog" aria-label="কথা বলার মোড"><div class="talk-top"><span id="talkEngine" class="chip"></span><button id="talkClose" class="ghosty talk-x" type="button" aria-label="বন্ধ করো">✕</button></div>
+<div class="orb-wrap"><button id="orb" class="orb" type="button" aria-label="থামাতে বা আবার শুনতে চাপো"></button></div>
+<p id="talkState" class="talk-state" aria-live="polite"></p><div class="talk-caps"><p id="capUser" class="cap-user"></p><p id="capAi" class="cap-ai"></p></div>
+<div class="talk-btns"><button id="talkMute" class="ghosty" type="button">🔇 মাইক বন্ধ</button><button id="talkEnd" class="ghosty end" type="button">শেষ করো</button></div></div>
 <script type="module">
 import {askTutor,smallTalk,followUpKind,chatLike,isQuestion} from './src/tutor-core.js';
 import {topicById} from './src/easy-topics.js';
 import {subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
 import {apiUrl} from './src/api-config.js';
-import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion} from './src/rag.js';
+import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,lookupText,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion} from './src/rag.js';
 import * as llm from './src/local-llm.js';
 import * as voice from './src/voice.js';
 import * as cloud from './src/cloud-ai.js';
+import {LiveTalk} from './src/live-talk.js';
+import {openMic,recordUtterance,pcmPlayer,playWav,stopWav} from './src/talk-audio.js';
 const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
 let asked=[];try{const h=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(h))asked=h.filter(x=>typeof x==='string').slice(-20)}catch{}
@@ -138,10 +163,19 @@ function topicCard(b,t){
  b.append(E('div','🧠 '+t.trick,'trick'));
  const acts=E('div',undefined,'btn-row');const full=E('a','📖 পুরো টপিক ও MCQ','btn sm');full.href='./topics.html#'+t.id;acts.append(full);
  if(t.book){const a=E('a','বইয়ে মূল ইংরেজি ↗','btn sm ghost');a.href='./library.html?book='+t.book.id+'&q='+encodeURIComponent(t.book.q);acts.append(a)}
- if(voice.available())acts.append(speakButton(()=>[t.title,t.gist,...t.points.slice(0,4),t.trick].join('। ')));
+ if(canSay())acts.append(speakButton(()=>[t.title,t.gist,...t.points.slice(0,4),t.trick].join('। ')));
  b.append(acts);
 }
-function speakButton(text){const x=E('button','🔊 শোনো','btn sm ghost');x.type='button';x.onclick=()=>voice.speak(text()).catch(e=>x.textContent='🔇 '+voiceError(e?.message));return x}
+// Reads an answer aloud: Gemini's natural Bangla voice when online with a key, otherwise the phone's own Bangla voice.
+async function say(text){
+ stopSaying();
+ if(cloud.ready()&&cloud.hasKey('gemini')){try{const r=await cloud.speechAudio(voice.forSpeech(text).slice(0,1500));await playWav(r.wav);return}catch{}}
+ if(voice.available())return voice.speak(text);
+ throw new Error('no_voice');
+}
+function stopSaying(){stopWav();voice.stopSpeaking()}
+const canSay=()=>voice.available()||cloud.hasKey('gemini');
+function speakButton(text){const x=E('button','🔊 শোনো','btn sm ghost');x.type='button';x.onclick=()=>say(text()).catch(e=>x.textContent='🔇 '+voiceError(e?.message));return x}
 // What to read aloud from an answer that has no AI part: the friendly line, title, gist, points and trick.
 const speechOf=b=>[...b.querySelectorAll('p:not(.fine),h3,li,.trick')].filter(x=>!x.closest('.source,.aibox')).map(x=>x.textContent).join('। ');
 function voiceError(code){
@@ -273,9 +307,9 @@ function localAi(b,q,mode=null){
    const secs=(performance.now()-t0)/1000;
    meta.textContent='⏱ '+bn(secs.toFixed(1))+' সেকেন্ড · '+stats+(asChat?'':'\n⚠️ AI ভুল করতে পারে। ওপরের যাচাই করা ব্যাখ্যা বা বইয়ের সঙ্গে মিলিয়ে নাও।');
    meta.style.whiteSpace='pre-line';box.append(meta);
-   if(voice.available()&&text.trim())box.append(speakButton(()=>text));
+   if(canSay()&&text.trim())box.append(speakButton(()=>text));
   }catch(e){out.className='out';out.textContent='AI চালানো যায়নি ('+(e?.message||e)+')। সেটিংসে মডেল ও ফোনের ফাঁকা RAM দেখো।'}
-  finally{stop.remove();if(speakIt)voice.speak(out.textContent).catch(()=>{})}
+  finally{stop.remove();if(speakIt)say(out.textContent).catch(()=>{})}
  });
 }
 function cloudReason(e){
@@ -293,24 +327,136 @@ async function bookHits(b,q,{quiet=false}={}){
 }
 async function ask(text,{remember=true,spoken=false}={}){
  const q=String(text||'').trim().slice(0,200);if(q.length<2)return;
- voice.stopSpeaking();
+ stopSaying();
  const me=bubble('me');me.textContent=(spoken?'🎤 ':'')+q;
  if(remember){asked.push(q);saveAsked()}
  voiceTurn=spoken;
- try{const b=await answer(q);if(spoken&&voice.autoSpeak()&&b&&!b.querySelector('.aibox'))voice.speak(speechOf(b)).catch(()=>{})}
+ try{const b=await answer(q);if(spoken&&voice.autoSpeak()&&b&&!b.querySelector('.aibox'))say(speechOf(b)).catch(()=>{})}
  finally{voiceTurn=false}
 }
-// 🎤 (Android app): speak a question in Bangla; the words appear in the box while she talks.
-let listening=false;
-if(voice.available())$('mic').hidden=false;
+// 🎤 dictation: online with a Groq key, the recording is written by Whisper (works on any phone); otherwise the phone's own
+// recognizer. The words appear in the box, then the question is asked and the answer read aloud.
+const canDictate=()=>voice.available()||(cloud.ready()&&cloud.hasKey('groq')&&Boolean(navigator.mediaDevices?.getUserMedia));
+const canTalk=()=>voice.available()||(cloud.hasKey('gemini')&&Boolean(navigator.mediaDevices?.getUserMedia));
+function refreshVoiceButtons(){$('mic').hidden=!canDictate();$('talk').hidden=!canTalk()}
+refreshVoiceButtons();addEventListener('online',refreshVoiceButtons);addEventListener('offline',refreshVoiceButtons);
+let listening=null;
 $('mic').onclick=async()=>{
- if(listening){voice.stopListening();return}
+ if(listening){listening.stop();return}
  const mic=$('mic'),input=$('q'),hint=input.placeholder;
- voice.stopSpeaking();listening=true;mic.classList.add('on');mic.textContent='■';input.value='';input.placeholder='🎤 শুনছি… বাংলায় বলো';
- try{const heard=await voice.listen(t=>{input.value=t});input.value='';await ask(heard,{spoken:true})}
- catch(e){input.value='';const b=bubble('bot');b.append(E('p',voiceError(e?.message)));b.scrollIntoView({behavior:'smooth',block:'start'})}
- finally{listening=false;mic.classList.remove('on');mic.textContent='🎤';input.placeholder=hint}
+ stopSaying();mic.classList.add('on');mic.textContent='■';input.value='';input.placeholder='🎤 শুনছি… বাংলায় বলো';
+ try{
+  let heard='';
+  if(cloud.ready()&&cloud.hasKey('groq')&&navigator.mediaDevices?.getUserMedia){
+   const rec=recordUtterance({onLevel:l=>mic.style.boxShadow='0 0 0 '+Math.round(Math.min(1,l*12)*10)+'px rgba(229,72,77,.25)'});listening=rec;
+   const blob=await rec.done;if(!blob)throw new Error('no_match');
+   input.placeholder='✍️ লিখছি…';heard=await cloud.transcribe(blob);
+  }else{listening={stop:()=>voice.stopListening()};heard=await voice.listen(t=>{input.value=t})}
+  if(!heard.trim())throw new Error('no_match');
+  input.value='';await ask(heard,{spoken:true});
+ }catch(e){input.value='';const b=bubble('bot');b.append(E('p',voiceError(e?.name==='NotAllowedError'?'mic_denied':e?.message)));b.scrollIntoView({behavior:'smooth',block:'start'})}
+ finally{listening=null;mic.classList.remove('on');mic.textContent='🎤';mic.style.boxShadow='';input.placeholder=hint}
 };
+
+// Talk mode, like ChatGPT's voice mode: a hands-free spoken conversation. Online with a Gemini key it is Gemini Live, which
+// hears her and answers by voice, looking facts up in the verified notes and books (lookup_nursing). Otherwise the phone
+// listens, the Tutor answers (online text AI, phone model or the verified card) and the phone's voice speaks, in a loop.
+const T={view:$('talkView'),state:$('talkState'),user:$('capUser'),ai:$('capAi'),engine:$('talkEngine'),orb:$('orb'),mute:$('talkMute')};
+const TALK_STATE={connecting:'চালু হচ্ছে…',listening:'শুনছি… বলো 🙂',thinking:'ভাবছি…',speaking:'বলছি… থামাতে বলটা চাপো',paused:'বলটা চাপলে আবার শুনব',muted:'মাইক বন্ধ আছে'};
+let talk=null;
+function talkState(s){T.view.dataset.state=s;T.state.textContent=TALK_STATE[s]||s}
+function liveError(code){return ({key_rejected:'Gemini key কাজ করছে না। সেটিংসে key দেখো।',limit:'Gemini Live-এর আজকের ফ্রি সীমা শেষ।',network:'ইন্টারনেট দুর্বল, Gemini Live-এ যোগাযোগ হলো না।',timeout:'Gemini Live সাড়া দিচ্ছে না।'})[code]||'Gemini Live চালু হলো না ('+code+')।'}
+// The spoken conversation also stays in the chat as text.
+function logTurn(user,ai){if(!user&&!ai)return;if(user){const me=bubble('me');me.textContent='🗣️ '+user}if(ai){const b=bubble('bot');b.classList.add('talklog');b.append(E('p',ai))}}
+$('talk').onclick=async()=>{
+ stopSaying();if(talk)return;
+ // Audio output must be created inside the tap, before anything is awaited.
+ const player=pcmPlayer();
+ T.view.hidden=false;T.user.textContent='';T.ai.textContent='';T.engine.textContent='';T.mute.textContent='🔇 মাইক বন্ধ';talkState('connecting');
+ if(cloud.ready()&&cloud.hasKey('gemini')&&navigator.mediaDevices?.getUserMedia){
+  try{await startLive(player);return}
+  catch(e){player.close();T.ai.textContent=e?.name==='NotAllowedError'?voiceError('mic_denied'):liveError(e?.message);if(!voice.available()){talkState('paused');return}}
+ }else player.close();
+ if(voice.available())startPhoneTalk();else{T.ai.textContent='কথা বলার মোডের জন্য নেট আর সেটিংসে Gemini key লাগবে।';talkState('paused')}
+};
+function endTalk(){talk?.stop();talk=null;stopSaying();T.view.hidden=true}
+$('talkEnd').onclick=endTalk;$('talkClose').onclick=endTalk;
+T.orb.onclick=()=>talk?.tap();
+T.mute.onclick=()=>{if(!talk)return;const m=!talk.muted;talk.setMuted(m);T.mute.textContent=m?'🎙️ মাইক চালু':'🔇 মাইক বন্ধ'};
+async function startLive(player,retries=1){
+ await player.resume();
+ let mic=null,closed=false,userTurn='',aiTurn='',muted=false;
+ const save=()=>{logTurn(userTurn.trim(),aiTurn.trim());userTurn='';aiTurn=''};
+ const session=new LiveTalk({key:cloud.keys().gemini,
+  lookup:async q=>{talkState('thinking');if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));return lookupText(q,ragIndex)},
+  onAudio:b64=>{player.play(b64);talkState('speaking')},
+  onUserText:t=>{if(aiTurn)save();if(!userTurn){T.user.textContent='';T.ai.textContent=''}userTurn+=t;T.user.textContent=userTurn},
+  onAiText:t=>{aiTurn+=t;T.ai.textContent=aiTurn},
+  onInterrupted:()=>{player.clear();talkState('listening')},
+  onTurnEnd:()=>{save();setTimeout(()=>{if(!closed&&!muted)talkState('listening')},player.remaining()*1000)},
+  onState:(s,code)=>{if(s!=='closed'||closed)return;
+   // A session lasts up to 15 minutes; start a fresh one without making her do anything.
+   mic?.close();save();if(retries>0&&code!=='key_rejected'){talkState('connecting');startLive(player,retries-1).catch(e=>{T.ai.textContent=liveError(e?.message);talkState('paused')})}
+   else{T.ai.textContent=liveError(code);talkState('paused')}}});
+ await session.connect();
+ // While the Tutor is speaking the microphone is not sent, so it cannot hear itself; tapping the ball cuts it off.
+ mic=await openMic(b64=>{if(player.remaining()>0.05)return;session.sendAudio(b64)},{onLevel:l=>T.orb.style.setProperty('--lvl',Math.min(1,l*10).toFixed(2))});
+ T.engine.textContent='🌐 Gemini Live (অনলাইন)';talkState('listening');
+ talk={muted:false,
+  stop(){closed=true;mic?.close();session.close();player.close();save()},
+  tap(){player.clear();if(!muted)talkState('listening')},
+  setMuted(m){this.muted=muted=m;mic?.setMuted(m);talkState(m?'muted':'listening')}};
+}
+function startPhoneTalk(){
+ let stopped=false,quiet=0,wake=null;
+ const wait=()=>new Promise(r=>{wake=r});
+ T.engine.textContent='📱 ফোনের কণ্ঠ'+(cloud.ready()?' + অনলাইন AI':' (অফলাইন)');
+ talk={muted:false,
+  stop(){stopped=true;voice.stopListening();voice.stopSpeaking();wake?.()},
+  tap(){voice.stopSpeaking();if(!this.muted)wake?.()},
+  setMuted(m){this.muted=m;if(m){voice.stopListening();talkState('muted')}else wake?.()}};
+ (async()=>{
+  while(!stopped){
+   if(talk?.muted){await wait();continue}
+   talkState('listening');let heard='';
+   try{heard=await voice.listen(t=>{T.user.textContent=t})}
+   catch(e){if(stopped)break;
+    // Two silent tries in a row: wait for a tap instead of listening forever.
+    if(['no_match','timeout'].includes(e?.message)&&++quiet<2)continue;
+    if(!['no_match','timeout'].includes(e?.message))T.ai.textContent=voiceError(e?.message);
+    quiet=0;talkState('paused');await wait();continue}
+   quiet=0;T.user.textContent=heard;T.ai.textContent='';talkState('thinking');
+   let reply;try{reply=await talkReply(heard)}catch{reply='দুঃখিত, এখন উত্তর দিতে পারছি না। আবার বলো তো?'}
+   if(stopped)break;
+   T.ai.textContent=reply;logTurn(heard,reply);talkState('speaking');
+   try{await voice.speakWait(reply)}catch{}
+  }
+ })();
+}
+// One spoken reply for the phone talk loop, with the same rules as typed questions.
+async function talkReply(q){
+ const kind=smallTalk(q);if(kind)return pick(CHAT_REPLY[kind],kind);
+ if(isDoseQuestion(q))return DOSE_NOTE;
+ const follow=followUpKind(q)||(lastQ&&q.trim().toLowerCase()===lastQ.trim().toLowerCase()&&'simpler');
+ if(follow&&!lastQ)return 'কোন টপিকটা বুঝতে চাও? একটু বলো তো।';
+ const question=follow?lastQ:q;
+ if(follow)tries++;else{lastQ=q;tries=0;lastAi=''}
+ let ctx=retrieve(question,null);const chat=!follow&&chatLike(question);
+ if(!ctx.topic&&chat!=='personal'){if(!ragIndex)ragIndex=buildIndex(chunkBooks(await loadBooks()));ctx=retrieve(question,ragIndex)}
+ const asChat=!ctx.topic&&(chat==='personal'||(chat==='short'&&!ctx.grounded));
+ if(!asChat&&!ctx.grounded)return NOT_FOUND;
+ const opts={followUp:follow||null,attempt:Math.max(0,tries-1),spoken:true};
+ const keep=text=>{if(asChat){chatHistory.push({role:'user',content:question},{role:'assistant',content:text});chatHistory=chatHistory.slice(-6)}else lastAi=text;return text};
+ if(cloud.ready()){try{return keep((await cloud.generate(asChat?buildChatMessages(question,{history:chatHistory}):buildMessages(question,ctx,{...opts,cloud:true,previous:follow?lastAi:''}),{maxTokens:400,temperature:asChat?0.8:0.4})).text)}catch{}}
+ if(localModel){
+  await llm.load(localModel);let text='';
+  await llm.generate(asChat?buildChatMessages(question):buildMessages(question,ctx,opts),{maxTokens:asChat?120:200,temperature:asChat?0.7:0,onToken:t=>{text+=t;T.ai.textContent=text}});
+  if(text.trim())return keep(text);
+ }
+ if(asChat)return pick(CHAT_FALLBACK[chat],chat);
+ const t=ctx.topic;
+ return t?t.title+'। '+t.gist+' '+t.points.slice(0,2).join(' ')+' বুঝেছ?':'বইয়ে এ নিয়ে লেখা আছে। Tutor পাতায় লিখে জিজ্ঞেস করলে অংশগুলো দেখাব।';
+}
 $('askForm').addEventListener('submit',e=>{e.preventDefault();const q=$('q').value;$('q').value='';ask(q)});
 $('clearChat').onclick=()=>{asked=[];saveAsked();$('chat').replaceChildren();greet()};
 greet();

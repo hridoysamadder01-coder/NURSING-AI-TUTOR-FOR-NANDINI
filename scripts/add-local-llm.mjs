@@ -52,7 +52,9 @@ public class MainActivity extends BridgeActivity {
 const manifestPath=join(app,'AndroidManifest.xml');
 let manifest=await readFile(manifestPath,'utf8');
 if(!manifest.includes('</manifest>')||manifest.includes('RECORD_AUDIO'))throw Error('unexpected AndroidManifest.xml');
+// MODIFY_AUDIO_SETTINGS: the WebView's microphone (talk mode, Whisper dictation) is only granted with both permissions.
 manifest=manifest.replace('</manifest>',`    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <queries>
         <intent><action android:name="android.speech.RecognitionService" /></intent>
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>

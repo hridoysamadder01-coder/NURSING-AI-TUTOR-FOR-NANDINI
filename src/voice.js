@@ -20,6 +20,13 @@ export function forSpeech(text){
  return String(text||'').replace(/[*#_`>|]/g,' ').replace(/\s*→\s*/g,', ').replace(/\p{Extended_Pictographic}|\uFE0F/gu,'').replace(/\s+/g,' ').trim().slice(0,3900);
 }
 export function speak(text){const t=forSpeech(text);return t&&plugin()?plugin().speak({text:t,rate:0.95}):Promise.resolve()}
+// Speaks and resolves when the phone has finished saying it (for the talk-mode loop: speak, then listen again).
+export async function speakWait(text){
+ const p=plugin(),t=forSpeech(text);if(!p||!t)return;
+ const finished=new Set();let id=null,resolveDone;const done=new Promise(r=>{resolveDone=r});
+ const h=await p.addListener('speakDone',e=>{finished.add(e.id);if(e.id===id)resolveDone()});
+ try{id=(await p.speak({text:t,rate:0.95})).id;if(finished.has(id))resolveDone();await done}finally{h.remove()}
+}
 export function stopSpeaking(){return plugin()?.stopSpeaking()}
 export function installVoice(){return plugin()?.installVoice()}
 export async function listen(onPartial){

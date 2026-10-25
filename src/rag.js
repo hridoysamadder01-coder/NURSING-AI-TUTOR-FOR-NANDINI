@@ -113,15 +113,18 @@ function topicSource(t,use,question){
 }
 // cloud: the bigger online models (src/cloud-ai.js) also get longer book passages, may ask back when a question is unclear,
 // and see their previous explanation in "বুঝিনি" rounds (unlike the phone model, they do not just copy it).
-export function buildMessages(question,ctx,{passageWords,followUp=null,attempt=0,cloud=false,previous=''}={}){
+// spoken: the answer will be read aloud in talk mode, so short sentences without lists or symbols.
+export function buildMessages(question,ctx,{passageWords,followUp=null,attempt=0,cloud=false,previous='',spoken=false}={}){
  passageWords??=cloud?150:90;
  const style=followUp?followUpStyle(followUp,attempt):null,sources=[];
  if(ctx.topic)sources.push(topicSource(ctx.topic,style?.use||'points',question));
- else for(const p of ctx.passages)sources.push(p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,passageWords));
+ // The phone model gets either the Bangla topic or book text (more English pulls it into English); online models get both.
+ if(!ctx.topic||cloud)for(const p of ctx.passages)sources.push(p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,passageWords));
  const system='তুমি নন্দিনীর বন্ধুর মতো, ধৈর্যশীল নার্সিং শিক্ষক। তাকে "তুমি" বলে আন্তরিক, সহজ কথ্য বাংলায় বলবে। নিয়ম:\n'+
   '১) শুধু "তথ্য" অংশে যা লেখা আছে, তা থেকেই উত্তর দেবে। নিজের থেকে কোনো তথ্য যোগ করবে না।\n'+
   '২) তথ্যের বাক্যগুলো যতটা সম্ভব হুবহু ব্যবহার করবে। সংখ্যা, "কম/বেশি", "থেকে/দিকে" একদম বদলাবে না।\n'+
-  '৩) অন্য ধরন বলা না থাকলে: প্রথমে এক লাইনে মূল কথাটা বলবে, তারপর ৩–৫টি ছোট পয়েন্ট। ইংরেজি পরিভাষা (যেমন Artery) বন্ধনীতে রাখবে, কিন্তু পুরো বাক্য ইংরেজিতে অনুবাদ করবে না।\n'+
+  (spoken?'৩) এটা কণ্ঠে পড়ে শোনানো হবে: ২–৪টি ছোট, সহজ বাক্যে বলবে; কোনো তালিকা, চিহ্ন বা বন্ধনী লিখবে না; শেষে জিজ্ঞেস করবে বুঝেছে কি না।\n'
+   :'৩) অন্য ধরন বলা না থাকলে: প্রথমে এক লাইনে মূল কথাটা বলবে, তারপর ৩–৫টি ছোট পয়েন্ট। ইংরেজি পরিভাষা (যেমন Artery) বন্ধনীতে রাখবে, কিন্তু পুরো বাক্য ইংরেজিতে অনুবাদ করবে না।\n')+
   '৪) "তথ্য"-এ উত্তর না থাকলে শুধু লিখবে: '+NOT_FOUND+'\n'+
   '৫) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত দেবে না।'+
   (cloud?'\n৬) প্রশ্নটা অস্পষ্ট হলে বা দুই রকম মানে হতে পারলে আন্দাজ করবে না; ছোট একটা প্রশ্ন করে জেনে নেবে সে কোনটা জানতে চায়।':'');
@@ -142,4 +145,14 @@ export function buildChatMessages(message,{history=[]}={}){
   '৫) শেষে আলতো করে পড়ায় ফেরাবে, যেমন জিজ্ঞেস করবে আজ কোন টপিকটা কঠিন লাগছে।';
  // history: the last few turns of this chat ({role:'user'|'assistant',content}), so a friend remembers what was just said.
  return [{role:'system',content:system},...history.slice(-4),{role:'user',content:String(message).trim()}];
+}
+// What the voice conversation's lookup_nursing tool returns: the verified topic (with trick) or book passages,
+// a fixed note for dose questions, or NOT_FOUND so the model says it is not in the books.
+export function lookupText(query,index){
+ if(isDoseQuestion(query))return 'DOSE: '+DOSE_NOTE+' এই নোটটাই বলবে, কোনো ডোজ বলবে না।';
+ const ctx=retrieve(query,index);
+ if(!ctx.grounded)return 'NOT_FOUND';
+ const book=ctx.passages.map(p=>p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,150)).join('\n\n');
+ if(ctx.topic)return topicSource(ctx.topic,'points',query)+'\nমনে রাখার কৌশল: '+ctx.topic.trick+(book?'\n\n'+book:'');
+ return ctx.passages.map(p=>p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,150)).join('\n\n');
 }

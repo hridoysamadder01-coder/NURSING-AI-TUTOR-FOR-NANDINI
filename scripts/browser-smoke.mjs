@@ -4,7 +4,8 @@ import {server} from '../server.mjs';
 import assert from 'node:assert/strict';
 const listen=()=>new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 await listen();const port=server.address().port;const base='http://127.0.0.1:'+port;
-const browser=await chromium.launch({headless:true});let failed=false;
+// Fake microphone and no autoplay block, for the voice tests.
+const browser=await chromium.launch({headless:true,args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required']});let failed=false;
 try{
  const context=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
  const page=await context.newPage();
@@ -98,7 +99,7 @@ try{
    NandiniVoice:{addListener:async(ev,fn)=>{(l[ev]??=[]).push(fn);return {remove:()=>{l[ev]=l[ev].filter(f=>f!==fn)}}},
     status:async()=>({tts:true,bangla:true,stt:true,onDevice:true,mic:true,engine:'com.google.android.googlequicksearchbox',engines:['com.vivo.voice','com.google.android.googlequicksearchbox']}),
     listen:async()=>{emit('partial',{text:'হৃদ্‌যন্ত্র'});return {text:'হৃদ্‌যন্ত্র কীভাবে কাজ করে?'}},
-    speak:async({text})=>{window.__spoken.push(text);return {id:'u1'}},stopSpeaking:async()=>{},stopListening:async()=>{},installVoice:async()=>{}}}};
+    speak:async({text})=>{window.__spoken.push(text);const id='u'+window.__spoken.length;setTimeout(()=>emit('speakDone',{id}),30);return {id}},stopSpeaking:async()=>{},stopListening:async()=>{},installVoice:async()=>{}}}};
   window.__spoken=[];
  });
  const app=await nativeCtx.newPage();app.on('pageerror',e=>errors.push(String(e)));
@@ -145,6 +146,13 @@ try{
  await app.waitForFunction(()=>window.__gen.length===5&&window.__spoken.some(t=>t.includes('দূরে নেয়')),null,{timeout:10000});
  assert.match(await app.locator('#chat .msg.me').last().innerText(),/🎤 হৃদ্‌যন্ত্র কীভাবে কাজ করে/);
  assert.ok(await app.locator('#chat .msg.bot').last().locator('.aibox button',{hasText:'শোনো'}).count());
+ // Talk mode offline: the phone listens, the phone model answers in spoken style, the phone's voice speaks it.
+ const spokenBefore=await app.evaluate(()=>window.__spoken.length),gensBefore=await app.evaluate(()=>window.__gen.length);
+ await app.locator('#talk').click();
+ await app.waitForFunction(n=>window.__spoken.length>n,spokenBefore,{timeout:10000});
+ assert.match(await app.locator('#talkEngine').innerText(),/ফোনের কণ্ঠ/);
+ assert.match(await app.evaluate(n=>window.__gen[n][0].content,gensBefore),/কণ্ঠে পড়ে শোনানো হবে/,'talk mode asks for a spoken-style answer');
+ await app.locator('#talkEnd').click();assert.ok(await app.locator('#talkView').isHidden());
  await nativeCtx.close();
  // Strong mode on the website (no phone model): fake Gemini/Groq servers. The first Gemini model is at its free limit,
  // the second answers; then all of Gemini is down and Groq answers.
@@ -159,6 +167,7 @@ try{
   if(r.url().includes('gemini-3.5-flash-lite')&&!tiny)return route.fulfill({status:429,headers:{...cors,'retry-after':'60'},body:'{"error":{"code":429}}'});
   return route.fulfill({status:200,headers:{...cors,'content-type':'text/event-stream'},body:stream([{candidates:[{content:{parts:[{text:tiny?'ঠিক আছে':'শক্তিশালী উত্তর: ধমনি রক্ত '}]}}]},{candidates:[{content:{parts:[{text:tiny?'':'হৃদ্‌যন্ত্র থেকে দূরে নেয়।'}]}}]}])})});
  await webCtx.route(/api\.groq\.com/,async route=>{const r=route.request();if(r.method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+  if(r.url().includes('audio/transcriptions')){seen.push({url:r.url(),whisper:(r.postDataBuffer()||Buffer.alloc(0)).length,auth:r.headers()['authorization']});return route.fulfill({status:200,headers:{...cors,'content-type':'application/json'},body:JSON.stringify({text:'Osmosis কী?'})})}
   seen.push({url:r.url(),body:JSON.parse(r.postData()||'{}'),auth:r.headers()['authorization']});
   return route.fulfill({status:200,headers:{...cors,'content-type':'text/event-stream'},body:stream([{choices:[{delta:{content:'Groq-এর উত্তর।'}}]}])+'data: [DONE]\n\n'})});
  const web=await webCtx.newPage();web.on('pageerror',e=>errors.push(String(e)));
@@ -183,7 +192,34 @@ try{
  await web.locator('#q').fill('বাংলাদেশের ক্রিকেট অধিনায়ক কে?');await web.locator('#askForm button[type=submit]').click();
  await web.waitForFunction(()=>[...document.querySelectorAll('.aibox .out')].some(o=>o.textContent.includes('পাইনি')),null,{timeout:20000});
  const cloudCalls=seen.length;await web.waitForTimeout(300);assert.equal(seen.length,cloudCalls,'off-topic questions do not reach the online AI either');
+ // Talk mode with a fake Gemini Live server: setup, microphone audio, a lookup_nursing tool call answered from the
+ // verified notes, spoken audio back, transcripts on screen and kept in the chat.
+ const live={setup:null,audio:0,toolResult:null};
+ await webCtx.routeWebSocket(/BidiGenerateContent/,ws=>{ws.onMessage(raw=>{const m=JSON.parse(String(raw));
+  if(m.setup){live.setup=m.setup;ws.send(JSON.stringify({setupComplete:{}}));return}
+  if(m.realtimeInput?.audio){live.audio++;if(live.audio===4){ws.send(JSON.stringify({serverContent:{inputTranscription:{text:'ধমনি আর শিরার পার্থক্য কী?'}}}));ws.send(JSON.stringify({toolCall:{functionCalls:[{id:'c1',name:'lookup_nursing',args:{query:'ধমনি আর শিরার পার্থক্য'}}]}}))}}
+  if(m.toolResponse){live.toolResult=m.toolResponse.functionResponses[0];
+   ws.send(JSON.stringify({serverContent:{modelTurn:{parts:[{inlineData:{mimeType:'audio/pcm;rate=24000',data:Buffer.alloc(4800).toString('base64')}}]},outputTranscription:{text:'ধমনি রক্ত হৃদ্‌যন্ত্র থেকে দূরে নেয়। বুঝেছ?'}}}));
+   ws.send(JSON.stringify({serverContent:{turnComplete:true}}))}
+ })});
+ await web.goto(base+'/ask.html',{waitUntil:'networkidle'});
+ assert.ok(await web.locator('#talk').isVisible(),'talk mode button is shown with a Gemini key');
+ await web.locator('#talk').click();
+ await web.waitForFunction(()=>document.querySelector('#capAi')?.textContent.includes('দূরে নেয়'),null,{timeout:15000});
+ assert.equal(live.setup.model,'models/gemini-3.8-live');assert.deepEqual(live.setup.generationConfig.responseModalities,['AUDIO']);
+ assert.equal(live.setup.tools[0].functionDeclarations[0].name,'lookup_nursing');assert.match(live.setup.systemInstruction.parts[0].text,/lookup_nursing/);
+ assert.ok(live.audio>=4,'microphone audio is streamed');
+ assert.match(live.toolResult.response.result,/ধমনি \(Artery\) হৃদ্‌যন্ত্র থেকে রক্ত দূরে নেয়/,'facts come from the verified notes');
+ assert.match(await web.locator('#capUser').innerText(),/ধমনি আর শিরার পার্থক্য/);
+ await web.locator('#talkEnd').click();assert.ok(await web.locator('#talkView').isHidden());
+ assert.match(await web.locator('#chat .msg.me').last().innerText(),/🗣️ ধমনি আর শিরার পার্থক্য/);
+ assert.match(await web.locator('#chat .msg.bot.talklog').last().innerText(),/দূরে নেয়/);
+ // 🎤 dictation online: the recording goes to (fake) Whisper and the written question is asked.
+ await web.locator('#mic').click();await web.waitForTimeout(1500);await web.locator('#mic').click();
+ await web.waitForFunction(()=>[...document.querySelectorAll('#chat .msg.me')].some(m=>m.textContent.includes('🎤 Osmosis কী?')),null,{timeout:15000});
+ const w=seen.find(s=>s.whisper);assert.ok(w&&w.whisper>1000&&w.auth==='Bearer gsk_test','the recorded audio is sent to Whisper');
+
  await webCtx.close();
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq (fake servers)');
+ console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq -> Gemini Live talk mode with lookup tool (fake servers, fake mic)');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}

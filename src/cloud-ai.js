@@ -115,3 +115,48 @@ export async function transcribe(blob,{signal}={}){
  if(!res.ok)throw new Error(res.status===429?'limit':res.status===401||res.status===403?'key_rejected':'http_'+res.status);
  return String((await res.json()).text||'').trim();
 }
+
+// Natural Bangla voice for reading answers aloud (Gemini TTS, ai.google.dev/gemini-api/docs/speech-generation).
+// Returns WAV bytes. Tries the Interactions API of the newest TTS model first, then the older generateContent TTS model.
+export const TTS_ROUTE=[{api:'interactions',model:'gemini-3.8-flash-lite-tts'},{api:'interactions',model:'gemini-3.8-flash-tts'},{api:'generate',model:'gemini-2.5-flash-preview-tts'}];
+const TTS_STYLE='একজন আন্তরিক, ধৈর্যশীল শিক্ষকের মতো, স্বাভাবিক গতিতে, উষ্ণ সুরে';
+function b64ToBytes(b64){const s=atob(b64),u8=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u8[i]=s.charCodeAt(i);return u8}
+function pcmWav(pcm,rate=24000){
+ const h=new DataView(new ArrayBuffer(44)),w=(o,s)=>{for(let i=0;i<s.length;i++)h.setUint8(o+i,s.charCodeAt(i))};
+ w(0,'RIFF');h.setUint32(4,36+pcm.byteLength,true);w(8,'WAVE');w(12,'fmt ');h.setUint32(16,16,true);h.setUint16(20,1,true);h.setUint16(22,1,true);
+ h.setUint32(24,rate,true);h.setUint32(28,rate*2,true);h.setUint16(32,2,true);h.setUint16(34,16,true);w(36,'data');h.setUint32(40,pcm.byteLength,true);
+ const out=new Uint8Array(44+pcm.byteLength);out.set(new Uint8Array(h.buffer),0);out.set(pcm,44);return out;
+}
+const isWav=u8=>u8.length>12&&String.fromCharCode(...u8.subarray(0,4))==='RIFF';
+export async function speechAudio(text,{voice='Aoede',signal}={}){
+ const key=keys().gemini;if(!key)throw new Error('no_key');
+ const tried=[];
+ for(const t of TTS_ROUTE){
+  if((cooldown.get('tts:'+t.model)||0)>now())continue;
+  try{
+   let res,audio;
+   if(t.api==='interactions'){
+    res=await fetch('https://generativelanguage.googleapis.com/v1beta/interactions',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},
+     body:JSON.stringify({model:t.model,input:[{type:'user_input',content:[{type:'text',text,annotations:[{type:'speech_metadata',style:TTS_STYLE}]}]}],response_format:{type:'audio'},generation_config:{speech_config:[{voice}]}})});
+    if(!res.ok)throw Object.assign(new Error(res.status===429?'limit':'http_'+res.status),{status:res.status});
+    const j=await res.json();
+    for(const s of j.steps||[])for(const c of s.content||[])if(c.type==='audio'&&c.data)audio=c.data;
+    audio??=j.output_audio?.data;
+   }else{
+    res=await fetch(GEMINI+t.model+':generateContent',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},
+     body:JSON.stringify({contents:[{parts:[{text:TTS_STYLE+' পড়ো: '+text}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}}})});
+    if(!res.ok)throw Object.assign(new Error(res.status===429?'limit':'http_'+res.status),{status:res.status});
+    const j=await res.json();audio=j.candidates?.[0]?.content?.parts?.find(p=>p.inlineData)?.inlineData?.data;
+   }
+   if(!audio)throw new Error('no_audio');
+   const bytes=b64ToBytes(audio);
+   return {wav:isWav(bytes)?bytes:pcmWav(bytes),model:t.model};
+  }catch(e){
+   if(signal?.aborted)throw e;
+   tried.push({model:t.model,error:e.message});
+   if(e.message==='limit')cooldown.set('tts:'+t.model,now()+10*60*1000);
+   if(e.status===401||e.status===403)break;
+  }
+ }
+ throw Object.assign(new Error('tts_unavailable'),{tried});
+}
