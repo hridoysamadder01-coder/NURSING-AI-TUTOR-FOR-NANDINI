@@ -92,6 +92,8 @@ export async function generate(messages,{onToken,signal,maxTokens=900,temperatur
    if(e.message==='stopped')throw e;
    if(e.message==='limit')cooldown.set(route.id,now()+(e.retryAfter?e.retryAfter*1000:10*60*1000));
    if(e.message==='key_rejected')for(const r of ROUTE)if(r.provider===route.provider)cooldown.set(r.id,Infinity);
+   // A model that does not exist (any more) or refuses the request is not tried first again for 6 hours.
+   if(e.message==='http_404'||e.message==='bad_request')cooldown.set(route.id,now()+6*3600*1000);
    // Words already shown cannot be taken back, so a cut-off answer is not restarted by another model.
    if(gotAny)throw Object.assign(new Error('cut_off'),{tried});
   }
@@ -154,7 +156,8 @@ export async function speechAudio(text,{voice='Aoede',signal}={}){
   }catch(e){
    if(signal?.aborted)throw e;
    tried.push({model:t.model,error:e.message});
-   if(e.message==='limit')cooldown.set('tts:'+t.model,now()+10*60*1000);
+   // Any failing voice model waits before it is tried again, so reading aloud does not slow down every time.
+   cooldown.set('tts:'+t.model,now()+(e.message==='limit'?10*60*1000:6*3600*1000));
    if(e.status===401||e.status===403)break;
   }
  }

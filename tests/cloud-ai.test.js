@@ -62,3 +62,9 @@ test('strong mode needs a key and can be switched off',()=>{
  cloud.setKeys({groq:'q'});assert.equal(cloud.ready(),true);
  cloud.setEnabled(false);assert.equal(cloud.ready(),false);cloud.setEnabled(true);
 });
+test('a model that no longer exists is not tried first on every question',async()=>{
+ cloud.setKeys({gemini:'g2',groq:''});
+ serve([['gemini-3.5-flash-lite',()=>new Response('{}',{status:404})],['gemini-3.1-flash-lite',()=>sse([geminiChunk('ঠিক')])]]);
+ await cloud.generate(msgs);serve([['gemini-3.1-flash-lite',()=>sse([geminiChunk('আবার')])]]);
+ assert.equal((await cloud.generate(msgs)).text,'আবার');assert.equal(calls.length,1);
+});
