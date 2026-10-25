@@ -197,8 +197,9 @@ try{
  await web.waitForFunction(()=>document.querySelector('#chat .msg.bot:last-child')?.textContent.includes('হৃদয় সামাদ্দার স্যার'));
  // Talk mode with a fake Gemini Live server: setup, microphone audio, a lookup_nursing tool call answered from the
  // verified notes, spoken audio back, transcripts on screen and kept in the chat.
- const live={setup:null,setups:[],audio:0,toolResult:null};
+ const live={setup:null,setups:[],audio:0,toolResult:null,quota:false};
  await webCtx.routeWebSocket(/BidiGenerateContent/,ws=>{ws.onMessage(raw=>{const m=JSON.parse(String(raw));
+  if(m.setup&&live.quota){ws.close({code:1011,reason:'Quota exceeded'});return}
   if(m.setup){live.setup??=m.setup;live.setups.push(m.setup);ws.send(JSON.stringify({setupComplete:{}}));if(live.setups.length===1)ws.send(JSON.stringify({sessionResumptionUpdate:{resumable:true,newHandle:'h1'}}));return}
   if(m.realtimeInput?.audio){live.audio++;if(live.audio===4){ws.send(JSON.stringify({serverContent:{inputTranscription:{text:'ধমনি আর শিরার পার্থক্য কী?'}}}));ws.send(JSON.stringify({toolCall:{functionCalls:[{id:'c1',name:'lookup_nursing',args:{query:'ধমনি আর শিরার পার্থক্য'}}]}}))}}
   if(m.toolResponse){live.toolResult=m.toolResponse.functionResponses[0];
@@ -227,6 +228,14 @@ try{
  await web.locator('#mic').click();await web.waitForTimeout(1500);await web.locator('#mic').click();
  await web.waitForFunction(()=>[...document.querySelectorAll('#chat .msg.me')].some(m=>m.textContent.includes('🎤 Osmosis কী?')),null,{timeout:15000});
  const w=seen.find(s=>s.whisper);assert.ok(w&&w.whisper>1000&&w.auth==='Bearer gsk_test','the recorded audio is sent to Whisper');
+ // Gemini Live's free limit is used up: talk mode goes on at level 2 (Whisper ears + online text AI) instead of stopping.
+ live.quota=true;
+ await web.locator('#talk').click();
+ await web.waitForFunction(()=>/স্তর ২/.test(document.querySelector('#talkEngine')?.textContent||''),null,{timeout:10000});
+ await web.waitForTimeout(1500);await web.locator('#orb').click();
+ await web.waitForFunction(()=>document.querySelector('#capAi')?.textContent.includes('Groq-এর উত্তর'),null,{timeout:15000});
+ assert.match(await web.locator('#capUser').innerText(),/Osmosis/);
+ await web.locator('#talkEnd').click();
 
  await webCtx.close();
  assert.deepEqual(errors,[]);
