@@ -99,7 +99,7 @@ try{
    NandiniVoice:{addListener:async(ev,fn)=>{(l[ev]??=[]).push(fn);return {remove:()=>{l[ev]=l[ev].filter(f=>f!==fn)}}},
     status:async()=>({tts:true,bangla:true,stt:true,onDevice:true,mic:true,engine:'com.google.android.googlequicksearchbox',engines:['com.vivo.voice','com.google.android.googlequicksearchbox']}),
     listen:async()=>{emit('partial',{text:'হৃদ্‌যন্ত্র'});return {text:'হৃদ্‌যন্ত্র কীভাবে কাজ করে?'}},
-    speak:async({text})=>{window.__spoken.push(text);const id='u'+window.__spoken.length;setTimeout(()=>emit('speakDone',{id}),30);return {id}},stopSpeaking:async()=>{},stopListening:async()=>{},installVoice:async()=>{}}}};
+    speak:async({text})=>{window.__spoken.push(text);const id='u'+window.__spoken.length;setTimeout(()=>emit('speakDone',{id}),30);return {id}},stopSpeaking:async()=>{},stopListening:async()=>{},installVoice:async()=>{},keepAwake:async({on})=>{window.__awake=on}}}};
   window.__spoken=[];
  });
  const app=await nativeCtx.newPage();app.on('pageerror',e=>errors.push(String(e)));
@@ -150,9 +150,9 @@ try{
  const spokenBefore=await app.evaluate(()=>window.__spoken.length),gensBefore=await app.evaluate(()=>window.__gen.length);
  await app.locator('#talk').click();
  await app.waitForFunction(n=>window.__spoken.length>n,spokenBefore,{timeout:10000});
- assert.match(await app.locator('#talkEngine').innerText(),/ফোনের কণ্ঠ/);
+ assert.match(await app.locator('#talkEngine').innerText(),/ফোনের কণ্ঠ/);assert.equal(await app.evaluate(()=>window.__awake),true,'the screen stays on while talking');
  assert.match(await app.evaluate(n=>window.__gen[n][0].content,gensBefore),/কণ্ঠে পড়ে শোনানো হবে/,'talk mode asks for a spoken-style answer');
- await app.locator('#talkEnd').click();assert.ok(await app.locator('#talkView').isHidden());
+ await app.locator('#talkEnd').click();assert.ok(await app.locator('#talkView').isHidden());assert.equal(await app.evaluate(()=>window.__awake),false);
  await nativeCtx.close();
  // Strong mode on the website (no phone model): fake Gemini/Groq servers. The first Gemini model is at its free limit,
  // the second answers; then all of Gemini is down and Groq answers.

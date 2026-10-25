@@ -386,14 +386,14 @@ $('talk').onclick=async()=>{
  stopSaying();if(talk)return;
  // Audio output must be created inside the tap, before anything is awaited.
  const player=pcmPlayer();
- T.view.hidden=false;T.user.textContent='';T.ai.textContent='';T.engine.textContent='';T.mute.textContent='🔇 মাইক বন্ধ';talkState('connecting');
+ T.view.hidden=false;T.user.textContent='';T.ai.textContent='';T.engine.textContent='';T.mute.textContent='🔇 মাইক বন্ধ';talkState('connecting');voice.keepAwake(true);
  if(cloud.ready()&&cloud.hasKey('gemini')&&navigator.mediaDevices?.getUserMedia){
   try{await startLive(player);return}
   catch(e){player.close();T.ai.textContent=e?.name==='NotAllowedError'?voiceError('mic_denied'):liveError(e?.message);if(!canStepTalk()){talkState('paused');return}}
  }else player.close();
  if(canStepTalk())startPhoneTalk();else{T.ai.textContent='কথা বলার মোডের জন্য নেট আর সেটিংসে Gemini বা Groq key লাগবে।';talkState('paused')}
 };
-function endTalk(){talk?.stop();talk=null;stopSaying();T.view.hidden=true}
+function endTalk(){talk?.stop();talk=null;stopSaying();T.view.hidden=true;voice.keepAwake(false)}
 $('talkEnd').onclick=endTalk;$('talkClose').onclick=endTalk;
 T.orb.onclick=()=>talk?.tap();
 T.mute.onclick=()=>{if(!talk)return;const m=!talk.muted;talk.setMuted(m);T.mute.textContent=m?'🎙️ মাইক চালু':'🔇 মাইক বন্ধ'};

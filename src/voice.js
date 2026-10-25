@@ -34,3 +34,14 @@ export async function listen(onPartial){
  try{return (await p.listen({lang:'bn-BD',offlineOnly:!onlineAllowed()})).text}finally{h.remove()}
 }
 export function stopListening(){return plugin()?.stopListening()}
+// Keeps the screen on during talk mode, so the phone does not lock and stop the microphone mid-conversation.
+// The Android app does it natively; a browser uses the Screen Wake Lock API, asked again when the page comes back.
+let lock=null,wanted=false;
+async function browserLock(){try{if(wanted&&!lock&&document.visibilityState==='visible')lock=await navigator.wakeLock?.request('screen');lock?.addEventListener?.('release',()=>{lock=null})}catch{lock=null}}
+globalThis.document?.addEventListener?.('visibilitychange',browserLock);
+export async function keepAwake(on){
+ wanted=on;
+ if(plugin()){try{await plugin().keepAwake({on})}catch{}return}
+ if(on)return browserLock();
+ const l=lock;lock=null;try{await l?.release()}catch{}
+}
