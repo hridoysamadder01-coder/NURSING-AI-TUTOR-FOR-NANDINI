@@ -1,8 +1,14 @@
 # অবস্থা · ১২ নভেম্বর ২০২৬
 
 `main`-এর শেষ APK: [run 40159525841](https://github.com/hridoysamadder01-coder/NURSING-AI-TUTOR-FOR-NANDINI/actions/runs/40159525841)
-(commit `3cfadb7`)। নতুন কাজ (Issue #2, ধাপ ১) আছে `claude/nice-franklin-pqz8nt` branch-এর draft PR-এ; তার APK-এর লিংক PR-এ দেওয়া।
-এই branch-এ সব টেস্ট পাস: ৬৮টা unit test আর ব্রাউজার smoke test। **আসল ফোনে কিছুই এখনো দেখা হয়নি।**
+(commit `3cfadb7`)। নতুন কাজ (Issue #2, ধাপ ১) আছে `claude/nice-franklin-pqz8nt` branch-এর draft
+[PR #3](https://github.com/hridoysamadder01-coder/NURSING-AI-TUTOR-FOR-NANDINI/pull/3)-এ।
+এই branch-এ সব টেস্ট পাস (এই environment-এ চালানো): ৬৮টা unit test আর ব্রাউজার smoke test। **আসল ফোনে কিছুই এখনো দেখা হয়নি।**
+
+**⛔ নতুন APK এখনো তৈরি হয়নি।** ১২ নভেম্বর GitHub Actions কোনো workflow-ই চালু করতে পারছে না: প্রতিটা run ১ সেকেন্ডে
+"startup failure" দিয়ে থেমে যায়, কোনো job শুরুই হয় না। অপরিবর্তিত `main`-এও একই হয়
+([run 43211807434](https://github.com/hridoysamadder01-coder/NURSING-AI-TUTOR-FOR-NANDINI/actions/runs/43211807434)), তাই এটা নতুন কোডের দোষ নয়;
+GitHub অ্যাকাউন্ট বা repo-র Actions সেটিংসের ব্যাপার। কারণটা মামাকে GitHub-এ দেখতে হবে (নিচে `TOMORROW.md`)।
 
 ## ✅ ১২ নভেম্বর: বইয়ের তাক (Issue #2, ধাপ ১)
 **অ্যাপে এখন ১২টা বই, ২,৬৭৬টা অধ্যায়, সব নেট ছাড়া পড়া যায়।** আগের ৪টা Open RN বই একদম অপরিবর্তিত (টেস্ট দিয়ে আটকানো)।
