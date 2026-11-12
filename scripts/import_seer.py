@@ -12,7 +12,7 @@ import argparse, datetime, re, sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from bookimport import build_sections, fetch, inline_text, normal, parse_html, publish, stats
+from bookimport import build_sections, fetch, inline_text, normal, parse_html, publish, stats, word_coverage
 
 BASE = "https://training.seer.cancer.gov"
 START = "/anatomy/"
@@ -70,7 +70,7 @@ def main():
     if "National Cancer Institute" not in inline_text(index):
         raise ValueError("SEER page no longer identifies the National Cancer Institute")
     pages = toc(index)
-    chapters, skipped = [], []
+    chapters, skipped, words, lost = [], [], 0, 0
     for page in pages:
         tree = parse_html(fetch(BASE + page["href"], args.cache).decode("utf8", "replace"))
         h1 = tree.find(lambda n: n.tag == "h1")
@@ -87,6 +87,8 @@ def main():
         if NOTICE.search(text):
             skipped.append({"title": title, "slug": page["href"], "reason": "page_carries_its_own_rights_notice"})
             continue
+        total, missing = word_coverage(body, title, sections, skip)
+        words, lost = words + total, lost + missing
         if any(c["title"] == title for c in chapters):
             title = page["unit"] + ": " + title
         chapters.append({"id": "seer-anatomy-" + str(len(chapters) + 1), "title": title, "group": page["unit"],
@@ -103,16 +105,19 @@ def main():
             "scope_note": "Introductory overview written as training for cancer-registry staff. It is not a nursing textbook and not medical advice.",
             "modifications": "Publisher web pages transformed into searchable plain-text sections. Images, diagrams, navigation and glossary pop-ups omitted.",
             "page_reference": "Web pages have no page numbers. Cite the module, page title and its URL only.",
-            "source_version": "web pages as retrieved", "toc_pages": len(pages), "skipped_pages": skipped, "chapters": chapters}
+            "source_version": "web pages as retrieved", "toc_pages": len(pages), "skipped_pages": skipped,
+            "source_words": words, "missing_words": lost, "chapters": chapters}
     sections, chars = stats(book)
     if args.survey:
-        print("seer-anatomy pages", len(pages), "chapters", len(chapters), "sections", sections, "chars", chars, "skipped", skipped)
+        print("seer-anatomy pages", len(pages), "chapters", len(chapters), "sections", sections, "chars", chars, "words", words, "missing", lost, "skipped", skipped)
         print(" units", sorted({c["group"] for c in chapters}))
         for c in chapters[:3] + chapters[40:42]:
             print(" ", c["title"], "|", c["url"], "|", [s["heading"][:30] for s in c["sections"]][:5], "|", c["sections"][0]["blocks"][0]["text"][:110])
         return
     if chars < 150_000:
         raise ValueError("SEER import has unexpectedly little text")
+    if lost > 0.01 * words:
+        raise ValueError(f"SEER import lost {lost} of {words} words (limit 1%)")
     publish([(book, {"chapter_url_base": book["chapter_url_base"], "source_version": book["source_version"],
                      "retrieved": datetime.date.today().isoformat(), "toc_pages": len(pages), "skipped_pages": len(skipped),
                      "subjects": ["D123"]})])

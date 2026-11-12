@@ -259,6 +259,9 @@ try{
  await webCtx.close();
  // The wider bookshelf: twelve bundled books; the printed Neuron titles are names only, with nothing to open.
  const lib=await context.newPage();lib.on('pageerror',e=>errors.push(String(e)));
+ // The owner's AI server is reported as switched on, so the book-question panel can show: it must do so only for a book the
+ // AI may use, never for a reading-only one.
+ await lib.route('**/api/status',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ai_enabled:true})}));
  await lib.goto(base+'/library.html',{waitUntil:'networkidle'});
  await lib.waitForFunction(()=>document.querySelectorAll('#shelf .bookrow').length===12&&document.querySelectorAll('#owned .owned').length===7);
  assert.equal(await lib.locator('#owned button, #owned a').count(),0);
@@ -275,10 +278,26 @@ try{
  await lib.waitForFunction(()=>document.querySelectorAll('#results .result').length>0);
  assert.match(await lib.locator('#results').innerText(),/Access for free at/);
  assert.equal(await lib.locator('#aiPanel').isVisible(),false);
+ // The licence is a link and the copy is marked as changed, as the licence asks.
+ assert.equal(await lib.locator('#article .attribution a').getAttribute('href'),'https://creativecommons.org/licenses/by-nc-sa/4.0/');
+ assert.match(await lib.locator('#article .attribution').innerText(),/বদলানো কপি/);
  await lib.goto(base+'/library.html?book=seer-anatomy&chapter=1',{waitUntil:'networkidle'});
  await lib.waitForFunction(()=>document.querySelector('#article .chapter-title')?.textContent.includes('Introduction to the Human Body'));
  assert.equal(await lib.locator('#readOnly').isVisible(),false);
+ assert.equal(await lib.locator('#aiPanel').isVisible(),true);
+ assert.equal(await lib.locator('#searchText').inputValue(),'');
  assert.match(await lib.locator('#article .attribution').innerText(),/originally published by the National Cancer Institute/);
+ // Answer keys keep the book's own numbers (1, 3, 5 ...) as plain lines; the reader must not number them again.
+ const keyChapter=await lib.evaluate(async()=>(await (await fetch('./data/books/openstax-chemistry.json')).json()).chapters.findIndex(c=>c.title==='Answer Key: Chapter 1'));
+ await lib.goto(base+'/library.html?book=openstax-chemistry&chapter='+keyChapter,{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelector('#article .chapter-title')?.textContent==='Answer Key: Chapter 1');
+ assert.equal(await lib.locator('#article ol').count(),0);
+ assert.deepEqual(await lib.locator('#article .paragraph .original').evaluateAll(ps=>ps.slice(0,3).map(p=>p.textContent.slice(0,3))),['1. ','3. ','5. ']);
+ // A real ordered list shows each item's own number, also after sub-points interrupt it.
+ const steps=await lib.evaluate(async()=>{const b=await (await fetch('./data/books/openstax-workplace.json')).json();for(let i=0;i<b.chapters.length;i++){const ns=b.chapters[i].sections.flatMap(s=>s.blocks).filter(x=>x.type==='numbered').map(x=>x.n);if(ns.length>3&&ns.some(n=>n>2))return {i,ns}}return null});
+ await lib.goto(base+'/library.html?book=openstax-workplace&chapter='+steps.i,{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelectorAll('#article ol.source-list>li').length>3);
+ assert.deepEqual(await lib.locator('#article ol.source-list>li').evaluateAll(ls=>ls.map(l=>l.value)),steps.ns);
  // Subject page: one row per subject from the shelf. The printed title is plain text; the bundled books are links.
  await lib.goto(base+'/faridpur-first-year.html',{waitUntil:'networkidle'});
  await lib.waitForFunction(()=>document.querySelectorAll('#matrix .sub').length===6&&document.querySelectorAll('#pending .sub').length===1);
@@ -291,10 +310,12 @@ try{
  assert.match(await lib.locator('[data-subject="D111"]').innerText(),/নিশ্চিত করলে/);
  assert.equal(await lib.locator('#bookCount').innerText(),'১২');
  // Tutor: a question about her own printed book gets the fixed note, then exact chapters of the app's books to read.
+ await lib.unroute('**/api/status');
  await lib.goto(base+'/ask.html?q='+encodeURIComponent('আমার বইয়ের ৫০ পৃষ্ঠায় nephron নিয়ে কী আছে?'),{waitUntil:'networkidle'});
  await lib.waitForFunction(()=>document.querySelector('#chat .ownbook')?.textContent.includes('ছাপা বইয়ের লেখা অ্যাপে নেই'),null,{timeout:15000});
  await lib.waitForFunction(()=>document.querySelector('#chat .reads a[href*="book=openstax-anatomy"]'),null,{timeout:20000});
- assert.doesNotMatch(await lib.locator('#chat').innerText(),/পৃষ্ঠা ৫০-এ|page 50 says/);
+ // The Tutor's own messages never name a page number (only her question does).
+ assert.doesNotMatch((await lib.locator('#chat .msg.bot').allInnerTexts()).join(' '),/পৃষ্ঠা\s*[০-৯0-9]|[০-৯0-9]+\s*(নম্বর)?\s*পৃষ্ঠা|page\s*[0-9]/i);
  await lib.locator('#chat .reads a[href*="book=openstax-anatomy"]').click();
  await lib.waitForFunction(()=>/Kidney/.test(document.querySelector('#article .chapter-title')?.textContent||''));
  await lib.close();

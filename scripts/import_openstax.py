@@ -12,7 +12,7 @@ import argparse, collections, concurrent.futures, datetime, json, re, sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from bookimport import build_sections, fetch, inline_text, normal, parse_html, publish, stats
+from bookimport import BLOCK_TAGS, Node, build_sections, fetch, inline_text, normal, parse_html, publish, stats, word_coverage
 
 SITE = "https://openstax.org"
 LICENSE_URL = "creativecommons.org/licenses/by-nc-sa/4.0/"
@@ -32,7 +32,7 @@ SKIP_TITLES = {"index": "index_needs_print_pages", "references": "bibliography_o
                "visual connection questions": "needs_the_figure", "bibliography": "bibliography_only", "suggested reading": "bibliography_only"}
 # Call-out boxes that only point at a video, a simulation or a figure.
 SKIP_BOX = re.compile(r"\b(interactive|link-to-learning|media-2|visual-connection|art-connection|ost-reading-discard|os-teacher)\b")
-SKIP_CLASS = re.compile(r"\b(os-figure|os-caption-container|os-noscript|os-newline|os-equation-number|ui-has-child-figcaption)\b")
+SKIP_CLASS = re.compile(r"\b(os-figure|os-noscript|os-newline|os-equation-number|ui-has-child-figcaption)\b")
 
 
 def strip_tags(markup):
@@ -65,25 +65,41 @@ def boxes(node):
 
 
 def _body(node):
-    """Question text with its options on one line: "... ? (a) x (b) y"."""
-    out = []
+    """Question or answer text on one line, options as "(a) x (b) y". Bare text beside lists and boxes is kept."""
+    out, run = [], []
+
+    def close():
+        if run:
+            holder = Node("span")
+            holder.children = list(run)
+            run.clear()
+            text = inline_text(holder, skip)
+            if text:
+                out.append(text)
 
     def walk(x):
-        if isinstance(x, str):
-            return
-        if x.tag in ("figure", "img") or skip(x) or "os-number" in x.classes() or "os-divider" in x.classes():
-            return
-        if x.tag in ("ol", "ul"):
-            items = [inline_text(li, skip) for li in x.nodes() if li.tag == "li"]
-            out.append(" ".join("(" + "abcdefghijklmnop"[i % 16] + ") " + t for i, t in enumerate(items) if t))
-            return
-        if not any(c.tag in ("p", "ol", "ul", "div", "table", "section") for c in x.nodes()):
-            out.append(inline_text(x, skip))
-            return
         for c in x.children:
-            walk(c)
+            if isinstance(c, str):
+                run.append(c)
+            elif c.tag in ("figure", "img") or skip(c) or "os-number" in c.classes() or "os-divider" in c.classes():
+                continue
+            elif c.tag in ("ol", "ul"):
+                close()
+                items = [inline_text(li, skip) for li in c.nodes() if li.tag == "li"]
+                out.append(" ".join("(" + "abcdefghijklmnop"[i % 16] + ") " + t for i, t in enumerate(items) if t))
+            elif c.tag == "table":
+                close()
+                out.extend(" | ".join(t for t in (inline_text(cell, skip) for cell in tr.nodes() if cell.tag in ("td", "th")) if t)
+                           for tr in c.iter() if tr.tag == "tr")
+            elif c.tag in BLOCK_TAGS:
+                close()
+                walk(c)
+                close()
+            else:
+                run.append(c)
 
     walk(node)
+    close()
     return normal(" ".join(t for t in out if t))
 
 
@@ -177,7 +193,7 @@ def import_book(bid, slug, uuid, subjects, release, cache, survey=None):
 
     with concurrent.futures.ThreadPoolExecutor(6) as pool:
         trees = list(pool.map(load, todo))
-    chapters = []
+    chapters, words, lost = [], 0, 0
     for (leaf, parents), tree in zip(todo, trees):
         title, group = chapter_title(leaf, parents)
         if survey is not None:
@@ -188,6 +204,10 @@ def import_book(bid, slug, uuid, subjects, release, cache, survey=None):
         if not sections:
             skipped.append({"title": title, "slug": leaf.get("slug"), "reason": "no_text_after_removing_media"})
             continue
+        total, missing = word_coverage(tree, title, sections, skip)
+        if total > 200 and missing > 0.12 * total:
+            raise ValueError(f"{slug}: {title!r} lost {missing} of {total} words; fix the importer before publishing")
+        words, lost = words + total, lost + missing
         chapters.append({"id": bid + "-" + str(len(chapters) + 1), "title": title, "group": group,
                          "kind": leaf.get("toc_target_type") or "page", "url": f"{SITE}/books/{slug}/pages/{leaf['slug']}",
                          "sections": sections})
@@ -211,10 +231,13 @@ def import_book(bid, slug, uuid, subjects, release, cache, survey=None):
                              "Check the publisher's page for the exact typeset form.",
             "page_reference": "No PDF page metadata. Cite book, section title and its openstax.org URL only.",
             "source_version": version + " (archive " + release["archiveUrl"].rsplit("/", 1)[-1] + ")",
-            "revised": meta["revised"][:10], "toc_pages": len(toc), "skipped_pages": skipped, "chapters": chapters}
+            "revised": meta["revised"][:10], "toc_pages": len(toc), "skipped_pages": skipped,
+            "source_words": words, "missing_words": lost, "chapters": chapters}
     sections, chars = stats(book)
     if chars < 400_000:
         raise ValueError(f"{slug}: unexpectedly little text ({chars} characters)")
+    if lost > 0.01 * words:
+        raise ValueError(f"{slug}: {lost} of {words} publisher words are missing from the import (limit 1%)")
     extra = {"read_url": access.group(1), "chapter_url_base": book["chapter_url_base"], "source_version": book["source_version"],
              "revised": book["revised"], "retrieved": datetime.date.today().isoformat(), "toc_pages": len(toc),
              "skipped_pages": len(skipped), "subjects": subjects}
@@ -237,6 +260,7 @@ def main():
         book, extra = import_book(bid, slug, uuid, subjects, release, args.cache, survey)
         if args.survey:
             print(bid, "pages", book["toc_pages"], "chapters", len(book["chapters"]), "chars", stats(book)[1],
+                  "words", book["source_words"], "missing", book["missing_words"],
                   "ai_statement", book["publisher_ai_statement_seen"])
             print("  skipped", collections.Counter(s["reason"] for s in book["skipped_pages"]).most_common())
             print("  kinds", collections.Counter(c["kind"] for c in book["chapters"]).most_common())

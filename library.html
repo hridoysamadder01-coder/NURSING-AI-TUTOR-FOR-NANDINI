@@ -51,7 +51,7 @@ body:not(.reading) #readPanel{display:none}
 .result{padding:12px 0;border-bottom:1px solid var(--line)}
 .result:last-child{border-bottom:0}
 .result strong{display:block;font-size:14px;line-height:1.45}.result p{font-family:Georgia,serif;line-height:1.6;margin:6px 0;font-size:14px;color:var(--ink-2)}
-.text-link{border:0;padding:0;background:none;color:var(--brand);font-weight:750;font-size:13px;text-align:left}
+.text-link{border:0;padding:9px 0;background:none;color:var(--brand);font-weight:750;font-size:13px;text-align:left}
 /* Chapter text */
 #article{scroll-margin-top:80px;background:#fff;border-radius:var(--r-lg);padding:24px 18px 10px;box-shadow:var(--shadow);border:1px solid rgba(222,234,229,.8)}
 .chapter-title{font-family:Georgia,"Noto Serif Bengali",serif;font-size:clamp(24px,5vw,32px);line-height:1.35;font-weight:700;letter-spacing:-.015em;margin:12px 0 10px;color:var(--ink)}
@@ -71,7 +71,7 @@ body:not(.reading) #readPanel{display:none}
 .chapter-btn span{font-size:12.5px;color:var(--ink-2);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .chapter-btn.next{text-align:right;background:linear-gradient(150deg,#eefaf6,#fff)}
 .chapter-btn:disabled{opacity:.4;cursor:default}
-.source-foot{font-size:12px;color:var(--ink-3);line-height:1.7;margin:4px 2px 16px}
+.source-foot{font-size:12px;color:var(--ink-3);line-height:1.7;margin:4px 2px 16px;overflow-wrap:anywhere}
 @media(min-width:720px){.bookgrid{grid-template-columns:repeat(4,1fr)}#article{padding:34px 40px 16px}}
 @media(max-width:350px){.bookgrid{grid-template-columns:1fr}}
 </style></head>
@@ -202,6 +202,13 @@ for(const p of shelf.physical_titles){const row=E('div',undefined,'owned'),body=
 const saved=catalog.books.find(b=>b.id===readBookId());if(saved)await loadBook(metaOf(saved));
 await aiReady();
 }
+// Shown with every chapter and every list of search hits: the publisher's credit, the licence as a link, and the note
+// that this is a changed (text-only) copy. The Creative Commons licences ask for all three.
+function creditLine(){
+ const p=E('p',(book.attribution||book.title+' · '+book.publisher)+' · লাইসেন্স: ','source-foot attribution');
+ if(/^https:\/\//.test(book.license_url||'')){const a=E('a',licenseShort(book));a.href=book.license_url;a.target='_blank';a.rel='noopener noreferrer license';p.append(a)}else p.append(licenseShort(book));
+ p.append(' · বদলানো কপি: শুধু লেখা রাখা হয়েছে; ছবি ও পাতার নকশা বাদ।');return p;
+}
 function showAi(){$('aiPanel').classList.toggle('hidden',!(serverAi&&book&&aiIds.includes(book.id)))}
 function showShelf(){token++;remaining=[];document.body.classList.remove('reading');if(history?.replaceState)history.replaceState({},'','./library.html');scrollTo(0,0)}
 $('backShelf').onclick=showShelf;
@@ -212,7 +219,7 @@ async function loadBook(m){
  $('miniCover').textContent=m.cover;$('miniCover').style.setProperty('--tone',m.tone);
  $('attribution').textContent=m.label+' · '+m.publisher;
  $('readOnly').classList.toggle('hidden',aiIds.includes(m.id));
- $('results').replaceChildren();
+ $('results').replaceChildren();if(!askQ)$('searchText').value='';
  $('article').replaceChildren(E('p','বইয়ের অধ্যায় খুলছে…','fine'));
  try{
  const r=await fetch('./data/books/'+m.id+'.json');if(!r.ok)throw Error('book_unavailable');
@@ -252,6 +259,8 @@ async function showChapter(i,scroll=true){
    const {text:value,type}=ps[pi];
    const key=paragraphKey(book.id,i,si,pi,value);
    const wrapper=E(type==='bullet'||type==='numbered'?'li':'div',undefined,'paragraph');
+   // An ordered item knows its own number, so a list that was interrupted (by sub-points, a note) does not restart at 1.
+   if(type==='numbered'&&Number.isInteger(ps[pi].n))wrapper.value=ps[pi].n;
    wrapper.append(E('p',value,'original'));
    const translated=E('div',undefined,'bn translation-unready');
    translated.lang='bn';translated.textContent='বাংলা অনুবাদ বাকি…';
@@ -265,8 +274,7 @@ async function showChapter(i,scroll=true){
  root.append(section);
  }
  root.append(E('p','উৎস: '+book.title+' · '+ch.title+' · অনলাইন বইয়ের অধ্যায় (PDF পৃষ্ঠা নয়)','source-foot'));
- // Publishers that ask for a credit line get it on every chapter view.
- if(book.attribution)root.append(E('p',book.attribution+' · লাইসেন্স: '+licenseShort(book),'source-foot attribution'));
+ root.append(creditLine());
  remaining=all;$('officialLink').href=ch.url||book.source_url;
  $('prevChapter').disabled=$('prevTop').disabled=i===0;
  $('nextChapter').disabled=$('nextTop').disabled=i===book.chapters.length-1;
@@ -350,7 +358,7 @@ $('searchBtn').onclick=()=>{
   const jump=E('button','অধ্যায়টি পড়ো →','text-link');jump.type='button';jump.onclick=()=>showChapter(hit.ci);
   row.append(jump);$('results').append(row)
  }
- if(book.attribution)$('results').append(E('p',book.attribution,'fine'));
+ $('results').append(creditLine());
 };
 $('searchText').addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();$('searchBtn').click()}});
 async function aiReady(){try{const r=await fetch(apiUrl('/api/status'),{cache:'no-store'});if(r.ok&&(await r.json()).ai_enabled){serverAi=true;showAi()}}catch{}}

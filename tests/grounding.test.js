@@ -1,7 +1,7 @@
 // Source grounding for the wider bookshelf: what may reach a language model, what a citation may say, and when to abstain.
 import test from 'node:test';import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
-import {chunkBooks,buildIndex,retrieve,lookupText,buildMessages,isOwnBookQuestion,OWN_BOOK_NOTE,isDoseQuestion,DOSE_NOTE} from '../src/rag.js';
+import {chunkBooks,buildIndex,retrieve,lookupText,buildMessages,isOwnBookQuestion,stripBrand,enTokens,OWN_BOOK_NOTE,isDoseQuestion,DOSE_NOTE} from '../src/rag.js';
 import {aiBookIds} from '../src/library-catalog.js';
 import {buildFinder,findChapters} from '../src/book-finder.js';
 import {buildTocIndex,packIndex} from '../scripts/build-book-index.mjs';
@@ -43,6 +43,12 @@ test('a printed title is never evidence: the Neuron books are in no index and ca
  // Asking what her own book says gets the fixed note, for the phone model, the online models and the voice tool alike.
  for(const q of ['Neuron Anatomy & Physiology বইয়ের ৩ নম্বর অধ্যায়ে কী আছে?','আমার বইয়ের ৫০ পৃষ্ঠায় কী লেখা?','amar anatomy boi te ki ache','নিউরন বই থেকে বলো','my college book page 12'])assert.equal(isOwnBookQuestion(q),true,q);
  for(const q of ['neuron কী?','নিউরনের গঠন বলো','neuron er anatomy bolo','বইয়ে খুঁজো','osmosis কী?'])assert.equal(isOwnBookQuestion(q),false,q);
+ // The publisher's name is taken out before every search on the Tutor page (topics, book passages, chapter pointers).
+ assert.doesNotMatch(stripBrand('Neuron বইয়ের ৩ নম্বর অধ্যায়ে কী আছে?'),/neuron/i);assert.equal(stripBrand('neuron কী?'),'neuron কী?');
+ assert.deepEqual(findChapters(stripBrand('Neuron বইয়ের ৩ নম্বর অধ্যায়ে কী আছে?'),finder),[]);
+ const page=readFileSync('ask.html','utf8');
+ for(const use of ['askTutor(stripBrand(q))','findChapters(stripBrand(q),finder)','q=stripBrand(q);'])assert.ok(page.includes(use),use);
+ assert.deepEqual(enTokens('H₂O and 10⁻¹⁴'),enTokens('H2O and 10-14'));
  const tool=lookupText('আমার Neuron Anatomy & Physiology বইয়ের ১২০ পৃষ্ঠায় কী আছে?',index);
  assert.ok(tool.startsWith('OWN_BOOK: '+OWN_BOOK_NOTE));
  const [,user]=buildMessages('আমার বইয়ে osmosis নিয়ে কী লেখা আছে?',retrieve('আমার বইয়ে osmosis নিয়ে কী লেখা আছে?',index));

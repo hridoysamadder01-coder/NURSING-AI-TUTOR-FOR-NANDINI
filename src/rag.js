@@ -14,7 +14,8 @@ function stem(w){
  if(w.length>5&&w.endsWith('ed'))return w.slice(0,-2);
  return w;
 }
-export function enTokens(text){return (String(text||'').toLowerCase().match(/[a-z0-9]+/g)||[]).filter(w=>w.length>1&&!EN_STOP.has(w)).map(stem)}
+// NFKC first, so H₂O and 10⁻¹⁴ in the books match H2O and 10-14 as typed.
+export function enTokens(text){return (String(text||'').normalize('NFKC').toLowerCase().match(/[a-z0-9]+/g)||[]).filter(w=>w.length>1&&!EN_STOP.has(w)).map(stem)}
 // Bangla question words → English book vocabulary. Topic term pairs are added below automatically.
 const BN_EN={'রক্ত':'blood','রক্তচাপ':'blood pressure','হার্ট':'heart','হৃদ্‌যন্ত্র':'heart','ফুসফুস':'lung','শ্বাস':'breathing respiration','শ্বাসকষ্ট':'dyspnea shortness breath',
  'জ্বর':'fever temperature','ব্যথা':'pain','ক্ষত':'wound','ঘা':'ulcer wound','বেডসোর':'pressure injury','ওষুধ':'medication','ইনজেকশন':'injection','রোগী':'patient','নার্স':'nurse',
@@ -71,7 +72,7 @@ export function search(index,terms,k=3){
 }
 export function retrieve(question,index,{k=2}={}){
  // The publisher's name in "Neuron বই" must not be searched as the nerve cell.
- question=String(question||'').normalize('NFC').replace(BRAND,' ');
+ question=stripBrand(question);
  // A wrong topic would mislead the model, so the Bangla explanation is only used on a strong match.
  const tutor=askTutor(question),topic=tutor.topics[0]?.score>=6?tutor.topics[0].topic:null;
  const terms=queryTerms(question);
@@ -88,6 +89,8 @@ const trim=(s,words)=>{const w=String(s).split(/\s+/);return w.length>words?w.sl
 export const OWN_BOOK_NOTE='তোমার হাতের ছাপা বইয়ের লেখা অ্যাপে নেই, তাই ওই বইয়ে বা তার কোন পৃষ্ঠায় কী আছে আমি বলতে পারব না। অ্যাপের বই আর নোট থেকে যা পাই, সেটাই বলছি।';
 // "Neuron" as the publisher's name (before a book word or one of her titles), not the nerve cell.
 const BRAND=/(neuron|নিউরন)(?=\s*(fundamentals|behaviou?ral\s+science|basic\s+science|anatomy\s*(&|and|ও|আর)\s*physiology|microbiology|communicative\s+english|publication|প্রকাশন|(এর|র)?\s*(বই|boi|book|guide|গাইড)))/gi;
+// The question without the publisher's name, for every search (topics, book passages, chapter pointers).
+export const stripBrand=q=>String(q||'').normalize('NFC').replace(BRAND,' ');
 export function isOwnBookQuestion(q){
  const s=String(q||'').normalize('NFC');
  if(s.search(BRAND)>=0)return true;

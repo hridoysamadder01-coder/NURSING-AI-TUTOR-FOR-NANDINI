@@ -6,17 +6,21 @@ Turns publisher HTML/XHTML into the same text-only book shape the Open RN import
 Images, figures, captions, media and interactive embeds are dropped, so third-party media rights are never copied.
 Also owns the catalog merge, so one importer never deletes another importer's books.
 """
-import hashlib, json, re, sys, time, urllib.request
+import collections, hashlib, json, re, sys, time, urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
 
 OUT = Path("data/books")
-USER_AGENT = "NandiniNursingStudy/0.3 (source-attributed educational import)"
+USER_AGENT = "nursing-study-book-import/0.4 (educational text import)"
 VOID = {"br", "img", "hr", "input", "meta", "link", "source", "col", "wbr", "area", "base", "embed", "param", "track"}
 BANNED = {"figure", "figcaption", "img", "svg", "video", "audio", "iframe", "object", "embed", "script", "style",
           "noscript", "canvas", "button", "nav", "form", "head", "title"}
 HEADINGS = {"h1", "h2", "h3", "h4", "h5", "h6"}
 BLOCKY = {"p", "ul", "ol", "dl", "table", "div", "section", "blockquote"}
+# Elements that start a block of their own; everything else (span, a, em, sub, math ...) is running text.
+BLOCK_TAGS = {"p", "ul", "ol", "li", "dl", "dt", "dd", "table", "thead", "tbody", "tr", "td", "th", "div", "section", "blockquote", "pre",
+              "article", "aside", "header", "footer", "main", "details", "summary", "figure", "hr", "html", "body", "center",
+              "address", "caption", "fieldset", "#root"} | HEADINGS
 
 
 class Node:
@@ -91,6 +95,32 @@ def _wrap(s):
     return s if re.fullmatch(r"[\w.]+", s) else "(" + s + ")"
 
 
+# Powers, charges and formula subscripts are written with real superscript and subscript characters (10⁻¹⁴, Ca²⁺, H₂O),
+# so 10⁶ never reads as 106 and 1s²2s² never reads as 1s22s2. Letters have no such characters: X^W, K_a.
+_SUP = str.maketrans("0123456789+-−–()n", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁻⁻⁽⁾ⁿ")
+_SUB = str.maketrans("0123456789+-−–()", "₀₁₂₃₄₅₆₇₈₉₊₋₋₋₍₎")
+
+
+def _raised(text, before=""):
+    text = normal(text)
+    if not text:
+        return ""
+    if all(ch in "0123456789+-−–()n" for ch in text) and any(ch.isdigit() or ch in "+-−–" for ch in text):
+        return text.translate(_SUP)
+    if before.isdigit() and text.lower() in ("st", "nd", "rd", "th"):
+        return text
+    return "^" + _wrap(text)
+
+
+def _lowered(text):
+    text = normal(text)
+    if not text:
+        return ""
+    if all(ch in "0123456789+-−–()" for ch in text):
+        return text.translate(_SUB)
+    return "_" + _wrap(text)
+
+
 def math_text(node):
     """MathML as one readable line: fractions (a)/(b), powers a^b, H2O and Ca2+ for formulas."""
     if isinstance(node, str):
@@ -103,14 +133,11 @@ def math_text(node):
     if tag == "mfrac" and len(kids) == 2:
         return "(" + part(0) + ")/(" + part(1) + ")"
     if tag == "msup" and len(kids) == 2:
-        up = part(1)
-        return part(0) + ("^" + _wrap(up) if re.fullmatch(r"[−–-]?[\w.]+", up) and not re.fullmatch(r"\d*[+−–-]", up) else up)
+        return part(0) + _raised(part(1))
     if tag == "msub" and len(kids) == 2:
-        low = part(1)
-        return part(0) + (low if re.fullmatch(r"\d+", low) else "_" + _wrap(low))
+        return part(0) + _lowered(part(1))
     if tag == "msubsup" and len(kids) == 3:
-        low, up = part(1), part(2)
-        return part(0) + (low if re.fullmatch(r"\d+", low) else "_" + _wrap(low)) + (up if re.fullmatch(r"\d*[+−–-]", up) else "^" + _wrap(up))
+        return part(0) + _lowered(part(1)) + _raised(part(2))
     if tag == "msqrt":
         return "sqrt(" + normal("".join(math_text(c) for c in node.children)) + ")"
     if tag == "mroot" and len(kids) == 2:
@@ -121,7 +148,13 @@ def math_text(node):
         return " ".join(normal(math_text(c)) for c in kids) + "; "
     if tag == "mo":
         return " " + "".join(math_text(c) for c in node.children).strip() + " "
+    if tag == "mspace":
+        return " "
     return "".join(math_text(c) for c in node.children)
+
+
+def _footnote_mark(x):
+    return x.get("role") in ("doc-noteref", "doc-footnote") or x.get("data-type") in ("footnote-ref", "footnote-number", "footnote-refs")
 
 
 def inline_text(node, skip=None):
@@ -141,17 +174,13 @@ def inline_text(node, skip=None):
         if tag.split(":")[-1] == "math":
             out.append(" " + normal(math_text(x)) + " ")
             return
-        if x.get("role") in ("doc-noteref", "doc-footnote") or x.get("data-type") in ("footnote-ref", "footnote-number", "footnote-refs"):
+        if _footnote_mark(x):
             return
-        if tag == "sup":
+        if tag in ("sup", "sub"):
             inner = Node("span")
             inner.children = x.children
             t = inline_text(inner, skip)
-            before = "".join(out)[-1:]
-            if re.fullmatch(r"[−–-]?\d+", t) and (before.isalnum() or before == ")"):
-                out.append("^" + t)
-            else:
-                out.append(t)
+            out.append(_raised(t, "".join(out)[-1:]) if tag == "sup" else _lowered(t))
             return
         for c in x.children:
             walk(c)
@@ -175,24 +204,56 @@ def build_sections(root, title, skip=None, boxes=None, exercise=None, leaf=None)
 
     skip(node)      -> True to drop a subtree (figures and media are always dropped).
     boxes(node)     -> a heading string when the node is a call-out box; text after it returns to the outer heading.
-    exercise(node)  -> a ready block text for a question node, or None.
+    exercise(node)  -> a ready block text for a question or answer node (it carries the book's own number), or None.
     leaf(node)      -> True when the node is one block of its own (a displayed equation).
+
+    Text lying directly in a container next to block children (a paragraph that holds an equation, a list item that
+    holds a nested list, a div with bare text) is kept as a block of its own, never dropped.
+    Items of an ordered list carry their number as `n`, so a reader can show the right number after an interruption.
     """
     sections, state = [], {"head": title, "blocks": []}
 
     def flush():
         blocks = state["blocks"]
         if blocks:
-            body = "\n\n".join(t for _, t in blocks)
+            body = "\n\n".join(t for _, t, _ in blocks)
             if len(body) > 1:
                 sections.append({"heading": state["head"][:180], "text": body,
-                                 "blocks": [{"type": kind, "text": t} for kind, t in blocks]})
+                                 "blocks": [dict({"type": kind, "text": t}, **({"n": n} if n is not None else {})) for kind, t, n in blocks]})
         state["blocks"] = []
 
-    def add(kind, text):
+    def add(kind, text, n=None):
         text = normal(text)
         if len(text) > 1:
-            state["blocks"].append((kind, text[:6000]))
+            state["blocks"].append((kind, text[:6000], n))
+
+    def contents(x, kind, n, list_type, in_box):
+        """Visit x's children. Running text between block children becomes a block: the first run is x's own block."""
+        run, first = [], [True]
+
+        def close():
+            if run:
+                holder = Node("span")
+                holder.children = list(run)
+                run.clear()
+                text = inline_text(holder, skip)
+                if len(text) > 1:
+                    add(kind if first[0] else "paragraph", text, n if first[0] else None)
+                    first[0] = False
+
+        for c in x.children:
+            if isinstance(c, str) or c.tag not in BLOCK_TAGS:
+                run.append(c)
+                continue
+            close()
+            if first[0] and kind != "paragraph" and c.tag == "p" and not (skip and skip(c)):
+                # <li><p>text</p></li>: the paragraph is the list item itself.
+                before = len(state["blocks"])
+                contents(c, kind, n, list_type, in_box)
+                first[0] = len(state["blocks"]) == before
+            else:
+                visit(c, list_type, in_box)
+        close()
 
     def visit(x, list_type=None, in_box=False):
         if isinstance(x, str):
@@ -204,15 +265,14 @@ def build_sections(root, title, skip=None, boxes=None, exercise=None, leaf=None)
             done = exercise(x)
             if done is not None:
                 if done:
-                    add("numbered", done)
+                    add("paragraph", done)
                 return
         box = boxes(x) if boxes and not in_box else None
         if box:
             outer = state["head"]
             flush()
             state["head"] = box
-            for c in x.children:
-                visit(c, list_type, True)
+            contents(x, "paragraph", None, list_type, True)
             flush()
             state["head"] = outer if outer.endswith(" (continued)") or outer == title else outer + " (continued)"
             return
@@ -230,10 +290,25 @@ def build_sections(root, title, skip=None, boxes=None, exercise=None, leaf=None)
                 flush()
                 state["head"] = h
             return
-        if tag == "ol":
-            list_type = "numbered"
-        elif tag == "ul":
-            list_type = "bullet"
+        if tag in ("ol", "ul"):
+            kind = "numbered" if tag == "ol" else "bullet"
+            number = None
+            if tag == "ol":
+                try:
+                    number = int(x.get("start") or 1)
+                except ValueError:
+                    number = 1
+            for c in x.children:
+                if isinstance(c, str):
+                    continue
+                if c.tag == "li":
+                    if not (skip and skip(c)):
+                        contents(c, kind, number, kind, in_box)
+                    if number is not None:
+                        number += 1
+                else:
+                    visit(c, kind, in_box)
+            return
         if tag == "table":
             for line in _table_rows(x, skip):
                 add("paragraph", line)
@@ -247,20 +322,51 @@ def build_sections(root, title, skip=None, boxes=None, exercise=None, leaf=None)
                     add("bullet", (term + ": " if term else "") + inline_text(c, skip))
                     term = ""
             return
-        if tag in ("p", "li", "blockquote", "pre"):
-            if any(c.tag in BLOCKY for c in x.nodes()):
-                for c in x.children:
-                    visit(c, list_type, in_box)
-                return
-            kind = (list_type or "bullet") if tag == "li" else "paragraph"
-            add(kind, inline_text(x, skip))
+        if tag == "li":
+            contents(x, list_type or "bullet", None, list_type, in_box)
             return
-        for c in x.children:
-            visit(c, list_type, in_box)
+        contents(x, "paragraph", None, list_type, in_box)
 
     visit(root)
     flush()
     return sections
+
+
+import unicodedata
+
+# Words, and digits one by one: 1s²2s² on the page and in the import give the same tokens however they are joined.
+_WORD = re.compile(r"[A-Za-z\u0370-\u03FF]+|[0-9]")
+
+
+def _tokens(text):
+    return [w.lower() for w in _WORD.findall(unicodedata.normalize("NFKC", text))]
+
+
+def word_coverage(root, title, sections, skip=None):
+    """(words on the publisher's page, words of it that are not in the imported sections). Equations are not counted.
+
+    Every importer runs this on every page and refuses to publish a book that lost text.
+    """
+    have = collections.Counter(w for s in sections for t in [s["heading"]] + [b["text"] for b in s["blocks"]] for w in _tokens(t))
+    have.update(_tokens(title))
+    count = [0, 0]
+
+    def walk(x):
+        if isinstance(x, str):
+            for w in _tokens(x):
+                count[0] += 1
+                if have[w] > 0:
+                    have[w] -= 1
+                else:
+                    count[1] += 1
+            return
+        if x.tag in BANNED or (skip and skip(x)) or _footnote_mark(x) or x.tag.split(":")[-1] == "math":
+            return
+        for c in x.children:
+            walk(c)
+
+    walk(root)
+    return count[0], count[1]
 
 
 def fetch(url, cache=None, tries=4, expect=None):
@@ -330,7 +436,8 @@ def publish(books, out=OUT, compact=False):
                  "source_url": book["source_url"], "publisher": book["publisher"], "year": book["year"],
                  "license": book["license"], "license_url": book["license_url"], "ready": True,
                  "access": "bundled", "ai_use": book["ai_use"], "attribution": book["attribution"],
-                 "sections": sections, "text_chars": chars, "sha256": hashlib.sha256(raw).hexdigest()}
+                 "sections": sections, "text_chars": chars, "source_words": book["source_words"],
+                 "missing_words": book["missing_words"], "sha256": hashlib.sha256(raw).hexdigest()}
         entry.update(extra)
         entries.append(entry)
         print("IMPORTED", book["id"], "chapters", len(book["chapters"]), "sections", sections, "text_kb", len(raw) // 1024, flush=True)
@@ -345,19 +452,40 @@ def _selftest():
     <ul><li>skeletal</li><li>cardiac<li>smooth</ul>
     <div data-type="note"><h3>Everyday Connection</h3><p>A box paragraph about hypothermia.</p></div>
     <p>After the box the text returns to the section.</p><div data-type="equation"><math><mi>pH</mi><mo>=</mo><mn>7</mn></math></div>
-    <table><tr><th>Nerve</th><th>Function</th></tr><tr><td>Optic</td><td>Vision</td></tr></table>
+    <div class="os-table"><div class="os-table-title">Cranial Nerves</div><table><tr><th>Nerve</th><th>Function</th></tr><tr><td>Optic</td><td>Vision</td></tr></table></div>
     <dl><dt>anabolism</dt><dd>assembly of complex molecules</dd></dl>
-    <p>Ion: Ca<sup>2+</sup>; math <math><mfrac><mn>1</mn><mn>2</mn></mfrac><msup><mi>x</mi><mn>2</mn></msup><msub><mi>CO</mi><mn>2</mn></msub></math>.</p></div>"""
+    <p>Ion: Ca<sup>2+</sup>; math <math><mfrac><mn>1</mn><mn>2</mn></mfrac><msup><mi>x</mi><mn>2</mn></msup><msub><mi>CO</mi><mn>2</mn></msub></math>.</p>
+    <h2>Mixed</h2><p>The pH of a solution is defined as <div data-type="equation"><math><mi>pH</mi><mo>=</mo><mn>2</mn></math></div> where the bracket is molarity.</p>
+    <div class="body">Gold has been a form of currency. <p>It is dense.</p> It does not rust.</div>
+    <ol start="3"><li>Open the File tab.<ul><li>Choose Save As.</li></ul></li><li><p>Type a name.</p></li></ol>
+    <div data-type="exercise"><span class="n">6</span>Which organ filters blood?</div></div>"""
     boxes = lambda n: "Everyday Connection" if n.get("data-type") == "note" else None
-    sections = build_sections(parse_html(html), "1.1 Test", boxes=boxes, leaf=lambda n: n.get("data-type") == "equation")
+    exercise = lambda n: "6. Which organ filters blood? (a) heart (b) kidney" if n.get("data-type") == "exercise" else None
+    root = parse_html("<html><head><title>x</title></head><body>" + html + "</body></html>")   # a whole page, as publishers send it
+    sections = build_sections(root, "1.1 Test", boxes=boxes, exercise=exercise, leaf=lambda n: n.get("data-type") == "equation")
     text = "\n".join(s["heading"] + "::" + s["text"] for s in sections)
-    assert "H2O" in text and "10^6 cells." in text, text
+    blocks = [b for s in sections for b in s["blocks"]]
+    assert "H₂O" in text and "10⁶ cells." in text, text
     assert "photo credit" not in text and "x.png" not in text, text
-    assert [b["text"] for s in sections for b in s["blocks"] if b["type"] == "bullet"][:3] == ["skeletal", "cardiac", "smooth"], text
-    assert [s["heading"] for s in sections] == ["Cells", "Everyday Connection", "Cells (continued)"], [s["heading"] for s in sections]
-    assert "Optic | Vision" in text and "anabolism: assembly of complex molecules" in text, text
+    assert [b["text"] for b in blocks if b["type"] == "bullet"][:3] == ["skeletal", "cardiac", "smooth"], text
+    assert [s["heading"] for s in sections] == ["Cells", "Everyday Connection", "Cells (continued)", "Mixed"], [s["heading"] for s in sections]
+    assert "Cranial Nerves" in text and "Optic | Vision" in text and "anabolism: assembly of complex molecules" in text, text
     assert "pH = 7" in text, text
-    assert "Ca2+" in text and "(1)/(2)" in text and "x^2" in text and "CO2" in text, text
+    assert "Ca²⁺" in text and "(1)/(2)" in text and "x²" in text and "CO₂" in text, text
+    assert _raised("W") == "^W" and _raised("st", "1") == "st" and _lowered("max") == "_max" and _raised("−14") == "⁻¹⁴", "scripts"
+    # Text around a block child is kept, in order.
+    mixed = [b["text"] for b in sections[3]["blocks"]]
+    assert mixed[:3] == ["The pH of a solution is defined as", "pH = 2", "where the bracket is molarity."], mixed
+    assert mixed[3:6] == ["Gold has been a form of currency.", "It is dense.", "It does not rust."], mixed
+    # Ordered items keep their own number; a question keeps the book's number and is not a list item.
+    numbered = [(b["text"], b.get("n")) for b in blocks if b["type"] == "numbered"]
+    assert numbered == [("Open the File tab.", 3), ("Type a name.", 4)], numbered
+    assert {"type": "bullet", "text": "Choose Save As."} in blocks, blocks
+    assert {"type": "paragraph", "text": "6. Which organ filters blood? (a) heart (b) kidney"} in blocks, blocks
+    total, missing = word_coverage(root, "1.1 Test", sections)
+    assert total > 60 and missing <= 6, (total, missing)   # only the question's own markup differs from the hook's text
+    lossy = [{"heading": "Cells", "text": "", "blocks": [{"type": "paragraph", "text": "Water is H2O"}]}]
+    assert word_coverage(root, "1.1 Test", lossy)[1] > 40
     with tempfile.TemporaryDirectory() as tmp:
         old = {"schema": 1, "books": [{"id": "fundamentals", "title": "Nursing Fundamentals 2e", "chapters": 141, "ready": True}]}
         Path(tmp, "catalog.json").write_text(json.dumps(old, ensure_ascii=False, indent=2) + "\n", encoding="utf8")

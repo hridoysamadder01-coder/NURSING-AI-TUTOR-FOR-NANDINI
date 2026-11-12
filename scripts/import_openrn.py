@@ -10,7 +10,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 sys.path.insert(0,str(Path(__file__).parent))
-from bookimport import merge_catalog
+from bookimport import USER_AGENT, merge_catalog
 
 BOOKS=[
  ("fundamentals","Nursing Fundamentals 2e","https://wtcs.pressbooks.pub/nursingfundamentals/",2024),
@@ -32,7 +32,7 @@ def local(el):
     return el.tag.rsplit("}",1)[-1].lower() if isinstance(el.tag,str) else ""
 
 def download(url):
-    req=urllib.request.Request(url,headers={"User-Agent":"NandiniNursingStudy/0.2 (source-attributed educational import)"})
+    req=urllib.request.Request(url,headers={"User-Agent":USER_AGENT})
     with urllib.request.urlopen(req,timeout=70) as r:
         if int(r.headers.get("Content-Length") or 0)>MAX_INPUT:raise ValueError("Source size limit exceeded")
         raw=r.read(MAX_INPUT+1)

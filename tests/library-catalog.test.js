@@ -77,12 +77,20 @@ test('every later import has its licence, source, attribution and AI decision re
   assert.equal(sha(file),entry.sha256,entry.id);assert.equal(file.length,entry.size_bytes);assert.equal(book.chapters.length,entry.chapters);
   assert.equal(book.toc_pages,entry.toc_pages);assert.equal(book.chapters.length+book.skipped_pages.length,book.toc_pages,entry.id+': every publisher page is imported or listed as skipped');
   assert.ok(book.skipped_pages.every(s=>s.title&&s.reason));
+  // Measured at import against every publisher page: at most half a percent of the words may be unaccounted for.
+  assert.equal(book.source_words,entry.source_words);assert.equal(book.missing_words,entry.missing_words);
+  assert.ok(entry.source_words>25000&&entry.missing_words/entry.source_words<0.005,entry.id+' lost text at import');
   let sections=0,chars=0;const urls=new Set(),titles=new Set(),ids=new Set();
   for(const ch of book.chapters){
    assert.ok(ch.title&&ch.group&&ch.url.startsWith(entry.chapter_url_base),entry.id+' '+ch.title);
    urls.add(ch.url);titles.add(ch.title);ids.add(ch.id);assert.ok(ch.sections.length>0);
    for(const s of ch.sections){sections++;const text=sectionText(s);chars+=text.length;assert.ok(s.heading&&text.length>1&&s.blocks.length>0);
     assert.ok(s.blocks.every(b=>['paragraph','bullet','numbered'].includes(b.type)&&b.text.trim().length>1));
+    // A real ordered-list item carries its number; a question or answer keeps the book's own number and is never a list item
+    // (the reader would number it a second time, and wrongly).
+    assert.ok(s.blocks.every(b=>b.type!=='numbered'||(Number.isInteger(b.n)&&b.n>=1&&!/^\d+[.)]\s/.test(b.text))),entry.id+' '+ch.title);
+    // 10⁻¹⁴, never 10^-14 or 10-14. Only a decimal power keeps the caret (10^1.4): there is no superscript point.
+    assert.doesNotMatch(text,/\d\^[−-]?\d+(?![.\d])/,entry.id+' '+ch.title+': a whole-number power must be written as a superscript');
     assert.doesNotMatch(text,/<(img|figure|svg|iframe|script|math)\b/i,entry.id+' '+ch.title)}
   }
   assert.equal(urls.size,book.chapters.length);assert.equal(titles.size,book.chapters.length);assert.equal(ids.size,book.chapters.length);
@@ -106,6 +114,19 @@ test('OpenStax books: CC BY-NC-SA 4.0 with the publisher\'s credit line, and nev
  }
  assert.ok(aiBookIds(catalog,shelf).every(id=>!id.startsWith('openstax-')));
  assert.match(shelf.ai_use.not_permitted[0].basis,/prior written permission/);
+});
+
+test('questions keep the book\'s numbers, powers and formulas stay readable, text beside an equation is kept',()=>{
+ const chem=json('openstax-chemistry.json'),texts=t=>chem.chapters.find(c=>c.title.startsWith(t)).sections.flatMap(s=>s.blocks);
+ const key=texts('Answer Key: Chapter 1');
+ assert.ok(key.every(b=>b.type==='paragraph'));assert.deepEqual(key.slice(0,3).map(b=>b.text.slice(0,3)),['1. ','3. ','5. ']);
+ const ph=texts('14.2 pH and pOH').map(b=>b.text);
+ assert.ok(ph.includes('pH = −log [ H₃O⁺ ]'));assert.ok(ph.some(t=>t.includes('1.0 × 10⁻¹⁴')));
+ // The sentence that leads into an equation used to be lost with it.
+ assert.ok(ph.includes('The pH of a solution is therefore defined as shown here, where [H₃O⁺] is the molar concentration of hydronium ion in the solution:'));
+ assert.ok(texts('6.4 Electronic Structure of Atoms').some(b=>/1s²2s²2p⁶/.test(b.text)));
+ const steps=json('openstax-workplace.json').chapters.flatMap(c=>c.sections.flatMap(s=>s.blocks)).filter(b=>b.type==='numbered');
+ assert.ok(steps.length>100&&steps.some(b=>b.n>1));
 });
 
 test('the NCI anatomy overview is public text with credit, and may be used by the Tutor',()=>{

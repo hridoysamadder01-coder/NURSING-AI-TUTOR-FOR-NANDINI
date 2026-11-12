@@ -85,7 +85,7 @@ import {topicById} from './src/easy-topics.js';
 import {subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
 import {apiUrl} from './src/api-config.js';
-import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,lookupText,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion,OWN_BOOK_NOTE,isOwnBookQuestion} from './src/rag.js';
+import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,lookupText,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion,OWN_BOOK_NOTE,isOwnBookQuestion,stripBrand} from './src/rag.js';
 import {aiBookIds,sectionText} from './src/library-catalog.js';
 import {buildFinder,findChapters} from './src/book-finder.js';
 import * as llm from './src/local-llm.js';
@@ -190,10 +190,12 @@ function voiceError(code){
   ||(['network','network_timeout','server','language','client','disconnected'].includes(code)?(voice.onlineAllowed()?'ফোনের কণ্ঠ-বোঝার ব্যবস্থা বাংলা চালাতে পারছে না ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।':'ফোনে অফলাইনে বাংলা শোনার ব্যবস্থা পাওয়া যায়নি ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।'):'কণ্ঠ চালানো যায়নি ('+code+')।');
 }
 // Only the books the shelf allows for AI use are loaded for the Tutor; reading-only books never reach a model.
-async function loadShelf(){if(!shelfData)shelfData=Promise.all(['catalog','shelf'].map(async n=>{const r=await fetch('./data/books/'+n+'.json');if(!r.ok)throw Error('catalog_unavailable');return r.json()}));return shelfData}
+// A failed load is not remembered, so the next question tries again (and until it works, no book reaches the AI).
+async function loadShelf(){if(!shelfData){shelfData=Promise.all(['catalog','shelf'].map(async n=>{const r=await fetch('./data/books/'+n+'.json');if(!r.ok)throw Error('catalog_unavailable');return r.json()}));shelfData.catch(()=>{shelfData=null})}return shelfData}
 async function loadBooks(){if(!rawBooks){const [c,sh]=await loadShelf();rawBooks=await Promise.all(aiBookIds(c,sh).map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}))}return rawBooks}
 let books;
 async function searchBooks(q){
+ q=stripBrand(q);
  try{const r=await fetch(apiUrl('/api/books/search')+'?q='+encodeURIComponent(q)+'&book=all');if(r.ok){const j=await r.json();return (j.matches||[]).slice(0,3)}}catch{}
  if(!books){const data=await loadBooks();
   books=data.flatMap(b=>b.chapters.flatMap(ch=>ch.sections.map(s=>({title:ch.title+' · '+s.heading,text:sectionText(s),bookTitle:b.title,chapter:ch.title,sourceUrl:ch.url||b.source_url}))))}
@@ -217,7 +219,8 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
  // Asking the same question again means it was not clear yet: explain it a new way instead of repeating.
  const follow=!talk&&(followUpKind(q)||(lastQ&&q.trim().toLowerCase()===lastQ.trim().toLowerCase()&&'simpler'));
  if(talk||follow){const b=talk?chatReply(talk):followUp(follow,lookInBooks);if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return b}
- const r=askTutor(q),chat=chatLike(q);
+ // "Neuron" as her book's publisher is not a question about the nerve cell.
+ const r=askTutor(stripBrand(q)),chat=chatLike(q);
  // Talking about herself or her feelings ("আমি খুব ক্লান্ত"): a friend's reply, not a failed search. Only a strong
  // topic match (the same bar the AI uses) counts as a study question: "amar khub tens hoitase" is not about grammar tenses.
  if(chat==='personal'&&!(r.topics[0]?.score>=6)){
@@ -333,7 +336,7 @@ function cloudReason(e){
 // Exact chapters of the bundled books (titles and headings only). These are links to read, not text given to the AI.
 async function chapterLinks(b,q){
  try{if(!finder){const r=await fetch('./data/books/toc-index.json');if(!r.ok)return 0;finder=buildFinder(await r.json())}
-  const found=findChapters(q,finder);if(!found.length)return 0;
+  const found=findChapters(stripBrand(q),finder);if(!found.length)return 0;
   const box=E('div',undefined,'source reads');box.append(E('b','📖 অ্যাপের বইয়ের এই অধ্যায়গুলোতে পড়ো:'));
   for(const f of found){const a=E('a',f.bookTitle+' · '+f.chapterTitle+' →');a.href=f.href;box.append(a)}
   b.append(box);return found.length}catch{return 0}
