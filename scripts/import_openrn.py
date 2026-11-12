@@ -4,10 +4,13 @@
 Deliberately strips images, captions, interactive embeds and third-party media.
 Preserves publisher attribution, chapter headings and section links. No user uploads.
 """
-import json, re, time, urllib.request
+import json, re, sys, time, urllib.request
 from html.entities import name2codepoint
 from pathlib import Path
 from xml.etree import ElementTree as ET
+
+sys.path.insert(0,str(Path(__file__).parent))
+from bookimport import merge_catalog
 
 BOOKS=[
  ("fundamentals","Nursing Fundamentals 2e","https://wtcs.pressbooks.pub/nursingfundamentals/",2024),
@@ -166,7 +169,8 @@ def main():
     # Only publish all requested sources after every completeness check passes.
     for bid,raw in staged.items():
         (OUT/(bid+".json")).write_bytes(raw)
-    (OUT/"catalog.json").write_text(json.dumps(catalog,ensure_ascii=False,indent=2)+"\n",encoding="utf8")
+    # Replace only these four entries; books added by the other importers stay in the catalog.
+    merge_catalog(catalog["books"],OUT)
     print("IMPORT_COMPLETE",len(staged),flush=True)
 
 if __name__=="__main__":

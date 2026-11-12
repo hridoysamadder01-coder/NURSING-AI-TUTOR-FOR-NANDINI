@@ -20,6 +20,7 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 .suggest.quick button{background:var(--brand-soft);border-color:transparent}
 .suggest button{border:1.5px solid var(--line-2);background:#fff;color:var(--brand-ink);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:650}
 .msg .btn-row{margin-top:10px}
+.reads a{display:block;margin-top:7px;font-weight:650;text-decoration:none;line-height:1.45}
 .source{border-left:3px solid var(--brand);padding:8px 12px;margin:8px 0;background:#f5fbf9;border-radius:0 12px 12px 0;font-size:13px}
 .source p{font-family:Georgia,serif;color:var(--ink-2);margin:4px 0}
 .typing{color:var(--ink-3);font-size:13px}
@@ -84,7 +85,9 @@ import {topicById} from './src/easy-topics.js';
 import {subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
 import {apiUrl} from './src/api-config.js';
-import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,lookupText,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion} from './src/rag.js';
+import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,lookupText,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion,OWN_BOOK_NOTE,isOwnBookQuestion} from './src/rag.js';
+import {aiBookIds,sectionText} from './src/library-catalog.js';
+import {buildFinder,findChapters} from './src/book-finder.js';
 import * as llm from './src/local-llm.js';
 import * as voice from './src/voice.js';
 import * as cloud from './src/cloud-ai.js';
@@ -94,7 +97,7 @@ const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.crea
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
 let asked=[];try{const h=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(h))asked=h.filter(x=>typeof x==='string').slice(-20)}catch{}
 const saveAsked=()=>{try{localStorage.setItem(KEY,JSON.stringify(asked.slice(-20)))}catch{}};
-let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null;
+let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null,shelfData=null,finder=null;
 // The question "বুঝিনি" refers to, and how many times it has been re-explained.
 let lastQ=null,tries=0;
 // True while answering a question that was asked by voice, so the answer is read aloud.
@@ -186,12 +189,14 @@ function voiceError(code){
   dialog_cancelled:'শোনা বন্ধ হয়ে গেছে। আবার 🎤 চাপো। বারবার এমন হলে সেটিংস → "কণ্ঠে কথা বলা" দেখো।'})[code]
   ||(['network','network_timeout','server','language','client','disconnected'].includes(code)?(voice.onlineAllowed()?'ফোনের কণ্ঠ-বোঝার ব্যবস্থা বাংলা চালাতে পারছে না ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।':'ফোনে অফলাইনে বাংলা শোনার ব্যবস্থা পাওয়া যায়নি ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।'):'কণ্ঠ চালানো যায়নি ('+code+')।');
 }
-async function loadBooks(){if(!rawBooks)rawBooks=await Promise.all(['fundamentals','skills','terminology','mentalhealth'].map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}));return rawBooks}
+// Only the books the shelf allows for AI use are loaded for the Tutor; reading-only books never reach a model.
+async function loadShelf(){if(!shelfData)shelfData=Promise.all(['catalog','shelf'].map(async n=>{const r=await fetch('./data/books/'+n+'.json');if(!r.ok)throw Error('catalog_unavailable');return r.json()}));return shelfData}
+async function loadBooks(){if(!rawBooks){const [c,sh]=await loadShelf();rawBooks=await Promise.all(aiBookIds(c,sh).map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}))}return rawBooks}
 let books;
 async function searchBooks(q){
  try{const r=await fetch(apiUrl('/api/books/search')+'?q='+encodeURIComponent(q)+'&book=all');if(r.ok){const j=await r.json();return (j.matches||[]).slice(0,3)}}catch{}
  if(!books){const data=await loadBooks();
-  books=data.flatMap(b=>b.chapters.flatMap(ch=>ch.sections.map(s=>({title:ch.title+' · '+s.heading,text:s.text,bookTitle:b.title,chapter:ch.title,sourceUrl:ch.url||b.source_url}))))}
+  books=data.flatMap(b=>b.chapters.flatMap(ch=>ch.sections.map(s=>({title:ch.title+' · '+s.heading,text:sectionText(s),bookTitle:b.title,chapter:ch.title,sourceUrl:ch.url||b.source_url}))))}
  return rank(q,books,3).map(h=>({bookTitle:h.bookTitle,chapter:h.chapter,sourceUrl:h.sourceUrl,excerpt:h.text.slice(0,400)}));
 }
 function aiButton(b,q){
@@ -220,6 +225,8 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
   localAiOffer(b,q,lookInBooks,{chat:true});if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return b;
  }
  const b=bubble('bot');
+ // Her own printed books are not in the app: say so before answering from the app's notes and books.
+ if(isOwnBookQuestion(q))b.append(E('p','📕 '+OWN_BOOK_NOTE,'fine ownbook'));
  if(chat&&!r.topics.length){
   // One or two words ("bondhu", "diabetes"): show book passages if there are any, otherwise just chat.
   const hits=lookInBooks?await bookHits(b,q,{quiet:true}):0;
@@ -236,6 +243,8 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
   b.append(E('p',isQuestion(q)?OPENERS[q.length%OPENERS.length]:OPENERS[0],'lead'));
   topicCard(b,r.topics[0].topic);
   const more=r.topics.slice(1).map(x=>x.topic.title);if(more.length){b.append(E('p','এগুলোও কাজে লাগতে পারে:','fine'));suggestions(more,b)}
+  // Where to read more: exact chapters of the app's books (links only; replaying saved questions stays instant).
+  if(lookInBooks)await chapterLinks(b,q);
  }else{
   b.append(E('p',r.topics.length?'ঠিক মিল পাইনি, তবে এগুলো কাছাকাছি মনে হচ্ছে:':'এই প্রশ্নের সহজ বাংলা ব্যাখ্যা এখনো অ্যাপে নেই। 🙏'));
   if(r.topics.length)suggestions(r.topics.map(x=>x.topic.title),b);
@@ -321,12 +330,21 @@ function cloudReason(e){
  const codes=(e?.tried||[]).map(t=>t.error);
  return codes.includes('key_rejected')?'key ঠিক নেই, সেটিংসে দেখো':codes.every(c=>c==='limit')&&codes.length?'আজকের ফ্রি সীমা শেষ':codes.some(c=>c==='network'||c==='timeout')?'ইন্টারনেট দুর্বল':'সাময়িক সমস্যা';
 }
+// Exact chapters of the bundled books (titles and headings only). These are links to read, not text given to the AI.
+async function chapterLinks(b,q){
+ try{if(!finder){const r=await fetch('./data/books/toc-index.json');if(!r.ok)return 0;finder=buildFinder(await r.json())}
+  const found=findChapters(q,finder);if(!found.length)return 0;
+  const box=E('div',undefined,'source reads');box.append(E('b','📖 অ্যাপের বইয়ের এই অধ্যায়গুলোতে পড়ো:'));
+  for(const f of found){const a=E('a',f.bookTitle+' · '+f.chapterTitle+' →');a.href=f.href;box.append(a)}
+  b.append(box);return found.length}catch{return 0}
+}
 async function bookHits(b,q,{quiet=false}={}){
-  const wait=E('p','📚 ৪টি বইয়ের মূল ইংরেজিতে খুঁজছি…','typing');b.append(wait);
+  const wait=E('p','📚 বইয়ের মূল ইংরেজিতে খুঁজছি…','typing');b.append(wait);
   try{const hits=await searchBooks(q);wait.remove();
    if(quiet&&!hits.length)return 0;
    if(hits.length){b.append(E('p','বইয়ে এই অংশগুলো পেয়েছি (মূল ইংরেজি):','fine'));for(const h of hits){const s=E('div',undefined,'source');s.append(E('b',h.bookTitle+' · '+h.chapter),E('p',h.excerpt.slice(0,300)+(h.excerpt.length>300?'…':'')));const a=E('a','মূল অধ্যায় ↗');a.href=h.sourceUrl;a.target='_blank';a.rel='noopener noreferrer';s.append(a);b.append(s)}}
-   else b.append(E('p','বইয়েও মিল পাইনি। ইংরেজি শব্দ লিখে আবার চেষ্টা করো (যেমন: diabetes), অথবা শিক্ষককে জিজ্ঞেস করো।','fine'));
+   const reads=await chapterLinks(b,q);
+   if(!hits.length&&!reads)b.append(E('p','বইয়েও মিল পাইনি। ইংরেজি শব্দ লিখে আবার চেষ্টা করো (যেমন: diabetes), অথবা শিক্ষককে জিজ্ঞেস করো।','fine'));
    return hits.length;
   }catch{wait.textContent='বই খুলতে পারিনি। অ্যাপটি একবার ইন্টারনেটসহ খুলে নাও।';return 0}
 }

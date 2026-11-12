@@ -1,10 +1,13 @@
 // Server-owned nursing-book evidence search. No client-supplied citations are accepted.
-// Imports only the Open RN books already distributed inside the repository.
+// Searches only the bundled books the shelf allows for AI use, because these passages are sent to the server's model.
+// Reading-only books (publisher forbids AI use) and printed titles that are not in the app are never searched here.
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {rank} from './answer-core.js';
-const BOOKS=['fundamentals','skills','terminology','mentalhealth'];
+import {aiBookIds,sectionText} from './library-catalog.js';
 const docsRoot=new URL('../data/books/',import.meta.url);
+const readJson=async name=>JSON.parse(await readFile(new URL(name,docsRoot),'utf8'));
+const BOOKS=aiBookIds(await readJson('catalog.json'),await readJson('shelf.json'));
 let cache;
 let pending;
 function segments(text,max=1250){
@@ -35,7 +38,7 @@ export async function libraryIndex(){
        if(!Array.isArray(chapter.sections)||!chapter.title)continue;
        for(let si=0;si<chapter.sections.length;si++){
          const sec=chapter.sections[si];
-         for(const passage of segments(sec.text)){
+         for(const passage of segments(sectionText(sec))){
            entries.push({
              id:id+':'+ci+':'+si+':'+entries.length,
              bookId:id,bookTitle:doc.title,chapter:chapter.title,

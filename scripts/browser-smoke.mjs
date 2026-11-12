@@ -32,7 +32,7 @@ try{
  assert.match(await page.locator('#result').innerText(),/HTTPS/);
  await page.locator('#clear').click();
  await page.goto(base+'/library.html',{waitUntil:'networkidle'});
- await page.waitForFunction(()=>document.querySelectorAll('#shelf .bookrow').length===4);
+ await page.waitForFunction(()=>document.querySelectorAll('#shelf .bookrow').length===12);
  await page.locator('#shelf .bookrow button').first().click();
  await page.waitForFunction(()=>document.querySelector('#chapters')?.options?.length>0);
  assert.ok((await page.locator('#chapters option').count())>=130);
@@ -257,6 +257,47 @@ try{
  await web.locator('#talkEnd').click();
 
  await webCtx.close();
+ // The wider bookshelf: twelve bundled books; the printed Neuron titles are names only, with nothing to open.
+ const lib=await context.newPage();lib.on('pageerror',e=>errors.push(String(e)));
+ await lib.goto(base+'/library.html',{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelectorAll('#shelf .bookrow').length===12&&document.querySelectorAll('#owned .owned').length===7);
+ assert.equal(await lib.locator('#owned button, #owned a').count(),0);
+ assert.match(await lib.locator('#owned').innerText(),/Neuron Anatomy & Physiology for Nurses & Midwives/);
+ assert.match(await lib.locator('#owned').innerText(),/বইয়ের নাম এখনো জানা নেই/);
+ assert.match(await lib.locator('[data-book="openstax-anatomy"]').innerText(),/শুধু পড়া ও খোঁজা/);
+ assert.match(await lib.locator('[data-book="seer-anatomy"]').innerText(),/শায়নি এই বই থেকে উত্তর খোঁজে/);
+ // A reading-only book opens, carries the publisher's credit line on the chapter and under search results, and offers no AI.
+ await lib.locator('[data-book="openstax-anatomy"] button').click();
+ await lib.waitForFunction(()=>document.querySelector('#chapters')?.options?.length>300);
+ assert.match(await lib.locator('#article .attribution').innerText(),/Access for free at https:\/\/openstax\.org\/books\/anatomy-and-physiology-2e\/pages\/1-introduction/);
+ assert.equal(await lib.locator('#readOnly').isVisible(),true);
+ await lib.fill('#searchText','nephron');await lib.click('#searchBtn');
+ await lib.waitForFunction(()=>document.querySelectorAll('#results .result').length>0);
+ assert.match(await lib.locator('#results').innerText(),/Access for free at/);
+ assert.equal(await lib.locator('#aiPanel').isVisible(),false);
+ await lib.goto(base+'/library.html?book=seer-anatomy&chapter=1',{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelector('#article .chapter-title')?.textContent.includes('Introduction to the Human Body'));
+ assert.equal(await lib.locator('#readOnly').isVisible(),false);
+ assert.match(await lib.locator('#article .attribution').innerText(),/originally published by the National Cancer Institute/);
+ // Subject page: one row per subject from the shelf. The printed title is plain text; the bundled books are links.
+ await lib.goto(base+'/faridpur-first-year.html',{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelectorAll('#matrix .sub').length===6&&document.querySelectorAll('#pending .sub').length===1);
+ const ap=lib.locator('[data-subject="D123"]');
+ assert.match(await ap.innerText(),/Neuron Anatomy & Physiology for Nurses & Midwives \(10th Edition\)/);
+ assert.match(await ap.innerText(),/মিলিয়ে দেখা হয়নি/);
+ assert.equal(await ap.locator('a[href*="library.html?book=openstax-anatomy"]').count(),1);
+ assert.equal(await ap.locator('a').evaluateAll(as=>as.some(a=>/Neuron/.test(a.textContent))),false);
+ assert.match(await lib.locator('[data-subject="D117"]').innerText(),/নাম জানা নেই/);
+ assert.match(await lib.locator('[data-subject="D111"]').innerText(),/নিশ্চিত করলে/);
+ assert.equal(await lib.locator('#bookCount').innerText(),'১২');
+ // Tutor: a question about her own printed book gets the fixed note, then exact chapters of the app's books to read.
+ await lib.goto(base+'/ask.html?q='+encodeURIComponent('আমার বইয়ের ৫০ পৃষ্ঠায় nephron নিয়ে কী আছে?'),{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelector('#chat .ownbook')?.textContent.includes('ছাপা বইয়ের লেখা অ্যাপে নেই'),null,{timeout:15000});
+ await lib.waitForFunction(()=>document.querySelector('#chat .reads a[href*="book=openstax-anatomy"]'),null,{timeout:20000});
+ assert.doesNotMatch(await lib.locator('#chat').innerText(),/পৃষ্ঠা ৫০-এ|page 50 says/);
+ await lib.locator('#chat .reads a[href*="book=openstax-anatomy"]').click();
+ await lib.waitForFunction(()=>/Kidney/.test(document.querySelector('#article .chapter-title')?.textContent||''));
+ await lib.close();
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq -> Gemini Live talk mode with lookup tool (fake servers, fake mic)');
+ console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 12-book shelf with owned printed titles and subject matrix -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq -> Gemini Live talk mode with lookup tool (fake servers, fake mic)');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}

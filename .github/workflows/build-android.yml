@@ -17,6 +17,7 @@ on:
       - settings.html
       - topics.html
       - ask.html
+      - faridpur-first-year.html
       - src/**
       - data/books/**
 permissions:

@@ -1,6 +1,7 @@
 // Dependency-free HTTP server. Serve behind HTTPS reverse proxy; never put API keys in browser assets.
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
+import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {dirname,join} from 'node:path';
 import {timingSafeEqual} from 'node:crypto';
@@ -18,8 +19,10 @@ const allowed=new Map([
  ['/','index.html'],['/index.html','index.html'],['/tutor.html','tutor.html'],['/coach.html','coach.html'],['/settings.html','settings.html'],['/src/api-config.js','src/api-config.js'],['/src/translation-cache.js','src/translation-cache.js'],['/src/study-plan.js','src/study-plan.js'],
  ['/manifest.webmanifest','manifest.webmanifest'],['/sw.js','sw.js'],
  ['/icon.svg','icon.svg'],['/faridpur-first-year.html','faridpur-first-year.html'],['/library.html','library.html'],['/data/books/catalog.json','data/books/catalog.json'],['/data/books/fundamentals.json','data/books/fundamentals.json'],['/data/books/skills.json','data/books/skills.json'],['/data/books/terminology.json','data/books/terminology.json'],['/data/books/mentalhealth.json','data/books/mentalhealth.json'],['/src/lesson-data.js','src/lesson-data.js'],
- ['/src/answer-core.js','src/answer-core.js'],['/src/app.css','src/app.css'],['/topics.html','topics.html'],['/src/easy-topics.js','src/easy-topics.js'],['/ask.html','ask.html'],['/src/tutor-core.js','src/tutor-core.js'],['/src/rag.js','src/rag.js'],['/src/local-llm.js','src/local-llm.js'],['/src/voice.js','src/voice.js'],['/src/cloud-ai.js','src/cloud-ai.js'],['/src/live-talk.js','src/live-talk.js'],['/src/talk-audio.js','src/talk-audio.js'],['/src/persona.js','src/persona.js']
+ ['/src/answer-core.js','src/answer-core.js'],['/src/app.css','src/app.css'],['/topics.html','topics.html'],['/src/easy-topics.js','src/easy-topics.js'],['/ask.html','ask.html'],['/src/tutor-core.js','src/tutor-core.js'],['/src/rag.js','src/rag.js'],['/src/local-llm.js','src/local-llm.js'],['/src/voice.js','src/voice.js'],['/src/cloud-ai.js','src/cloud-ai.js'],['/src/live-talk.js','src/live-talk.js'],['/src/talk-audio.js','src/talk-audio.js'],['/src/persona.js','src/persona.js'],['/src/library-catalog.js','src/library-catalog.js'],['/src/book-finder.js','src/book-finder.js'],['/data/books/shelf.json','data/books/shelf.json'],['/data/books/toc-index.json','data/books/toc-index.json']
 ]);
+// Every bundled book in the catalog is served; nothing else under data/ is.
+for(const b of JSON.parse(readFileSync(join(root,'data/books/catalog.json'),'utf8')).books)if(/^[a-z0-9-]+$/.test(b.id))allowed.set('/data/books/'+b.id+'.json','data/books/'+b.id+'.json');
 const mime={html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',webmanifest:'application/manifest+json',svg:'image/svg+xml',json:'application/json; charset=utf-8'};
 const counts=new Map();
 function json(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value))}

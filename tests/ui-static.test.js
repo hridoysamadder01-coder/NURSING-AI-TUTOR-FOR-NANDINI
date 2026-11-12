@@ -10,7 +10,7 @@ test('UI labels do not misrepresent search as verified generative AI',async()=>{
 test('publisher-imported bookshelf has substantial, source-linked complete source text',async()=>{
  const base=new URL('../data/books/',import.meta.url);
  const catalog=JSON.parse(await readFile(new URL('catalog.json',base),'utf8'));
- assert.equal(catalog.books.length,4);
+ assert.equal(catalog.books.length,12);assert.deepEqual(catalog.books.slice(0,4).map(b=>b.id),['fundamentals','skills','terminology','mentalhealth']);
  let count=0;
  for(const [id,min] of [['fundamentals',130],['skills',200],['terminology',140],['mentalhealth',120]]){
   const book=JSON.parse(await readFile(new URL(id+'.json',base),'utf8'));
@@ -30,7 +30,7 @@ test('PWA caches verified learning module, without server-side secrets',async()=
  for(const path of ['index.html','tutor.html','src/answer-core.js','src/lesson-data.js'])assert.doesNotMatch(await file(path),/sk-[a-zA-Z0-9]{25,}/);
 });
 
-test('Faridpur list shows Nandini\'s six subjects, is attributed and commercial full texts are not bundled', async()=>{const page=await file('faridpur-first-year.html');for(const code of ['D112','D123','D124','D135','D116','D117'])assert.match(page,new RegExp(code));assert.doesNotMatch(page,/D111/);assert.match(page,/BNMC/);assert.match(page,/কলেজের/);assert.match(page,/OpenStax/);assert.match(page,/শুধু পড়া/);assert.match(page,/eboighar/);assert.match(await file('index.html'),/faridpur-first-year\.html/)});
+test('Faridpur list shows Nandini\'s six subjects, is attributed and commercial full texts are not bundled', async()=>{const page=await file('faridpur-first-year.html');const shelf=JSON.parse(await file('data/books/shelf.json'));assert.deepEqual(shelf.subjects.filter(s=>s.in_coach).map(s=>s.code),['D135','D123','D112','D124','D117','D116']);assert.deepEqual(shelf.subjects.filter(s=>!s.in_coach).map(s=>s.code),['D111']);for(const token of ['id="matrix"','id="pending"','subjectMatrix(catalog,shelf)'])assert.ok(page.includes(token),token);assert.match(page,/BNMC/);assert.match(page,/কলেজের/);assert.match(page,/OpenStax/);assert.match(page,/শুধু পড়া/);assert.match(page,/AI-তে দিতে নিষেধ/);assert.match(page,/মলাটের ছবি অনুমতি নয়/);assert.match(page,/eboighar/);const lib=await file('library.html');for(const token of ['id="owned"','অ্যাপে লেখা নেই','shelf.physical_titles','catalog.books'])assert.ok(lib.includes(token),token);assert.match(await file('index.html'),/faridpur-first-year\.html/)});
 
 test('Nandini\'s six first-year subjects have unique trackable revision tasks', async()=>{const {SUBJECTS,TOTAL_TOPICS,taskId}=await import('../src/study-plan.js');assert.deepEqual(SUBJECTS.map(s=>s.name),['Fundamentals of Nursing','Anatomy & Physiology','Basic Science','Microbiology & Parasitology','ICT','English']);assert.equal(TOTAL_TOPICS,36);const ids=SUBJECTS.flatMap(s=>s.topics.map((t,i)=>taskId(s.code,i)));assert.equal(new Set(ids).size,36);for(const s of SUBJECTS)assert.ok(s.topics.length>=5&&s.topics.every(t=>t.length===2&&t[1].length>5));const page=await file('coach.html');assert.match(page,/localStorage/);assert.match(page,/api\/books\/ask/);assert.match(page,/api\/books\/search/);assert.match(await file('index.html'),/coach\.html/)});
 
