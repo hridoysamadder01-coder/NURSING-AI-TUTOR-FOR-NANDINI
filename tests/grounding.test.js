@@ -1,7 +1,7 @@
 // Source grounding for the wider bookshelf: what may reach a language model, what a citation may say, and when to abstain.
 import test from 'node:test';import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
-import {chunkBooks,buildIndex,retrieve,lookupText,buildMessages,isOwnBookQuestion,stripBrand,enTokens,OWN_BOOK_NOTE,isDoseQuestion,DOSE_NOTE} from '../src/rag.js';
+import {chunkBooks,buildIndex,retrieve,lookupText,buildMessages,isOwnBookQuestion,stripBrand,enTokens,OWN_BOOK_NOTE,isDoseQuestion,DOSE_NOTE,buildPageMessages,pageTextUsable,PAGE_UNREADABLE} from '../src/rag.js';
 import {aiBookIds} from '../src/library-catalog.js';
 import {buildFinder,findChapters} from '../src/book-finder.js';
 import {buildTocIndex,packIndex} from '../scripts/build-book-index.mjs';
@@ -79,4 +79,32 @@ test('the headings index is in step with the books, and the importer helpers pas
  const py=spawnSync('python3',['scripts/bookimport.py','--selftest'],{encoding:'utf8'});
  assert.equal(py.status,0,py.stderr);assert.match(py.stdout,/selftest ok/);
  for(const script of ['import_openstax.py','import_seer.py','import_openrn.py'])assert.equal(spawnSync('python3',['-m','py_compile','scripts/'+script]).status,0,script);
+});
+
+
+test('Scan & Explain: Shayni explains only the photographed page, with provenance and no dose',()=>{
+ // Noise or a near-blank read is not usable; a real page is.
+ assert.equal(pageTextUsable(''),false);
+ assert.equal(pageTextUsable('q w e'),false);
+ assert.equal(pageTextUsable('|| ~ 3 .'),false);
+ assert.equal(pageTextUsable('The nephron is the functional unit of the kidney and filters blood.'),true);
+ const page='The nephron is the functional unit of the kidney. It filters blood and forms urine through filtration, reabsorption and secretion.';
+ const [sys,user]=buildPageMessages(page,'nephron অংশটা বোঝাও');
+ assert.equal(sys.role,'system');assert.equal(user.role,'user');
+ // Grounded strictly on the page; must not invent; keeps the no-dose rule; honest if unreadable.
+ assert.match(sys.content,/শুধু নিচের "পাতার লেখা" থেকে/);
+ assert.match(sys.content,/পাতায় যা নেই, তা বলবে না/);
+ assert.match(sys.content,/ডোজ/);
+ assert.match(sys.content,/তোলা পাতা/);
+ assert.ok(user.content.includes(page),'the page text is the evidence');
+ assert.ok(user.content.includes('nephron অংশটা বোঝাও'),'carries her question');
+ // No question → explain the whole page.
+ assert.match(buildPageMessages(page,'')[1].content,/এই পাতাটা সহজ/);
+ // The cloud variant allows everyday examples; the on-device one stays terse.
+ assert.match(buildPageMessages(page,'',{cloud:true})[0].content,/উদাহরণ/);
+ assert.doesNotMatch(buildPageMessages(page,'')[0].content,/রোজকার জীবনের/);
+ // The fixed abstain line names the page and asks for a clearer photo.
+ assert.match(PAGE_UNREADABLE,/পরিষ্কার পড়তে পারিনি/);
+ // Dose questions are handled by the caller with DOSE_NOTE and never reach the page model.
+ assert.equal(isDoseQuestion('রোগীকে কত mg দেব?'),true);
 });

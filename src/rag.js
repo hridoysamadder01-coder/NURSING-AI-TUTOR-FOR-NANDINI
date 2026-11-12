@@ -165,6 +165,28 @@ export function buildChatMessages(message,{history=[]}={}){
  // history: the last few turns of this chat ({role:'user'|'assistant',content}), so a friend remembers what was just said.
  return [{role:'system',content:system},...history.slice(-4),{role:'user',content:String(message).trim()}];
 }
+// Scan & Explain: the student photographed one page of her own book, the app read it on-device (OCR), and she may
+// have fixed the text. Shayni explains THAT page only — never adds facts from elsewhere, never invents what the page
+// does not show. The image never leaves the phone; only this text does, and online only with her explicit consent.
+export const PAGE_SOURCE='তোমার তোলা পাতা';
+export const PAGE_UNREADABLE='এই পাতার লেখা আমি পরিষ্কার পড়তে পারিনি, তাই ভুল কিছু বলব না। ভালো আলোয়, সোজা করে, কাছ থেকে আরেকবার ছবি তোলো, অথবা লেখাটা নিজে একটু ঠিক করে দাও।';
+// Enough real words to explain? (Guards against OCR noise or a blank page reaching the model.)
+export function pageTextUsable(text){
+ const s=String(text||'').trim();
+ return (s.match(/[A-Za-zঀ-৿]/g)||[]).length>=20&&s.split(/\s+/).filter(Boolean).length>=5;
+}
+export function buildPageMessages(pageText,question,{cloud=false}={}){
+ const text=String(pageText||'').trim().split(/\s+/).slice(0,1800).join(' ');
+ const q=String(question||'').trim();
+ const system=IDENTITY+' তুমি নন্দিনীর বন্ধুর মতো, ধৈর্যশীল নার্সিং শিক্ষক। নন্দিনী তার বইয়ের একটা পাতার ছবি তুলেছে, আর অ্যাপ সেই পাতা থেকে লেখা বের করেছে। '+LANGUAGE+(cloud?' '+EXAMPLES:'')+' নিয়ম:\n'+
+  '১) শুধু নিচের "পাতার লেখা" থেকে বোঝাবে। নিজের থেকে বা অন্য বই থেকে কোনো তথ্য যোগ করবে না; পাতায় যা নেই, তা বলবে না বা আন্দাজ করবে না।\n'+
+  '২) প্রথমে এক-দুই লাইনে পাতাটা কী নিয়ে বলবে, তারপর ৩–৫টি ছোট সহজ পয়েন্টে মূল কথাগুলো বোঝাবে। ইংরেজি পরিভাষা (যেমন Nephron) বন্ধনীতে রেখে সহজ বাংলায় মানে বলবে, কিন্তু পুরো লেখা হুবহু অনুবাদ করবে না।\n'+
+  '৩) পাতার লেখা অস্পষ্ট, এলোমেলো বা খুব কম হলে সেটা সৎভাবে বলবে আর পরিষ্কার ছবি তুলতে বলবে; বানিয়ে ব্যাখ্যা দেবে না।\n'+
+  '৪) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত দেবে না, পাতায় লেখা থাকলেও সাধারণভাবে বোঝাবে, রোগীর জন্য ডোজ বলবে না।\n'+
+  '৫) শেষে মনে করিয়ে দেবে এটা তার তোলা পাতা থেকে বলা, আর পরীক্ষার আগে ক্লাস নোট/শিক্ষকের সঙ্গে মিলিয়ে নিতে বলবে।';
+ const user='পাতার লেখা:\n"""\n'+(text||'(কিছু পড়া যায়নি)')+'\n"""\n\n'+(q?('নন্দিনীর প্রশ্ন (এই পাতা নিয়ে): '+q):'নন্দিনী বলেছে: এই পাতাটা সহজ বাংলায় বুঝিয়ে দাও।');
+ return [{role:'system',content:system},{role:'user',content:user}];
+}
 // What the voice conversation's lookup_nursing tool returns: the verified topic (with trick) or book passages,
 // a fixed note for dose questions, or NOT_FOUND so the model says it is not in the books.
 export function lookupText(query,index){

@@ -6,7 +6,8 @@ import {join} from 'node:path';
 const sources=[
 'index.html','library.html','tutor.html','coach.html','settings.html','faridpur-first-year.html','topics.html','ask.html','scan.html',
 'manifest.webmanifest','icon.svg','sw.js','src/app.css',
-'src/study-plan.js','src/easy-topics.js','src/tutor-core.js','src/rag.js','src/local-llm.js','src/voice.js','src/cloud-ai.js','src/live-talk.js','src/talk-audio.js','src/persona.js','src/api-config.js','src/translation-cache.js','src/answer-core.js','src/lesson-data.js','src/library-catalog.js','src/book-finder.js',
+'src/study-plan.js','src/easy-topics.js','src/tutor-core.js','src/rag.js','src/local-llm.js','src/voice.js','src/cloud-ai.js','src/live-talk.js','src/talk-audio.js','src/persona.js','src/api-config.js','src/translation-cache.js','src/answer-core.js','src/lesson-data.js','src/library-catalog.js','src/book-finder.js','src/page-ocr.js',
+'vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js','vendor/tesseract/tesseract-core-simd-lstm.wasm.js','vendor/tesseract/tessdata/eng.traineddata.gz','vendor/tesseract/tessdata/ben.traineddata.gz',
 'data/books/catalog.json','data/books/shelf.json','data/books/toc-index.json',
 // Every bundled book the catalog lists (the four Open RN books plus the later licensed imports).
 ...JSON.parse(readFileSync('data/books/catalog.json','utf8')).books.map(b=>'data/books/'+b.id+'.json')

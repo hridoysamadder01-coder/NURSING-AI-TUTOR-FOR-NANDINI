@@ -181,3 +181,14 @@ On the desktop CPU, Gemma 3 4B produced a full answer in roughly 4–13 seconds.
 **Independent review: not completed.** A multi-reviewer check of this work was started and stopped by the account's usage limit before any reviewer reported; only what could be recovered from its partial notes was checked and fixed.
 
 **Not done yet (next phases):** private on-device import of Nandini's own pages or PDFs with OCR; the gap table; a parasitology text (candidate: CDC DPDx); a Communicative English textbook; WisTech Open general-education books. Nothing here has been checked on a real phone.
+
+## November 12 (Milestone 2B): Scan & Explain — read one page, explain it
+
+`scan.html` lets Nandini photograph or choose **one page of any book** and have Shayni explain that page — no need to import a whole six-book set.
+
+- **On-device, offline OCR.** Tesseract.js (English + Bengali) is bundled under `vendor/tesseract/` (~6.4 MB, pinned; `scripts/fetch-ocr-assets.sh` refreshes it) and cached by `sw.js`, so reading a page needs no internet. `src/page-ocr.js` loads only these bundled assets — never a CDN. The browser smoke test reads a page with zero external requests.
+- **Honest about accuracy.** The OCR result is always an **editable draft** with a confidence percentage; a low/blurry read asks for a clearer photo, and nothing is invented. Measured on clean rendered English nursing text: 100% character accuracy, ~0.5 s. Bengali accuracy could not be measured in the build environment (no Bengali font) and must be checked on a real phone photo.
+- **Page-grounded explanation.** `buildPageMessages` (`src/rag.js`) makes Shayni explain **only** the page's text, with provenance "তোমার তোলা পাতা", no outside facts, no patient dose, and an honest abstain when the text is unreadable.
+- **Privacy, on-device first.** The page **image never leaves the phone**. The explanation uses the on-device Gemma model by default (fully offline); if that is not installed, only the extracted **text** (not the image) can go to the online AI, and only after an explicit consent tick — never silently.
+- **Graceful fallback.** On a device without WebAssembly SIMD, the app says so and lets her type the text instead; Shayni still explains it.
+- Verification: `npm test` (74 pass; grounding, privacy and offline-asset tests) and `node scripts/browser-smoke.mjs` (real OCR reads a page, the on-device model explains it, the image is never sent). APK grows from ~30.7 MB to ~36.5 MB. Not verified on a real phone; Bengali OCR accuracy not yet measured.

@@ -63,11 +63,19 @@ test('"বিষয় ধরে পড়ি" is subject-first with a source ch
  for(const token of ['id="subjectGrid"','subjectByCode','openSubject','শায়নিকে জিজ্ঞেস করি',"ask.html?q='+encodeURIComponent",'library.html?book='])assert.ok(t.includes(token),'topics.html missing '+token);
 });
 
-test('Scan & Explain is honest: on-device only, no invented reading yet',async()=>{
- const s=await file('scan.html');
- assert.match(s,/তৈরি হচ্ছে/);assert.match(s,/এখনো চালু হয়নি/);
- assert.match(s,/শুধু তোমার ফোনেই/);
- // It must not claim it extracted or read the page, and must not ship a server upload.
- assert.doesNotMatch(s,/fetch\(|XMLHttpRequest|upload/i);
- assert.ok(s.includes('./ask.html'),'scan page should route to Shayni');
+test('Scan & Explain reads a page on-device from bundled offline OCR, image never leaves the phone',async()=>{
+ const s=await file('scan.html'),ocr=await file('src/page-ocr.js');
+ // Three real steps: pick → read (OCR) → explain.
+ for(const id of ['id="readBtn"','id="ocrText"','id="explainBtn"','recognizePage','buildPageMessages'])assert.ok(s.includes(id),'scan.html missing '+id);
+ // OCR assets are bundled and loaded locally — never from a CDN — so it works with no internet.
+ assert.ok(s.includes('./vendor/tesseract/tesseract.min.js'),'scan must load bundled Tesseract');
+ assert.ok(ocr.includes("new URL('../vendor/tesseract/',import.meta.url)"),'OCR must use bundled assets');
+ for(const t of [ocr,s])assert.doesNotMatch(t,/https?:\/\/(cdn|unpkg|tessdata|cdnjs|jsdelivr)/i,'no remote OCR asset');
+ // The image is never sent anywhere; only the (edited) page text can go online, and only on consent.
+ assert.ok(s.includes('id="consent"')&&s.includes('consentChk'),'online use needs explicit consent');
+ // scan.html itself opens no network connection and builds no upload — the only network path is cloud-ai.js (page text, on consent).
+ assert.doesNotMatch(s,/\bfetch\s*\(|FormData|XMLHttpRequest|\.send\s*\(|uploadBytes/,'scan.html must not upload');
+ assert.ok(s.includes('শুধু পাতার লেখা')&&s.includes('ছবি')&&s.includes('পাঠানো হবে না'),'privacy wording');
+ // Shayni's page explanation prefers the on-device model; falls back to online only with consent.
+ assert.ok(s.includes('llm.available()')&&s.includes('cloud.ready()'),'on-device-first engine choice');
 });

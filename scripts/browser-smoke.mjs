@@ -87,11 +87,10 @@ try{
  await page.locator('a[href="./topics.html#vital-signs"]').click();
  await page.waitForURL(/topics\.html#vital-signs/);
  assert.equal(await page.locator('#vital-signs').getAttribute('open'),'');
- // Scan & Explain: honest "coming next" page, the page stays on the device, Shayni reachable.
+ // Scan & Explain page: three real steps, page picker visible (the OCR + explain path is tested on-device below).
  await page.goto(base+'/scan.html',{waitUntil:'networkidle'});
- assert.match(await page.locator('.soon').innerText(),/তৈরি হচ্ছে/);
  assert.ok(await page.locator('#camBtn').isVisible());
- assert.ok((await page.locator('a[href="./ask.html"]').count())>=1);
+ assert.equal(await page.locator('.step-chip').count(),3);
  // Every main screen carries the same five-tab bar, with the camera (পাতা) tab.
  for(const url of ['/index.html','/topics.html','/ask.html','/scan.html','/library.html']){
    await page.goto(base+url,{waitUntil:'domcontentloaded'});
@@ -342,4 +341,43 @@ try{
  await lib.close();
  assert.deepEqual(errors,[]);
  console.log('PASS: Mobile Chrome clean three-path home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 12-book shelf with owned printed titles and subject matrix -> cited chapter reader -> subject-first lessons with ask-Shayni -> scan page + consistent tab bar -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq -> Gemini Live talk mode with lookup tool (fake servers, fake mic)');
+ // ---- Scan & Explain: bundled offline OCR reads a page photo, then the on-device model explains THAT page ----
+ const scanCtx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
+ await scanCtx.addInitScript(()=>{
+  const l={},emit=(ev,d)=>(l[ev]||[]).forEach(f=>f(d));window.__pageGen=[];
+  window.Capacitor={isNativePlatform:()=>true,Plugins:{NandiniLlm:{
+   addListener:async(ev,fn)=>{(l[ev]??=[]).push(fn);return {remove:()=>{l[ev]=l[ev].filter(f=>f!==fn)}}},
+   status:async()=>({files:[{name:'gemma-3-4b-it-Q4_0.gguf',bytes:2370065536}],loaded:null,totalRamMb:8000,availRamMb:5000,freeSpaceMb:9000,cores:8,threads:4}),
+   load:async()=>({ms:5}),
+   generate:async({messages})=>{window.__pageGen.push(messages);for(const t of ['এই ','পাতাটা ','কিডনির ','নেফ্রন ','নিয়ে।'])emit('token',{text:t});return {generatedTokens:5}},
+   stop:async()=>{},unload:async()=>{}}}};
+ });
+ const scan=await scanCtx.newPage();const scanErr=[];scan.on('pageerror',e=>scanErr.push(String(e)));
+ await scan.goto(base+'/scan.html',{waitUntil:'networkidle'});
+ // Inject a page photo the way the camera/picker would.
+ await scan.evaluate(async()=>{
+  const c=document.createElement('canvas');c.width=900;c.height=220;const x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,900,220);x.fillStyle='#000';x.font='34px serif';
+  x.fillText('The nephron is the functional unit of the kidney.',22,80);
+  x.fillText('It filters blood and forms urine.',22,150);
+  const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+  const dt=new DataTransfer();dt.items.add(new File([blob],'page.png',{type:'image/png'}));
+  const inp=document.getElementById('pageFile');inp.files=dt.files;inp.dispatchEvent(new Event('change',{bubbles:true}));
+ });
+ await scan.waitForSelector('#readCard:not(.hidden)');
+ await scan.locator('#readBtn').click();
+ await scan.waitForFunction(()=>/nephron|kidney|filters/i.test(document.getElementById('ocrText')?.value||''),null,{timeout:120000});
+ // Explain the page on-device — no online consent box, provenance shown.
+ await scan.waitForSelector('#explainCard:not(.hidden)');
+ await scan.locator('#explainBtn').click();
+ await scan.waitForFunction(()=>(document.querySelector('#answer')?.textContent||'').includes('পাতাটা'),null,{timeout:20000});
+ assert.equal(await scan.locator('#consent').isVisible(),false,'on-device explanation needs no online consent');
+ assert.equal(await scan.locator('#prov').isVisible(),true);
+ // The model was grounded on the page text, and the image was never sent to it.
+ const pageSent=await scan.evaluate(()=>JSON.stringify(window.__pageGen));
+ assert.match(pageSent,/nephron is the functional unit/,'page text grounds the explanation');
+ assert.doesNotMatch(pageSent,/data:image|base64|\.png/i,'the page image is never sent to the model');
+ assert.deepEqual(scanErr,[]);
+ await scanCtx.close();
+ console.log('PASS: Scan & Explain — offline OCR read the page and the on-device model explained it, grounded, image kept on device');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}
