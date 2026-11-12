@@ -4,7 +4,7 @@ import {mkdir,copyFile,readFile,stat,rm} from 'node:fs/promises';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 const sources=[
-'index.html','library.html','tutor.html','coach.html','settings.html','faridpur-first-year.html','topics.html','ask.html',
+'index.html','library.html','tutor.html','coach.html','settings.html','faridpur-first-year.html','topics.html','ask.html','scan.html',
 'manifest.webmanifest','icon.svg','sw.js','src/app.css',
 'src/study-plan.js','src/easy-topics.js','src/tutor-core.js','src/rag.js','src/local-llm.js','src/voice.js','src/cloud-ai.js','src/live-talk.js','src/talk-audio.js','src/persona.js','src/api-config.js','src/translation-cache.js','src/answer-core.js','src/lesson-data.js','src/library-catalog.js','src/book-finder.js',
 'data/books/catalog.json','data/books/shelf.json','data/books/toc-index.json',

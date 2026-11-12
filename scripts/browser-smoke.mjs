@@ -12,7 +12,10 @@ try{
  const errors=[];page.on('pageerror',e=>errors.push(String(e)));
  await page.goto(base+'/index.html',{waitUntil:'networkidle'});
  assert.match(await page.title(),/Nandini/);
- await page.getByRole('link',{name:/Study Coach/}).first().click();
+ // The home screen's whole job: three clear primary paths.
+ assert.deepEqual(await page.locator('.paths .path').evaluateAll(as=>as.map(a=>a.getAttribute('href'))),['./topics.html','./ask.html','./scan.html']);
+ // Study Coach lives in the tidy "আরও" menu now.
+ await page.getByRole('link',{name:/পড়ার প্ল্যান/}).click();
  await page.waitForURL(/coach\.html/);
  assert.match(await page.locator('#chosenSubject').innerText(),/নার্সিং/);
  assert.equal(await page.locator('.topic').count(),8);
@@ -67,16 +70,34 @@ try{
  await page.locator('#searchBtn').click();
  assert.ok((await page.locator('#results').innerText()).length>40);
  await page.goto(base+'/topics.html',{waitUntil:'networkidle'});
- assert.ok((await page.locator('.tcard').count())>=30,'Simple-Bangla topics missing');
+ // "বিষয় ধরে পড়ি": the landing is the six subjects; lessons appear only after choosing one.
+ assert.equal(await page.locator('#subjectGrid .subjcard').count(),6);
+ assert.equal(await page.locator('.tcard').count(),0);
+ await page.locator('#subjectGrid .subjcard').first().click();
+ assert.ok((await page.locator('.tcard').count())>=5,'Subject lessons missing');
+ // Search finds a topic across subjects; the lesson has its self-check, the source chapter and an ask-Shayni button.
  await page.locator('#topicSearch').fill('osmosis');
  await page.locator('#osmosis summary').click();
  await page.locator('#osmosis .option').nth(1).click();
  assert.match(await page.locator('#osmosis .explain').innerText(),/সঠিক/);
  assert.match(await page.locator('#osmosis a[href*="library.html"]').getAttribute('href'),/book=fundamentals&q=/);
+ assert.match(await page.locator('#osmosis a[href*="ask.html"]').getAttribute('href'),/ask\.html\?q=/);
+ // The Study Coach deep-link opens the exact lesson inside its subject.
  await page.goto(base+'/coach.html',{waitUntil:'networkidle'});
  await page.locator('a[href="./topics.html#vital-signs"]').click();
  await page.waitForURL(/topics\.html#vital-signs/);
  assert.equal(await page.locator('#vital-signs').getAttribute('open'),'');
+ // Scan & Explain: honest "coming next" page, the page stays on the device, Shayni reachable.
+ await page.goto(base+'/scan.html',{waitUntil:'networkidle'});
+ assert.match(await page.locator('.soon').innerText(),/তৈরি হচ্ছে/);
+ assert.ok(await page.locator('#camBtn').isVisible());
+ assert.ok((await page.locator('a[href="./ask.html"]').count())>=1);
+ // Every main screen carries the same five-tab bar, with the camera (পাতা) tab.
+ for(const url of ['/index.html','/topics.html','/ask.html','/scan.html','/library.html']){
+   await page.goto(base+url,{waitUntil:'domcontentloaded'});
+   assert.equal(await page.locator('.tabbar .tabs>a').count(),5,url+' tab bar count');
+   assert.ok((await page.locator('.tabbar').innerText()).includes('পাতা'),url+' missing পাতা tab');
+ }
  await page.goto(base+'/index.html',{waitUntil:'networkidle'});
  await page.locator('.askhome input').fill('osmosis কী?');
  await page.locator('.askhome button').click();
@@ -320,5 +341,5 @@ try{
  await lib.waitForFunction(()=>/Kidney/.test(document.querySelector('#article .chapter-title')?.textContent||''));
  await lib.close();
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 12-book shelf with owned printed titles and subject matrix -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq -> Gemini Live talk mode with lookup tool (fake servers, fake mic)');
+ console.log('PASS: Mobile Chrome clean three-path home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 12-book shelf with owned printed titles and subject matrix -> cited chapter reader -> subject-first lessons with ask-Shayni -> scan page + consistent tab bar -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq -> Gemini Live talk mode with lookup tool (fake servers, fake mic)');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}

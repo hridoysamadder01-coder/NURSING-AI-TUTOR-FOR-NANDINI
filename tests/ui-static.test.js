@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {spawnSync} from 'node:child_process';
 const file=async name=>readFile(new URL('../'+name,import.meta.url),'utf8');
 test('browser inline script passes Node syntax check',async()=>{
- for(const path of ['index.html','tutor.html','library.html','faridpur-first-year.html','coach.html','settings.html','topics.html','ask.html']){const html=await file(path);const m=html.match(/<script(?: type="module")?>([\s\S]*?)<\/script>/);if(!m){assert.equal(path,'faridpur-first-year.html','unexpected missing script');continue}const parsed=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(parsed.status,0,path+' JavaScript syntax error: '+parsed.stderr)}
+ for(const path of ['index.html','tutor.html','library.html','faridpur-first-year.html','coach.html','settings.html','topics.html','ask.html','scan.html']){const html=await file(path);const m=html.match(/<script(?: type="module")?>([\s\S]*?)<\/script>/);if(!m){assert.equal(path,'faridpur-first-year.html','unexpected missing script');continue}const parsed=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(parsed.status,0,path+' JavaScript syntax error: '+parsed.stderr)}
 });
 test('UI labels do not misrepresent search as verified generative AI',async()=>{
  const html=await file('tutor.html');
@@ -37,3 +37,37 @@ test('Nandini\'s six first-year subjects have unique trackable revision tasks', 
 test('Android bundle includes private AI host settings and no hardcoded paid API key',async()=>{const p=await file('scripts/prepare-android.mjs');assert.match(p,/settings\.html/);assert.match(p,/src\/api-config\.js/);const cfg=await file('src/api-config.js');assert.match(cfg,/https:/);assert.doesNotMatch(cfg,/OPENAI_API_KEY/);assert.match(await file('coach.html'),/settings\.html/)});
 
 test('chapter reader uses structured paragraph typography and native bilingual translation only in Android',async()=>{const html=await file('library.html');for(const token of ['chapter-title','readsection','paragraph','data-mode="english"','data-mode="both"','data-mode="bangla"','translateChapter','translation-cache.js','native-translation.bundle.js'])assert.ok(html.includes(token),token);const wf=await file('.github/workflows/build-android.yml');assert.match(wf,/@capacitor-mlkit\/translation@8/);assert.match(wf,/esbuild src\/native-translation.js/);const prep=await file('scripts/prepare-android.mjs');assert.match(prep,/translation-cache\.js/)});
+
+test('home is a clean three-path landing and keeps every feature reachable in the "আরও" menu',async()=>{
+ const home=await file('index.html');
+ // The three primary paths, in order, are the point of the home screen (owner clarification, 12 Nov).
+ const paths=[...home.matchAll(/class="path" href="\.\/([a-z-]+\.html)"/g)].map(m=>m[1]);
+ assert.deepEqual(paths,['topics.html','ask.html','scan.html']);
+ for(const label of ['বিষয় ধরে পড়ি','শায়নিকে জিজ্ঞেস করি','পাতার ছবি বুঝি'])assert.ok(home.includes(label),label);
+ // Nothing was deleted: the secondary features still have a door.
+ for(const href of ['./library.html','./coach.html','#quiz','#notes','#pdf','./faridpur-first-year.html','./settings.html'])assert.ok(home.includes(href),'home lost '+href);
+});
+
+test('every main screen carries the same five-tab Bangla navigation',async()=>{
+ const tabs=[['./index.html','হোম'],['./topics.html','পড়ি'],['./ask.html','শায়নি'],['./scan.html','পাতা'],['./library.html','বই']];
+ for(const page of ['index.html','topics.html','ask.html','scan.html','library.html','coach.html','faridpur-first-year.html','settings.html','tutor.html']){
+  const html=await file(page);
+  const bar=html.slice(html.indexOf('<nav class="tabbar"'));
+  for(const [href,label] of tabs)assert.ok(bar.includes('href="'+href+'"')&&bar.includes(label),page+' tab bar missing '+label);
+  assert.equal((bar.match(/data-tab=/g)||[]).length,5,page+' must have exactly five tabs');
+ }
+});
+
+test('"বিষয় ধরে পড়ি" is subject-first with a source chapter and an ask-Shayni button on every lesson',async()=>{
+ const t=await file('topics.html');
+ for(const token of ['id="subjectGrid"','subjectByCode','openSubject','শায়নিকে জিজ্ঞেস করি',"ask.html?q='+encodeURIComponent",'library.html?book='])assert.ok(t.includes(token),'topics.html missing '+token);
+});
+
+test('Scan & Explain is honest: on-device only, no invented reading yet',async()=>{
+ const s=await file('scan.html');
+ assert.match(s,/তৈরি হচ্ছে/);assert.match(s,/এখনো চালু হয়নি/);
+ assert.match(s,/শুধু তোমার ফোনেই/);
+ // It must not claim it extracted or read the page, and must not ship a server upload.
+ assert.doesNotMatch(s,/fetch\(|XMLHttpRequest|upload/i);
+ assert.ok(s.includes('./ask.html'),'scan page should route to Shayni');
+});
