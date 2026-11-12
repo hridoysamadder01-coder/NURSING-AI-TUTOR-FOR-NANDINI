@@ -66,8 +66,8 @@
  <span class="step-chip">ধাপ ৩ · শায়নিকে বোঝাতে বলো</span>
  <label class="field" for="pageQ">এই পাতা নিয়ে কিছু জিজ্ঞেস করতে চাও? (না লিখলে পুরো পাতা বুঝিয়ে দেবে)</label>
  <input id="pageQ" type="search" maxlength="200" placeholder="যেমন: nephron অংশটা সহজ করে বোঝাও">
- <div class="consent hidden" id="consent"><input type="checkbox" id="consentChk"><label for="consentChk">ফোনের ভেতরের AI এখন নেই। <b class="muted-strong">পাতার এই লেখাটুকু</b> অনলাইন AI-তে পাঠিয়ে ব্যাখ্যা নিতে রাজি আছি। <b>ছবিটা পাঠানো হবে না</b>, শুধু উপরের লেখা যাবে।</label></div>
- <div class="btn-row" style="margin-top:12px"><button class="btn" id="explainBtn" type="button">🤖 এই পাতা বুঝিয়ে দাও</button><button class="btn ghost hidden" id="stopExplain" type="button">থামাও</button></div>
+ <div class="consent hidden" id="consent"><input type="checkbox" id="consentChk"><label for="consentChk"><b class="muted-strong">পাতার এই লেখাটুকু</b> অনলাইন শায়নিকে পাঠিয়ে সবচেয়ে ভালো ব্যাখ্যা নিতে রাজি আছি। <b>ছবিটা পাঠানো হবে না</b>, শুধু উপরের লেখা যাবে। (একবার রাজি হলে পরেরবার থেকে সরাসরি হবে।)</label></div>
+ <div class="btn-row" style="margin-top:12px"><button class="btn" id="explainBtn" type="button">🤖 এই পাতা বুঝিয়ে দাও</button><a class="btn ghost hidden" id="toSettings" href="./settings.html">⚙️ অনলাইন শায়নি চালু করো</a><button class="btn ghost hidden" id="stopExplain" type="button">থামাও</button></div>
  <p id="engineMsg" class="fine" style="margin:8px 0 0"></p>
  <div id="answer" style="margin-top:12px"></div>
  <p class="prov hidden" id="prov">উৎস: তোমার তোলা পাতা · AI ভুল করতে পারে, পাতার লেখা ও ক্লাস নোটের সঙ্গে মিলিয়ে নাও।</p>
@@ -133,15 +133,23 @@ $('readBtn').onclick=async()=>{
 $('stopRead').onclick=()=>ocrCtl?.abort();
 // Typing text (no OCR) should also open step 3.
 $('ocrText').addEventListener('input',()=>{if($('ocrText').value.trim().length>8)$('explainCard').classList.remove('hidden')});
-// --- Step 3: Shayni explains THIS page; on-device first, online only with consent ---
+// --- Step 3: Shayni explains THIS page. Online is the strong, default path (Nandini is usually online);
+// the phone's own model is the offline fallback. The image never leaves the phone; the page TEXT goes online
+// only after a one-time consent, which is then remembered. ---
+const CONSENT='nandini-scan-online-consent';
+const consented=()=>{try{return localStorage.getItem(CONSENT)==='yes'}catch{return false}};
+const rememberConsent=()=>{try{localStorage.setItem(CONSENT,'yes')}catch{}};
 async function pickEngine(){
+ if(cloud.ready())return {mode:'online',msg:'ব্যাখ্যা অনলাইন শায়নি থেকে আসবে (সবচেয়ে ভালো)। শুধু পাতার লেখা যাবে, ছবি নয়।'};
  if(llm.available()&&llm.autoEnabled()){try{localModel=llm.activeModel(await llm.status())}catch{localModel=null}}
- if(localModel)return {mode:'local',msg:'ব্যাখ্যা ফোনের ভেতরে হবে ('+localModel.label+'), নেট ছাড়া। ছবি বা লেখা কোথাও যাবে না।'};
- if(cloud.ready())return {mode:'online',msg:'ফোনের ভেতরের AI নেই। রাজি থাকলে শুধু পাতার লেখা অনলাইন AI-তে পাঠিয়ে ব্যাখ্যা নেওয়া যাবে।'};
- return {mode:'none',msg:'ব্যাখ্যার জন্য ফোনের ভেতরের AI দরকার — সেটিংস থেকে একবার নামাও, অথবা অনলাইন AI-র key দাও।'};
+ if(localModel)return {mode:'local',msg:'নেট নেই — ব্যাখ্যা ফোনের ভেতরে হবে ('+localModel.label+')। ছবি বা লেখা কোথাও যাবে না।'};
+ return {mode:'none',msg:'ব্যাখ্যার জন্য অনলাইন শায়নি চালু করো (সেটিংসে বিনামূল্যের key — সবচেয়ে ভালো), অথবা ফোনের ভেতরের AI নামাও।'};
 }
 let engine={mode:'none'};
-async function refreshEngine(){engine=await pickEngine();$('engineMsg').textContent=engine.msg;$('consent').classList.toggle('hidden',engine.mode!=='online');
+async function refreshEngine(){engine=await pickEngine();$('engineMsg').textContent=engine.msg;
+ $('consent').classList.toggle('hidden',engine.mode!=='online');
+ if(engine.mode==='online'&&consented())$('consentChk').checked=true;
+ $('toSettings').classList.toggle('hidden',engine.mode!=='none');
  $('explainBtn').disabled=engine.mode==='none'}
 refreshEngine();
 let exCtl=null;
@@ -153,8 +161,8 @@ $('explainBtn').onclick=async()=>{
  if(isDoseQuestion(q)){sayStatic(DOSE_NOTE);return}
  if(!pageTextUsable(text)){sayStatic(PAGE_UNREADABLE);return}
  await refreshEngine();
- if(engine.mode==='none'){sayStatic('ব্যাখ্যা করতে পারলাম না — ফোনের ভেতরের AI নামাও (সেটিংস), অথবা অনলাইন AI-র key দাও।');return}
- if(engine.mode==='online'&&!$('consentChk').checked){$('engineMsg').textContent='পাতার লেখা অনলাইন AI-তে পাঠাতে উপরের ঘরে টিক দাও।';return}
+ if(engine.mode==='none'){sayStatic('ব্যাখ্যা করতে পারলাম না — সেটিংসে অনলাইন শায়নির বিনামূল্যের key দাও, অথবা ফোনের ভেতরের AI নামাও।');return}
+ if(engine.mode==='online'){if(!$('consentChk').checked){$('engineMsg').textContent='পাতার লেখা অনলাইন শায়নিকে পাঠাতে উপরের ঘরে একবার টিক দাও।';return}rememberConsent()}
  const p=document.createElement('p');out.append(p);let acc='';const push=t=>{acc+=t;p.textContent=acc};
  exCtl=new AbortController();$('explainBtn').disabled=true;$('stopExplain').classList.remove('hidden');p.textContent='পাতাটা পড়ে বোঝাচ্ছি…';
  try{

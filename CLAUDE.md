@@ -21,6 +21,10 @@ Start every session by reading `STATUS.md` (what is done, what is not verified) 
 - Only Bangla in answers and voice; English terms are allowed with their Bangla meaning. Never Hindi.
 - No patient-specific doses or treatment decisions. The Open RN books are international references, not her college's
   prescribed books; never claim otherwise.
+- **Nandini is usually online, so prioritise the online (stronger) AI path.** Make the online free-tier models the
+  default/first choice wherever quality matters (the Tutor already does this); keep the on-device phone model and the
+  verified notes as the offline fallback. (Owner preference, 12 Nov 2026.) Exception: on the Scan & Explain page the
+  page's own text goes online only after a one-time, remembered consent, and the page image never leaves the phone.
 - No paid API, server or subscription without the owner's explicit approval. Free tiers only.
 - Never rotate several accounts or keys to stretch free quotas (Google and Groq terms forbid it). Route across different
   models and providers instead.

@@ -76,6 +76,8 @@ test('Scan & Explain reads a page on-device from bundled offline OCR, image neve
  // scan.html itself opens no network connection and builds no upload — the only network path is cloud-ai.js (page text, on consent).
  assert.doesNotMatch(s,/\bfetch\s*\(|FormData|XMLHttpRequest|\.send\s*\(|uploadBytes/,'scan.html must not upload');
  assert.ok(s.includes('শুধু পাতার লেখা')&&s.includes('ছবি')&&s.includes('পাঠানো হবে না'),'privacy wording');
- // Shayni's page explanation prefers the on-device model; falls back to online only with consent.
- assert.ok(s.includes('llm.available()')&&s.includes('cloud.ready()'),'on-device-first engine choice');
+ // Online is the strong, default path (Nandini is usually online); the phone model is the offline fallback.
+ assert.ok(s.indexOf('cloud.ready()')<s.indexOf('llm.available()'),'scan must prefer online when available');
+ // The page text goes online only after a one-time, remembered consent.
+ assert.ok(s.includes('nandini-scan-online-consent')&&s.includes('rememberConsent'),'online use needs a remembered consent');
 });

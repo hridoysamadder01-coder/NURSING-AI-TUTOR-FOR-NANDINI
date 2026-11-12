@@ -275,7 +275,24 @@ try{
  await web.waitForFunction(()=>document.querySelector('#capAi')?.textContent.includes('Groq-এর উত্তর'),null,{timeout:15000});
  assert.match(await web.locator('#capUser').innerText(),/Osmosis/);
  await web.locator('#talkEnd').click();
-
+ // Scan & Explain, online-first: with keys set, the page is explained by the online model (strong path),
+ // after a one-time consent; the page TEXT is sent, the image is not.
+ const beforeScan=seen.length;
+ await web.goto(base+'/scan.html',{waitUntil:'networkidle'});
+ await web.evaluate(async()=>{const c=document.createElement('canvas');c.width=900;c.height=160;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,900,160);x.fillStyle='#000';x.font='30px serif';x.fillText('The nephron filters blood and forms urine.',20,90);const blob=await new Promise(r=>c.toBlob(r,'image/png'));const dt=new DataTransfer();dt.items.add(new File([blob],'p.png',{type:'image/png'}));const inp=document.getElementById('pageFile');inp.files=dt.files;inp.dispatchEvent(new Event('change',{bubbles:true}))});
+ await web.waitForSelector('#readCard:not(.hidden)');await web.locator('#readBtn').click();
+ await web.waitForFunction(()=>/nephron|filters/i.test(document.getElementById('ocrText')?.value||''),null,{timeout:120000});
+ await web.waitForSelector('#explainCard:not(.hidden)');
+ assert.equal(await web.locator('#consent').isVisible(),true,'online path shows the one-time consent');
+ await web.locator('#explainBtn').click();
+ assert.match(await web.locator('#engineMsg').innerText(),/টিক দাও/,'explain is blocked until she consents');
+ await web.locator('#consentChk').check();await web.locator('#explainBtn').click();
+ await web.waitForFunction(()=>/Groq-এর উত্তর|শক্তিশালী উত্তর|দূরে নেয়/.test(document.querySelector('#answer')?.textContent||''),null,{timeout:15000});
+ assert.equal(await web.locator('#prov').isVisible(),true);
+ const scanReq=JSON.stringify(seen.slice(beforeScan));
+ assert.match(scanReq,/nephron filters blood/,'the page text grounds the online explanation');
+ assert.doesNotMatch(scanReq,/data:image|base64|\.png|inlineData/i,'the page image is never sent online');
+ assert.equal(await web.evaluate(()=>localStorage.getItem('nandini-scan-online-consent')),'yes','consent is remembered for next time');
  await webCtx.close();
  // The wider bookshelf: twelve bundled books; the printed Neuron titles are names only, with nothing to open.
  const lib=await context.newPage();lib.on('pageerror',e=>errors.push(String(e)));
