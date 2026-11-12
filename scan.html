@@ -140,9 +140,14 @@ const CONSENT='nandini-scan-online-consent';
 const consented=()=>{try{return localStorage.getItem(CONSENT)==='yes'}catch{return false}};
 const rememberConsent=()=>{try{localStorage.setItem(CONSENT,'yes')}catch{}};
 async function pickEngine(){
- if(cloud.ready())return {mode:'online',msg:'ব্যাখ্যা অনলাইন শায়নি থেকে আসবে (সবচেয়ে ভালো)। শুধু পাতার লেখা যাবে, ছবি নয়।'};
+ // Check the phone's own model first so Scan still explains with no connection: online is best, but only when
+ // there actually is a connection. If she is offline and the on-device model is ready, use it instead of
+ // sending her to an online call that would just fail.
  if(llm.available()&&llm.autoEnabled()){try{localModel=llm.activeModel(await llm.status())}catch{localModel=null}}
- if(localModel)return {mode:'local',msg:'নেট নেই — ব্যাখ্যা ফোনের ভেতরে হবে ('+localModel.label+')। ছবি বা লেখা কোথাও যাবে না।'};
+ const online=navigator.onLine!==false;
+ if(cloud.ready()&&online)return {mode:'online',msg:'ব্যাখ্যা অনলাইন শায়নি থেকে আসবে (সবচেয়ে ভালো)। শুধু পাতার লেখা যাবে, ছবি নয়।'};
+ if(localModel)return {mode:'local',msg:(cloud.ready()?'এখন নেট নেই — ':'নেট নেই — ')+'ব্যাখ্যা ফোনের ভেতরে হবে ('+localModel.label+')। ছবি বা লেখা কোথাও যাবে না।'};
+ if(cloud.ready())return {mode:'online',msg:'এখন নেট নেই মনে হচ্ছে — ইন্টারনেট এলে শায়নি পাতাটা বুঝিয়ে দেবে। শুধু পাতার লেখা যাবে, ছবি নয়।'};
  return {mode:'none',msg:'ব্যাখ্যার জন্য অনলাইন শায়নি চালু করো (সেটিংসে বিনামূল্যের key — সবচেয়ে ভালো), অথবা ফোনের ভেতরের AI নামাও।'};
 }
 let engine={mode:'none'};

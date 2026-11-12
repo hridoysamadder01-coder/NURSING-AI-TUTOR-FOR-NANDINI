@@ -397,4 +397,26 @@ try{
  assert.deepEqual(scanErr,[]);
  await scanCtx.close();
  console.log('PASS: Scan & Explain — offline OCR read the page and the on-device model explained it, grounded, image kept on device');
+ // ---- Offline via the service worker: every cached page must open with no network, even with a ?query ----
+ // (regression guard: ask.html?q=… and library.html?book=… used to fail offline because the cache key kept the query)
+ const offCtx=await browser.newContext({viewport:{width:360,height:760},isMobile:true,hasTouch:true});
+ const off=await offCtx.newPage();const offErr=[];off.on('pageerror',e=>offErr.push(String(e)));
+ await off.goto(base+'/index.html',{waitUntil:'networkidle'});
+ // The app registers the worker only over https on a phone; localhost is a secure context, so register it here to test it.
+ await off.evaluate(async()=>{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;let n=0;while(!navigator.serviceWorker.controller&&n++<60)await new Promise(r=>setTimeout(r,100));});
+ await off.waitForTimeout(2500); // let the precache list finish
+ await offCtx.setOffline(true);
+ for(const path of ['/index.html','/topics.html','/scan.html','/library.html',
+                    '/ask.html?q='+encodeURIComponent('ধমনি আর শিরার পার্থক্য কী?'),
+                    '/library.html?book=openstax-anatomy&chapter=1']){
+  await off.goto(base+path,{waitUntil:'domcontentloaded',timeout:15000});
+  assert.match(await off.title(),/নন্দিনী|Nandini/i,'offline shell loads for '+path);
+  assert.equal(await off.locator('.tabbar [data-tab]').count(),5,'offline page keeps the five-tab bar: '+path);
+ }
+ // A deep link that was never cached still lands on the app shell instead of a browser error page.
+ await off.goto(base+'/does-not-exist.html',{waitUntil:'domcontentloaded',timeout:15000});
+ assert.match(await off.title(),/নন্দিনী|Nandini/i,'uncached navigation falls back to the home shell offline');
+ assert.deepEqual(offErr,[]);
+ await offCtx.close();
+ console.log('PASS: Offline — cached pages (incl. ask?q= and library?book=) open with no network; uncached deep link falls back to the home shell');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}
