@@ -43,13 +43,34 @@ C. নেট বন্ধ রেখে "পাতার ছবি বুঝি"-
 D. একই বই দ্বিতীয়বার খুললে দ্রুত খোলে কি না (cache), আর ১০-১৫ মিনিট ব্যবহারে ডেটা খরচ আগের চেয়ে কম কি না।
 
 ## Claude পরের session-এ যা করবে
-নতুন session-এর প্রথম বার্তা: "CLAUDE.md, STATUS.md, TOMORROW.md আর Issue #2-এর 12 Nov OWNER CLARIFICATION পড়ো। মামার ফোন-স্ক্রিনশট দেখে ঠিক করো, আর APK প্রস্তুত করো।"
+নতুন session-এর প্রথম বার্তা: "CLAUDE.md, STATUS.md, TOMORROW.md আর Issue #2-এর 12 Nov OWNER CLARIFICATION পড়ো। আজকের কাজ: শায়নির জন্য OpenAI realistic female voice যোগ করা।"
 
-1. **APK (এখন মূল বাধা):** Actions এখনো `startup_failure`। মামার billing/Actions স্ক্রিনশট দেখে কারণ বলা। ঠিক হলে build চালিয়ে পুশ-করা commit-এর artifact লিংক দেওয়া। নাহলে মালিকের দুটো PC চালু — **অনুমতি নিয়ে** PC-তে Android SDK/Gradle আছে কি না দেখা (install/পরিবর্তন বা ফোনে ইনস্টল অনুমতি ছাড়া নয়)।
-2. মামার অফলাইন-journey (উপরের A–D) স্ক্রিনশট দেখে আসল ফোনের ভুল ঠিক করা; প্রতিটা ঠিকের পর `npm test` + `node scripts/browser-smoke.mjs`।
-3. **বাংলা OCR নির্ভুলতা** আসল বাংলা ছাপা পাতার ছবিতে মেপে দেখা (এই environment-এ বাংলা ফন্ট নেই বলে মাপা যায়নি)। কম হলে: tessdata "best" (বড়), ছবি আগে পরিষ্কার (greyscale/threshold), বা ডিফল্ট ইংরেজি।
-4. key থাকলে `node scripts/cloud-live-check.mjs out/` চালানো; vivo-তে স্তর ৩ কাজ না করলে `android-llm/java/.../NandiniVoicePlugin.java` ঠিক করা।
-5. পুরনো PDF reader (`index.html`-এর "নিজের পুরো PDF বই") এখনো CDN থেকে PDF.js আনে, প্রথম ১০০ পাতা পড়ে, মনে রাখে না — একই কায়দায় অ্যাপের ভেতরে + মনে-রাখা করা যায়।
-6. **পরে:** সূচিপত্রের ছবি পেলে `data/books/shelf.json`-এ অধ্যায় লিখে মিলের টেবিল বানানো।
-7. প্যারাসাইটোলজি: CDC DPDx-এর লাইসেন্স-প্রমাণ দেখে আমদানি। WisTech Open-এর বই GitHub Actions দিয়ে আনা (এই environment থেকে সাইট খোলে না)।
-8. মামা বললে স্বাধীন যাচাই, একবারে ২–৩ জন পরীক্ষক: আগে লাইসেন্সের শর্ত আর "OpenStax-এর লেখা AI-তে যায় না", তারপর বাংলা লেখা, গতি, টেস্টের জোর, নতুন UI-র ব্যবহারযোগ্যতা।
+### 🎙️ ১ (মালিকের নতুন অনুরোধ, ১৩ নভেম্বর): শায়নির OpenAI realistic friendly female voice
+মালিক চান শায়নি কথা বললে **মানুষের মতো বন্ধুত্বপূর্ণ নারীকণ্ঠে** শোনাক, আর Settings-এ **OpenAI API key** বসানোর জায়গা থাকুক। **⚠️ OpenAI voice API পেইড — মালিকের নিজের key, নিজের বিল; মালিক স্পষ্ট অনুমতি দিয়েছেন। key শুধু ফোনের Settings-এ, chat-এ নয়।**
+- **Settings slot:** `src/cloud-ai.js`-এর `keys()/setKeys()`-এ `openai` যোগ (Gemini/Groq-এর মতোই localStorage)। `settings.html`-এর "শক্তিশালী মোড" কার্ডে একটা নতুন field: "OpenAI API key (ভয়েস) — `sk-…`" (type=password)। চাইলে ছোট voice-পিকার (shimmer / nova / coral)।
+- **TTS কল:** OpenAI `POST https://api.openai.com/v1/audio/speech`, model `gpt-4o-mini-tts` (সস্তা, `instructions`-এ টোন দেওয়া যায়), voice ডিফল্ট **`coral`** বা **`shimmer`** (বন্ধুত্বপূর্ণ নারীকণ্ঠ), `instructions:"Warm, friendly, natural Bengali female tutor; calm and encouraging"`, response_format `mp3`/`opus` → ফেরত audio `Audio`/WebAudio দিয়ে বাজানো। নতুন মডিউল `src/openai-voice.js` (তাহলে `sw.js`+`server.mjs`+`scripts/prepare-android.mjs`-এ যোগ করতে হবে — `tests/packaging.test.js` enforce করে)।
+- **কোথায় জোড়া:** উত্তর পড়ে শোনানো আর "কথা বলা" মোডের ফোন-কণ্ঠ ধাপে — key থাকলে OpenAI voice আগে, নইলে এখনকার ফোনের TTS (fallback)। `src/voice.js`/`src/talk-audio.js` দেখে সবচেয়ে কম-ছোঁয়া জায়গায় বসাও। নেট না থাকলে চুপচাপ ফোনের TTS-এ ফিরবে।
+- **যাচাই:** `npm test`-এ একটা টেস্ট (key থাকলে OpenAI endpoint ডাকে, fake fetch; key না থাকলে ফোনের TTS), `browser-smoke`-এ stub দিয়ে। তারপর APK rebuild (নিচের recipe)।
+- মনে রাখা: "robot voice" অভিযোগ এখান থেকেই এসেছে — এটাই তার সমাধান।
+
+### 📦 APK নিজে build করার recipe (GitHub Actions billing-hold-এ আটকা থাকলে — ১৩ নভেম্বর যেভাবে করা হয়েছে)
+GitHub Actions `startup_failure` (অ্যাকাউন্টে পেমেন্ট ফেল; public করেও চলে না)। তাই এই environment-এই build করা যায় (dl.google.com + maven + services.gradle.org সব reachable; একসাথে অনেক parallel download দিলে সাময়িক 403 আসে, একটা করে চালাও):
+```
+# SDK (একবার): cmdline-tools নামিয়ে ~/android-sdk-এ, তারপর
+sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.1.12297006" "cmake;3.22.1"
+export ANDROID_HOME=~/android-sdk ANDROID_NDK_LATEST_HOME=$ANDROID_HOME/ndk/27.1.12297006
+npm install --no-save @capacitor/core@8 @capacitor/cli@8 @capacitor/android@8 @capacitor-mlkit/translation@8 esbuild@0.25.12
+./node_modules/.bin/esbuild src/native-translation.js --bundle --format=esm --target=es2022 --outfile=www/src/native-translation.bundle.js
+node scripts/prepare-android.mjs && npx cap add android && npx cap sync android && node scripts/add-local-llm.mjs
+cd android && ./gradlew --no-daemon assembleDebug   # native "unknown target CPU" warning-গুলো non-fatal
+```
+APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~২০.৭ MB, সই `f7e1b16c…` = fixed debug key, পুরোনোর উপর বসে)। `android/` gitignored। browser-smoke চালাতে `ln -sfn /opt/node22/lib/node_modules/playwright node_modules/playwright`।
+**Actions ঠিক হলে:** মামার billing/Actions ঠিক হলে push-করা commit-এ `build-android.yml` চালিয়ে official artifact দেওয়া যাবে (তখন এই হাতে-build লাগবে না)।
+### বাকি কাজ (মালিকের ফোন-টেস্টের পর)
+1. মামার অফলাইন-journey (উপরের A–D) স্ক্রিনশট দেখে আসল ফোনের ভুল ঠিক করা; প্রতিটা ঠিকের পর `npm test` + `node scripts/browser-smoke.mjs`।
+2. **বাংলা OCR নির্ভুলতা** আসল বাংলা ছাপা পাতার ছবিতে মেপে দেখা (এই environment-এ বাংলা ফন্ট নেই বলে মাপা যায়নি)। কম হলে: tessdata "best" (বড়), ছবি আগে পরিষ্কার (greyscale/threshold), বা ডিফল্ট ইংরেজি।
+3. key থাকলে `node scripts/cloud-live-check.mjs out/` চালানো; vivo-তে স্তর ৩ কাজ না করলে `android-llm/java/.../NandiniVoicePlugin.java` ঠিক করা।
+4. পুরনো PDF reader (`index.html`-এর "নিজের পুরো PDF বই") এখনো CDN থেকে PDF.js আনে, প্রথম ১০০ পাতা পড়ে, মনে রাখে না — একই কায়দায় অ্যাপের ভেতরে + মনে-রাখা করা যায়।
+5. **পরে:** সূচিপত্রের ছবি পেলে `data/books/shelf.json`-এ অধ্যায় লিখে মিলের টেবিল বানানো।
+6. প্যারাসাইটোলজি: CDC DPDx-এর লাইসেন্স-প্রমাণ দেখে আমদানি। WisTech Open-এর বই GitHub Actions দিয়ে আনা (এই environment থেকে সাইট খোলে না)।
+7. মামা বললে স্বাধীন যাচাই, একবারে ২–৩ জন পরীক্ষক: আগে লাইসেন্সের শর্ত আর "OpenStax-এর লেখা AI-তে যায় না", তারপর বাংলা লেখা, গতি, টেস্টের জোর, নতুন UI-র ব্যবহারযোগ্যতা।
