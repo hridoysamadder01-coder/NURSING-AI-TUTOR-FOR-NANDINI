@@ -1,6 +1,6 @@
 // Prepare a standalone offline-first Android study bundle from repository sources.
 // No network calls, API keys or dynamic private files are included in APK.
-import {mkdir,copyFile,readFile,stat,rm} from 'node:fs/promises';
+import {mkdir,copyFile,readFile,writeFile,stat,rm} from 'node:fs/promises';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 const sources=[
@@ -14,6 +14,10 @@ const sources=[
 ];
 await rm('www',{recursive:true,force:true});
 for(const src of sources){const dest=join('www',src);await mkdir(join(dest,'..'),{recursive:true});await copyFile(src,dest)}
+// Android hardware/gesture Back: go back through the page history, and only leave the app from the first screen.
+// Injected into the APK pages only (the @capacitor/app plugin exists there); on the web this script does nothing.
+const BACK='<script>(function(){try{var C=window.Capacitor;if(!C||!C.isNativePlatform||!C.isNativePlatform())return;var A=C.Plugins&&C.Plugins.App;if(!A||!A.addListener)return;A.addListener("backButton",function(){if(window.history.length>1){window.history.back()}else if(A.exitApp){A.exitApp()}})}catch(e){}})();</script>';
+for(const src of sources.filter(s=>s.endsWith('.html'))){const dest=join('www',src);const html=await readFile(dest,'utf8');if(html.includes('</body>'))await writeFile(dest,html.replace('</body>',BACK+'</body>'))}
 const catalog=JSON.parse(await readFile('www/data/books/catalog.json','utf8'));
 if(!['fundamentals','skills','terminology','mentalhealth'].every(id=>catalog.books.some(b=>b.id===id)))throw Error('Missing four verified source books in APK');
 let chapters=0;for(const b of catalog.books){const data=JSON.parse(await readFile(join('www/data/books',b.id+'.json'),'utf8'));if(data.chapters.length!==b.chapters)throw Error('Catalog and book file disagree: '+b.id);chapters+=data.chapters.length}
