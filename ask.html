@@ -434,6 +434,9 @@ $('talk').onclick=async()=>{
  // Audio output must be created inside the tap, before anything is awaited.
  const player=pcmPlayer();
  T.view.hidden=false;T.user.textContent='';T.ai.textContent='';T.engine.textContent='';T.mute.textContent='🔇 মাইক বন্ধ';talkState('connecting');voice.keepAwake(true);
+ // With an OpenAI voice key set, talk uses Shayni's natural OpenAI voice: online ears (Gemini/Whisper) hear her,
+ // the online AI answers, and OpenAI speaks — no robot phone voice. Gemini and OpenAI both stay in use.
+ if(cloud.openaiVoiceReady()&&cloudEars()){player.close();startPhoneTalk();return}
  if(cloud.ready()&&cloud.hasKey('gemini')&&navigator.mediaDevices?.getUserMedia){
   try{await startLive(player);return}
   catch(e){player.close();T.ai.textContent=e?.name==='NotAllowedError'?voiceError('mic_denied'):liveError(e?.message);if(!canStepTalk()){talkState('paused');return}}
@@ -509,7 +512,7 @@ function startPhoneTalk(){
  let stopped=false,quiet=0,wake=null,rec=null,earsOff=false;
  const wait=()=>new Promise(r=>{wake=r});
  const online=()=>!earsOff&&cloudEars();
- const label=()=>{T.engine.textContent=online()?'🎧 স্তর ২ · অনলাইন কান + অনলাইন AI':'📱 স্তর ৩ · ফোনের কণ্ঠ'+(cloud.ready()?' + অনলাইন AI':' (অফলাইন)')};
+ const label=()=>{T.engine.textContent=online()?('🎧 স্তর ২ · অনলাইন কান + অনলাইন AI'+(cloud.openaiVoiceReady()?' + OpenAI কণ্ঠ 🎙️':'')):'📱 স্তর ৩ · ফোনের কণ্ঠ'+(cloud.ready()?' + অনলাইন AI':' (অফলাইন)')};
  const hear=async()=>{
   if(online()){
    rec=recordUtterance({onLevel:l=>T.orb.style.setProperty('--lvl',Math.min(1,l*10).toFixed(2))});
