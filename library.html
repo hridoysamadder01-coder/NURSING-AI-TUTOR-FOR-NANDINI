@@ -63,7 +63,7 @@ body:not(.reading) #readPanel{display:none}
 .original{font-family:Georgia,"Noto Serif",serif;line-height:1.8;font-size:var(--reader-size,16px);color:#213a36;white-space:normal;overflow-wrap:anywhere}
 .bn{font-family:"Noto Serif Bengali","Noto Sans Bengali",serif;line-height:1.85;font-size:var(--reader-size,16px);color:#0f4f45;margin-top:9px;padding:11px 14px;background:#f1faf6;border-left:3px solid #7cc8b4;border-radius:0 12px 12px 0;overflow-wrap:anywhere}
 .translation-unready{display:none}
-.mode-english .bn{display:none}.mode-bangla .original{display:none}.mode-bangla .bn.translation-unready{display:block;color:var(--ink-3);background:#f6f8f7;border-left-color:var(--line-2)}
+.mode-english .bn{display:none}.mode-bangla .paragraph.translated .original{display:none}
 .mode-both .bn.translation-unready{display:none}
 .nav-chapter{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
 .chapter-btn{display:flex;flex-direction:column;gap:3px;min-height:64px;padding:11px 14px;border-radius:16px;border:1.5px solid var(--line-2);background:#fff;text-align:left;color:var(--ink);min-width:0}
@@ -171,7 +171,7 @@ font=Math.max(14,Math.min(21,safeInt(localValue('nandini-reader-font','16'),16))
 function mode(next){view=next;saveValue('nandini-reader-mode',view);
 $('article').className='mode-'+view;
 document.querySelectorAll('[data-mode]').forEach(b=>{const on=b.dataset.mode===view;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))});
-if(view==='bangla'&&remaining.length)$('translateStatus').textContent='বাংলা পড়ার জন্য “এই অধ্যায় বাংলায় আনো” চাপো। যেগুলো অনুবাদ হয়েছে, সেগুলো আগে দেখাবে।';
+if(view==='bangla'&&remaining.length)$('translateStatus').textContent='যেটুকু এখনো বাংলায় আনা হয়নি, সেটুকু আপাতত মূল ইংরেজিতে পড়তে পারবে। পুরো বাংলা পেতে “এই অধ্যায় বাংলায় আনো” চাপো।';
 }
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>mode(b.dataset.mode));
 document.documentElement.style.setProperty('--reader-size',font+'px');
@@ -291,7 +291,7 @@ async function showChapter(i,scroll=true){
  await Promise.all(all.map(async item=>{
     const saved=await readTranslation(item.key);
     if(current!==token)return;
-    if(saved){item.node.textContent=saved;item.node.classList.remove('translation-unready');item.done=true}
+    if(saved){item.node.textContent=saved;item.node.classList.remove('translation-unready');item.node.parentElement.classList.add('translated');item.done=true}
  }));
  if(current!==token)return;
  remaining=all.filter(p=>!p.done);
@@ -332,7 +332,7 @@ $('translateChapter').onclick=async()=>{
   if(token!==myToken)break;
   const result=translated.join(' ').trim();
   if(result){
-   item.node.textContent=result;item.node.classList.remove('translation-unready');item.done=true;
+   item.node.textContent=result;item.node.classList.remove('translation-unready');item.node.parentElement.classList.add('translated');item.done=true;
    await saveTranslation(item.key,result);
   }
   const doneTotal=Array.from($('article').querySelectorAll('.paragraph .bn:not(.translation-unready)')).length;
