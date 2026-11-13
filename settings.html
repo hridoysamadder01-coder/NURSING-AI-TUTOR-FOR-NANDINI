@@ -8,6 +8,8 @@
  <input id="openaiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
  <label class="field" for="openaiVoice" style="margin-top:10px">কণ্ঠ বেছে নাও</label>
  <select id="openaiVoice"><option value="coral">Coral — বন্ধুত্বপূর্ণ নারীকণ্ঠ</option><option value="shimmer">Shimmer — কোমল নারীকণ্ঠ</option><option value="nova">Nova — প্রাণবন্ত নারীকণ্ঠ</option><option value="sage">Sage — শান্ত নারীকণ্ঠ</option></select>
+ <div class="btn-row" style="margin-top:10px"><button id="voiceTest" class="btn soft" type="button">🔊 কণ্ঠ পরীক্ষা করো</button></div>
+ <p id="voiceTestResult" class="fine" aria-live="polite" style="margin-top:6px;white-space:pre-line"></p>
  <p class="fine" style="margin-top:8px">⚠️ OpenAI কণ্ঠ <b>ফ্রি নয়</b> — তোমার নিজের key, তোমার বিলে চলবে (ব্যবহার কম হলে খরচও কম)। key শুধু এই ফোনে থাকে। নেট থাকলে শায়নি এই স্বাভাবিক কণ্ঠে পড়ে শোনাবে; নেট না থাকলে ফোনের নিজের কণ্ঠে।</p>
 </div>
 <div class="btn-row" style="margin-top:12px"><button id="cloudSave" class="btn" type="button">সেভ করো</button><button id="cloudTest" class="btn soft" type="button">🔌 পরীক্ষা করো</button></div>
@@ -104,6 +106,26 @@ $('cloudTest').onclick=async()=>{
  for(const p of ['gemini','groq']){if(!k[p])continue;const r=await cloud.testProvider(p);
   lines.push(r.ok?'✅ '+r.label+': কাজ করছে ('+bn((r.ms/1000).toFixed(1))+' সেকেন্ড)':'❌ '+r.label+': '+({key_rejected:'key ভুল বা বন্ধ',limit:'আজকের ফ্রি সীমা শেষ',network:'ইন্টারনেট পাওয়া যাচ্ছে না',timeout:'সাড়া দিচ্ছে না'}[r.error]||r.error))}
  $('cloudResult').textContent=lines.join('\n')+(keyHint()?'\n⚠️ '+keyHint():'');
+};
+// Play a short sample in Shayni's OpenAI voice, so the owner hears it works — and sees the real reason if it does not.
+$('voiceTest').onclick=async()=>{
+ saveCloud();
+ if(!cloud.keys().openai){$('voiceTestResult').textContent='আগে উপরে OpenAI key বসিয়ে সেভ করো।';return}
+ if(globalThis.navigator?.onLine===false){$('voiceTestResult').textContent='এখন নেট নেই — OpenAI কণ্ঠের জন্য ইন্টারনেট লাগবে।';return}
+ $('voiceTest').disabled=true;$('voiceTestResult').textContent='🔊 শায়নির কণ্ঠ আনছি…';
+ let url;
+ try{
+  const r=await cloud.openaiSpeech('হ্যালো নন্দিনী! আমি শায়নি, তোমার পড়ার বন্ধু। চলো আজ একটু পড়ি।');
+  url=URL.createObjectURL(new Blob([r.wav],{type:'audio/wav'}));
+  const a=new Audio(url);a.onended=()=>{try{URL.revokeObjectURL(url)}catch{}};
+  await a.play();
+  $('voiceTestResult').textContent='✅ শায়নির OpenAI কণ্ঠ কাজ করছে! এখন প্রশ্নের উত্তর এই কণ্ঠেই পড়ে শোনাবে।';
+ }catch(e){
+  if(url)try{URL.revokeObjectURL(url)}catch{}
+  const m=e?.message||'';
+  const map={key_rejected:'OpenAI key ভুল, নয়তো অ্যাকাউন্টে টাকা/ক্রেডিট যোগ করা নেই। platform.openai.com → Billing-এ গিয়ে payment method আর অল্প ক্রেডিট (যেমন $৫) যোগ করো।',limit:'OpenAI quota বা ক্রেডিট শেষ (অথবা খুব দ্রুত অনেকবার)। platform.openai.com → Billing দেখো।',no_key:'আগে OpenAI key বসাও।',http_400:'অনুরোধে সমস্যা — key আর কণ্ঠ ঠিক আছে কি না দেখো।'};
+  $('voiceTestResult').textContent='❌ '+(map[m]||('কণ্ঠ আনা গেল না ('+m+')। নেট আর key দেখে আবার চেষ্টা করো।'));
+ }finally{$('voiceTest').disabled=false}
 };
 $('cloudOn').onchange=e=>cloud.setEnabled(e.target.checked);
 $('voiceAuto').onchange=e=>voice.setAutoSpeak(e.target.checked);
