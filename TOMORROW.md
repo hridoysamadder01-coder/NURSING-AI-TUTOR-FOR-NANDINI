@@ -43,15 +43,10 @@ C. নেট বন্ধ রেখে "পাতার ছবি বুঝি"-
 D. একই বই দ্বিতীয়বার খুললে দ্রুত খোলে কি না (cache), আর ১০-১৫ মিনিট ব্যবহারে ডেটা খরচ আগের চেয়ে কম কি না।
 
 ## Claude পরের session-এ যা করবে
-নতুন session-এর প্রথম বার্তা: "CLAUDE.md, STATUS.md, TOMORROW.md আর Issue #2-এর 12 Nov OWNER CLARIFICATION পড়ো। আজকের কাজ: শায়নির জন্য OpenAI realistic female voice যোগ করা।"
+নতুন session-এর প্রথম বার্তা: "CLAUDE.md, STATUS.md, TOMORROW.md আর Issue #2-এর 12 Nov OWNER CLARIFICATION পড়ো। মামার ফোন-টেস্টের ফিডব্যাক দেখে ঠিক করো।"
 
-### 🎙️ ১ (মালিকের নতুন অনুরোধ, ১৩ নভেম্বর): শায়নির OpenAI realistic friendly female voice
-মালিক চান শায়নি কথা বললে **মানুষের মতো বন্ধুত্বপূর্ণ নারীকণ্ঠে** শোনাক, আর Settings-এ **OpenAI API key** বসানোর জায়গা থাকুক। **⚠️ OpenAI voice API পেইড — মালিকের নিজের key, নিজের বিল; মালিক স্পষ্ট অনুমতি দিয়েছেন। key শুধু ফোনের Settings-এ, chat-এ নয়।**
-- **Settings slot:** `src/cloud-ai.js`-এর `keys()/setKeys()`-এ `openai` যোগ (Gemini/Groq-এর মতোই localStorage)। `settings.html`-এর "শক্তিশালী মোড" কার্ডে একটা নতুন field: "OpenAI API key (ভয়েস) — `sk-…`" (type=password)। চাইলে ছোট voice-পিকার (shimmer / nova / coral)।
-- **TTS কল:** OpenAI `POST https://api.openai.com/v1/audio/speech`, model `gpt-4o-mini-tts` (সস্তা, `instructions`-এ টোন দেওয়া যায়), voice ডিফল্ট **`coral`** বা **`shimmer`** (বন্ধুত্বপূর্ণ নারীকণ্ঠ), `instructions:"Warm, friendly, natural Bengali female tutor; calm and encouraging"`, response_format `mp3`/`opus` → ফেরত audio `Audio`/WebAudio দিয়ে বাজানো। নতুন মডিউল `src/openai-voice.js` (তাহলে `sw.js`+`server.mjs`+`scripts/prepare-android.mjs`-এ যোগ করতে হবে — `tests/packaging.test.js` enforce করে)।
-- **কোথায় জোড়া:** উত্তর পড়ে শোনানো আর "কথা বলা" মোডের ফোন-কণ্ঠ ধাপে — key থাকলে OpenAI voice আগে, নইলে এখনকার ফোনের TTS (fallback)। `src/voice.js`/`src/talk-audio.js` দেখে সবচেয়ে কম-ছোঁয়া জায়গায় বসাও। নেট না থাকলে চুপচাপ ফোনের TTS-এ ফিরবে।
-- **যাচাই:** `npm test`-এ একটা টেস্ট (key থাকলে OpenAI endpoint ডাকে, fake fetch; key না থাকলে ফোনের TTS), `browser-smoke`-এ stub দিয়ে। তারপর APK rebuild (নিচের recipe)।
-- মনে রাখা: "robot voice" অভিযোগ এখান থেকেই এসেছে — এটাই তার সমাধান।
+### ✅ শেষ (১৩ নভেম্বর): শায়নির OpenAI realistic friendly female voice
+`src/cloud-ai.js`-এ `openaiSpeech()` (`gpt-4o-mini-tts`, response_format wav, friendly-tutor instructions) + `openai` key + voice-পিকার (coral/shimmer/nova/sage)। `settings.html`-এ key field + পিকার + পেইড-নোট। `ask.html`-এর উত্তর-পড়া ও talk মোডে OpenAI কণ্ঠ সবার আগে → Gemini TTS → ফোনের কণ্ঠ (অফলাইনে)। ৭৫ টেস্ট + smoke পাস, sw v26, APK পাঠানো। **মালিক key বসিয়ে ফোনে কণ্ঠ যাচাই করবেন — তার ফিডব্যাক পরের কাজ।**
 
 ### 📦 APK নিজে build করার recipe (GitHub Actions billing-hold-এ আটকা থাকলে — ১৩ নভেম্বর যেভাবে করা হয়েছে)
 GitHub Actions `startup_failure` (অ্যাকাউন্টে পেমেন্ট ফেল; public করেও চলে না)। তাই এই environment-এই build করা যায় (dl.google.com + maven + services.gradle.org সব reachable; একসাথে অনেক parallel download দিলে সাময়িক 403 আসে, একটা করে চালাও):
