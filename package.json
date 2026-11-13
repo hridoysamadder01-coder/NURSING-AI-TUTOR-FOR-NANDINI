@@ -10,5 +10,10 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "comment": "These Capacitor plugins are listed so `npx cap sync` registers them in the Android app (plugin discovery reads package.json). They are only used in the APK build; the web app and tests stay dependency-free.",
+  "dependencies": {
+    "@capacitor/app": "^8.0.0",
+    "@capacitor-mlkit/translation": "^8.0.0"
   }
 }

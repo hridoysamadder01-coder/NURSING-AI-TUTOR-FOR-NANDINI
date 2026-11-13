@@ -12,7 +12,10 @@ try{
  const errors=[];page.on('pageerror',e=>errors.push(String(e)));
  await page.goto(base+'/index.html',{waitUntil:'networkidle'});
  assert.match(await page.title(),/Nandini/);
- await page.getByRole('link',{name:/Study Coach/}).first().click();
+ // The home screen's whole job: three clear primary paths.
+ assert.deepEqual(await page.locator('.paths .path').evaluateAll(as=>as.map(a=>a.getAttribute('href'))),['./topics.html','./ask.html','./scan.html']);
+ // Study Coach lives in the tidy "আরও" menu now.
+ await page.getByRole('link',{name:/পড়ার প্ল্যান/}).click();
  await page.waitForURL(/coach\.html/);
  assert.match(await page.locator('#chosenSubject').innerText(),/নার্সিং/);
  assert.equal(await page.locator('.topic').count(),8);
@@ -32,7 +35,7 @@ try{
  assert.match(await page.locator('#result').innerText(),/HTTPS/);
  await page.locator('#clear').click();
  await page.goto(base+'/library.html',{waitUntil:'networkidle'});
- await page.waitForFunction(()=>document.querySelectorAll('#shelf .bookrow').length===4);
+ await page.waitForFunction(()=>document.querySelectorAll('#shelf .bookrow').length===12);
  await page.locator('#shelf .bookrow button').first().click();
  await page.waitForFunction(()=>document.querySelector('#chapters')?.options?.length>0);
  assert.ok((await page.locator('#chapters option').count())>=130);
@@ -62,21 +65,38 @@ try{
  assert.ok((await page.locator('#article .original').first().innerText()).length>15);
  await page.waitForFunction(()=>document.querySelector('#translateStatus')?.textContent.includes('অনুচ্ছেদের বাংলা'),null,{timeout:10000});
  await page.locator('#translateChapter').click();
- await page.waitForFunction(()=>document.querySelector('#translateStatus')?.textContent.includes('Android APK'),null,{timeout:10000});
+ await page.waitForFunction(()=>document.querySelector('#translateStatus')?.textContent.includes('online key'),null,{timeout:10000});
   await page.locator('#searchText').fill('hand hygiene');
  await page.locator('#searchBtn').click();
  assert.ok((await page.locator('#results').innerText()).length>40);
  await page.goto(base+'/topics.html',{waitUntil:'networkidle'});
- assert.ok((await page.locator('.tcard').count())>=30,'Simple-Bangla topics missing');
+ // "বিষয় ধরে পড়ি": the landing is the six subjects; lessons appear only after choosing one.
+ assert.equal(await page.locator('#subjectGrid .subjcard').count(),6);
+ assert.equal(await page.locator('.tcard').count(),0);
+ await page.locator('#subjectGrid .subjcard').first().click();
+ assert.ok((await page.locator('.tcard').count())>=5,'Subject lessons missing');
+ // Search finds a topic across subjects; the lesson has its self-check, the source chapter and an ask-Shayni button.
  await page.locator('#topicSearch').fill('osmosis');
  await page.locator('#osmosis summary').click();
  await page.locator('#osmosis .option').nth(1).click();
  assert.match(await page.locator('#osmosis .explain').innerText(),/সঠিক/);
  assert.match(await page.locator('#osmosis a[href*="library.html"]').getAttribute('href'),/book=fundamentals&q=/);
+ assert.match(await page.locator('#osmosis a[href*="ask.html"]').getAttribute('href'),/ask\.html\?q=/);
+ // The Study Coach deep-link opens the exact lesson inside its subject.
  await page.goto(base+'/coach.html',{waitUntil:'networkidle'});
  await page.locator('a[href="./topics.html#vital-signs"]').click();
  await page.waitForURL(/topics\.html#vital-signs/);
  assert.equal(await page.locator('#vital-signs').getAttribute('open'),'');
+ // Scan & Explain page: three real steps, page picker visible (the OCR + explain path is tested on-device below).
+ await page.goto(base+'/scan.html',{waitUntil:'networkidle'});
+ assert.ok(await page.locator('#camBtn').isVisible());
+ assert.equal(await page.locator('.step-chip').count(),3);
+ // Every main screen carries the same five-tab bar, with the camera (পাতা) tab.
+ for(const url of ['/index.html','/topics.html','/ask.html','/scan.html','/library.html']){
+   await page.goto(base+url,{waitUntil:'domcontentloaded'});
+   assert.equal(await page.locator('.tabbar .tabs>a').count(),5,url+' tab bar count');
+   assert.ok((await page.locator('.tabbar').innerText()).includes('পাতা'),url+' missing পাতা tab');
+ }
  await page.goto(base+'/index.html',{waitUntil:'networkidle'});
  await page.locator('.askhome input').fill('osmosis কী?');
  await page.locator('.askhome button').click();
@@ -164,6 +184,8 @@ try{
   const body=JSON.parse(r.postData()||'{}');seen.push({url:r.url(),body,key:r.headers()['x-goog-api-key']});
   const tiny=JSON.stringify(body).includes('শুধু লেখো');
   if(geminiDown)return route.fulfill({status:503,headers:cors,body:'{}'});
+  // Reading a page: a page image sent to Gemini vision to be read (fast online OCR), JSON reply with the page text.
+  if(body.contents?.[0]?.parts?.[0]?.inlineData?.mimeType?.startsWith('image/'))return route.fulfill({status:200,headers:{...cors,'content-type':'application/json'},body:JSON.stringify({candidates:[{content:{parts:[{text:'The nephron filters blood and forms urine.'}]}}]})});
   // Listening: a recording sent to Gemini to be written down (not streamed, JSON reply).
   if(body.contents?.[0]?.parts?.[0]?.inlineData&&!r.url().includes('gemini-3.5-flash-lite'))return route.fulfill({status:200,headers:{...cors,'content-type':'application/json'},body:JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify({transcript:'Osmosis কী?'})}]}}]})});
   if(r.url().includes('gemini-3.5-flash-lite')&&!tiny)return route.fulfill({status:429,headers:{...cors,'retry-after':'60'},body:'{"error":{"code":429}}'});
@@ -255,8 +277,152 @@ try{
  await web.waitForFunction(()=>document.querySelector('#capAi')?.textContent.includes('Groq-এর উত্তর'),null,{timeout:15000});
  assert.match(await web.locator('#capUser').innerText(),/Osmosis/);
  await web.locator('#talkEnd').click();
-
+ // Scan & Explain, online-first: with keys set, the page is explained by the online model (strong path),
+ // after a one-time consent; the page TEXT is sent, the image is not.
+ const beforeScan=seen.length;
+ await web.goto(base+'/scan.html',{waitUntil:'networkidle'});
+ await web.evaluate(async()=>{const c=document.createElement('canvas');c.width=900;c.height=160;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,900,160);x.fillStyle='#000';x.font='30px serif';x.fillText('The nephron filters blood and forms urine.',20,90);const blob=await new Promise(r=>c.toBlob(r,'image/png'));const dt=new DataTransfer();dt.items.add(new File([blob],'p.png',{type:'image/png'}));const inp=document.getElementById('pageFile');inp.files=dt.files;inp.dispatchEvent(new Event('change',{bubbles:true}))});
+ await web.waitForSelector('#readCard:not(.hidden)');await web.locator('#readBtn').click();
+ await web.waitForFunction(()=>/nephron|filters/i.test(document.getElementById('ocrText')?.value||''),null,{timeout:120000});
+ await web.waitForSelector('#explainCard:not(.hidden)');
+ assert.equal(await web.locator('#consent').isVisible(),true,'online path shows the one-time consent');
+ await web.locator('#explainBtn').click();
+ assert.match(await web.locator('#engineMsg').innerText(),/টিক দাও/,'explain is blocked until she consents');
+ await web.locator('#consentChk').check();await web.locator('#explainBtn').click();
+ await web.waitForFunction(()=>/Groq-এর উত্তর|শক্তিশালী উত্তর|দূরে নেয়/.test(document.querySelector('#answer')?.textContent||''),null,{timeout:15000});
+ assert.equal(await web.locator('#prov').isVisible(),true);
+ const after=seen.slice(beforeScan);
+ const scanReq=JSON.stringify(after);
+ assert.match(scanReq,/nephron filters blood/,'the page text grounds the online explanation');
+ // Net on: the image goes online only to READ the page (Gemini vision OCR). The explanation is grounded on the page
+ // TEXT, never the image — so no model that gets the system prompt is also handed image bytes.
+ assert.ok(after.some(s=>s.body?.contents?.[0]?.parts?.[0]?.inlineData?.mimeType?.startsWith('image/')),'the page is read online by Gemini vision');
+ assert.ok(!after.some(s=>(s.body?.systemInstruction||s.body?.messages)&&JSON.stringify(s.body).match(/inlineData|image\//i)),'the explanation is sent the page text, not the image');
+ assert.equal(await web.evaluate(()=>localStorage.getItem('nandini-scan-online-consent')),'yes','consent is remembered for next time');
  await webCtx.close();
+ // The wider bookshelf: twelve bundled books; the printed Neuron titles are names only, with nothing to open.
+ const lib=await context.newPage();lib.on('pageerror',e=>errors.push(String(e)));
+ // The owner's AI server is reported as switched on, so the book-question panel can show: it must do so only for a book the
+ // AI may use, never for a reading-only one.
+ await lib.route('**/api/status',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ai_enabled:true})}));
+ await lib.goto(base+'/library.html',{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelectorAll('#shelf .bookrow').length===12&&document.querySelectorAll('#owned .owned').length===7);
+ assert.equal(await lib.locator('#owned button, #owned a').count(),0);
+ assert.match(await lib.locator('#owned').innerText(),/Neuron Anatomy & Physiology for Nurses & Midwives/);
+ assert.match(await lib.locator('#owned').innerText(),/বইয়ের নাম এখনো জানা নেই/);
+ assert.match(await lib.locator('[data-book="openstax-anatomy"]').innerText(),/শুধু পড়া ও খোঁজা/);
+ assert.match(await lib.locator('[data-book="seer-anatomy"]').innerText(),/শায়নি এই বই থেকে উত্তর খোঁজে/);
+ // A reading-only book opens, carries the publisher's credit line on the chapter and under search results, and offers no AI.
+ await lib.locator('[data-book="openstax-anatomy"] button').click();
+ await lib.waitForFunction(()=>document.querySelector('#chapters')?.options?.length>300);
+ assert.match(await lib.locator('#article .attribution').innerText(),/Access for free at https:\/\/openstax\.org\/books\/anatomy-and-physiology-2e\/pages\/1-introduction/);
+ assert.equal(await lib.locator('#readOnly').isVisible(),true);
+ await lib.fill('#searchText','nephron');await lib.click('#searchBtn');
+ await lib.waitForFunction(()=>document.querySelectorAll('#results .result').length>0);
+ assert.match(await lib.locator('#results').innerText(),/Access for free at/);
+ assert.equal(await lib.locator('#aiPanel').isVisible(),false);
+ // The licence is a link and the copy is marked as changed, as the licence asks.
+ assert.equal(await lib.locator('#article .attribution a').getAttribute('href'),'https://creativecommons.org/licenses/by-nc-sa/4.0/');
+ assert.match(await lib.locator('#article .attribution').innerText(),/বদলানো কপি/);
+ await lib.goto(base+'/library.html?book=seer-anatomy&chapter=1',{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelector('#article .chapter-title')?.textContent.includes('Introduction to the Human Body'));
+ assert.equal(await lib.locator('#readOnly').isVisible(),false);
+ assert.equal(await lib.locator('#aiPanel').isVisible(),true);
+ assert.equal(await lib.locator('#searchText').inputValue(),'');
+ assert.match(await lib.locator('#article .attribution').innerText(),/originally published by the National Cancer Institute/);
+ // Answer keys keep the book's own numbers (1, 3, 5 ...) as plain lines; the reader must not number them again.
+ const keyChapter=await lib.evaluate(async()=>(await (await fetch('./data/books/openstax-chemistry.json')).json()).chapters.findIndex(c=>c.title==='Answer Key: Chapter 1'));
+ await lib.goto(base+'/library.html?book=openstax-chemistry&chapter='+keyChapter,{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelector('#article .chapter-title')?.textContent==='Answer Key: Chapter 1');
+ assert.equal(await lib.locator('#article ol').count(),0);
+ assert.deepEqual(await lib.locator('#article .paragraph .original').evaluateAll(ps=>ps.slice(0,3).map(p=>p.textContent.slice(0,3))),['1. ','3. ','5. ']);
+ // A real ordered list shows each item's own number, also after sub-points interrupt it.
+ const steps=await lib.evaluate(async()=>{const b=await (await fetch('./data/books/openstax-workplace.json')).json();for(let i=0;i<b.chapters.length;i++){const ns=b.chapters[i].sections.flatMap(s=>s.blocks).filter(x=>x.type==='numbered').map(x=>x.n);if(ns.length>3&&ns.some(n=>n>2))return {i,ns}}return null});
+ await lib.goto(base+'/library.html?book=openstax-workplace&chapter='+steps.i,{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelectorAll('#article ol.source-list>li').length>3);
+ assert.deepEqual(await lib.locator('#article ol.source-list>li').evaluateAll(ls=>ls.map(l=>l.value)),steps.ns);
+ // Subject page: one row per subject from the shelf. The printed title is plain text; the bundled books are links.
+ await lib.goto(base+'/faridpur-first-year.html',{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelectorAll('#matrix .sub').length===6&&document.querySelectorAll('#pending .sub').length===1);
+ const ap=lib.locator('[data-subject="D123"]');
+ assert.match(await ap.innerText(),/Neuron Anatomy & Physiology for Nurses & Midwives \(10th Edition\)/);
+ assert.match(await ap.innerText(),/মিলিয়ে দেখা হয়নি/);
+ assert.equal(await ap.locator('a[href*="library.html?book=openstax-anatomy"]').count(),1);
+ assert.equal(await ap.locator('a').evaluateAll(as=>as.some(a=>/Neuron/.test(a.textContent))),false);
+ assert.match(await lib.locator('[data-subject="D117"]').innerText(),/নাম জানা নেই/);
+ assert.match(await lib.locator('[data-subject="D111"]').innerText(),/নিশ্চিত করলে/);
+ assert.equal(await lib.locator('#bookCount').innerText(),'১২');
+ // Tutor: a question about her own printed book gets the fixed note, then exact chapters of the app's books to read.
+ await lib.unroute('**/api/status');
+ await lib.goto(base+'/ask.html?q='+encodeURIComponent('আমার বইয়ের ৫০ পৃষ্ঠায় nephron নিয়ে কী আছে?'),{waitUntil:'networkidle'});
+ await lib.waitForFunction(()=>document.querySelector('#chat .ownbook')?.textContent.includes('ছাপা বইয়ের লেখা অ্যাপে নেই'),null,{timeout:15000});
+ await lib.waitForFunction(()=>document.querySelector('#chat .reads a[href*="book=openstax-anatomy"]'),null,{timeout:20000});
+ // The Tutor's own messages never name a page number (only her question does).
+ assert.doesNotMatch((await lib.locator('#chat .msg.bot').allInnerTexts()).join(' '),/পৃষ্ঠা\s*[০-৯0-9]|[০-৯0-9]+\s*(নম্বর)?\s*পৃষ্ঠা|page\s*[0-9]/i);
+ await lib.locator('#chat .reads a[href*="book=openstax-anatomy"]').click();
+ await lib.waitForFunction(()=>/Kidney/.test(document.querySelector('#article .chapter-title')?.textContent||''));
+ await lib.close();
  assert.deepEqual(errors,[]);
- console.log('PASS: Mobile Chrome home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 4-book shelf -> cited chapter reader -> simple-Bangla topics -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq -> Gemini Live talk mode with lookup tool (fake servers, fake mic)');
+ console.log('PASS: Mobile Chrome clean three-path home -> coach -> local progress/reload -> server-owned cross-book search -> secure AI settings -> 12-book shelf with owned printed titles and subject matrix -> cited chapter reader -> subject-first lessons with ask-Shayni -> scan page + consistent tab bar -> instant offline Tutor -> local AI setup, streamed RAG answer, follow-up, small talk and voice (stand-in engines) -> online strong mode with Gemini 429 → next model → Groq -> Gemini Live talk mode with lookup tool (fake servers, fake mic)');
+ // ---- Scan & Explain: bundled offline OCR reads a page photo, then the on-device model explains THAT page ----
+ const scanCtx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
+ await scanCtx.addInitScript(()=>{
+  const l={},emit=(ev,d)=>(l[ev]||[]).forEach(f=>f(d));window.__pageGen=[];
+  window.Capacitor={isNativePlatform:()=>true,Plugins:{NandiniLlm:{
+   addListener:async(ev,fn)=>{(l[ev]??=[]).push(fn);return {remove:()=>{l[ev]=l[ev].filter(f=>f!==fn)}}},
+   status:async()=>({files:[{name:'gemma-3-4b-it-Q4_0.gguf',bytes:2370065536}],loaded:null,totalRamMb:8000,availRamMb:5000,freeSpaceMb:9000,cores:8,threads:4}),
+   load:async()=>({ms:5}),
+   generate:async({messages})=>{window.__pageGen.push(messages);for(const t of ['এই ','পাতাটা ','কিডনির ','নেফ্রন ','নিয়ে।'])emit('token',{text:t});return {generatedTokens:5}},
+   stop:async()=>{},unload:async()=>{}}}};
+ });
+ const scan=await scanCtx.newPage();const scanErr=[];scan.on('pageerror',e=>scanErr.push(String(e)));
+ await scan.goto(base+'/scan.html',{waitUntil:'networkidle'});
+ // Inject a page photo the way the camera/picker would.
+ await scan.evaluate(async()=>{
+  const c=document.createElement('canvas');c.width=900;c.height=220;const x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,900,220);x.fillStyle='#000';x.font='34px serif';
+  x.fillText('The nephron is the functional unit of the kidney.',22,80);
+  x.fillText('It filters blood and forms urine.',22,150);
+  const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+  const dt=new DataTransfer();dt.items.add(new File([blob],'page.png',{type:'image/png'}));
+  const inp=document.getElementById('pageFile');inp.files=dt.files;inp.dispatchEvent(new Event('change',{bubbles:true}));
+ });
+ await scan.waitForSelector('#readCard:not(.hidden)');
+ await scan.locator('#readBtn').click();
+ await scan.waitForFunction(()=>/nephron|kidney|filters/i.test(document.getElementById('ocrText')?.value||''),null,{timeout:120000});
+ // Explain the page on-device — no online consent box, provenance shown.
+ await scan.waitForSelector('#explainCard:not(.hidden)');
+ await scan.locator('#explainBtn').click();
+ await scan.waitForFunction(()=>(document.querySelector('#answer')?.textContent||'').includes('পাতাটা'),null,{timeout:20000});
+ assert.equal(await scan.locator('#consent').isVisible(),false,'on-device explanation needs no online consent');
+ assert.equal(await scan.locator('#prov').isVisible(),true);
+ // The model was grounded on the page text, and the image was never sent to it.
+ const pageSent=await scan.evaluate(()=>JSON.stringify(window.__pageGen));
+ assert.match(pageSent,/nephron is the functional unit/,'page text grounds the explanation');
+ assert.doesNotMatch(pageSent,/data:image|base64|\.png/i,'the page image is never sent to the model');
+ assert.deepEqual(scanErr,[]);
+ await scanCtx.close();
+ console.log('PASS: Scan & Explain — offline OCR read the page and the on-device model explained it, grounded, image kept on device');
+ // ---- Offline via the service worker: every cached page must open with no network, even with a ?query ----
+ // (regression guard: ask.html?q=… and library.html?book=… used to fail offline because the cache key kept the query)
+ const offCtx=await browser.newContext({viewport:{width:360,height:760},isMobile:true,hasTouch:true});
+ const off=await offCtx.newPage();const offErr=[];off.on('pageerror',e=>offErr.push(String(e)));
+ await off.goto(base+'/index.html',{waitUntil:'networkidle'});
+ // The app registers the worker only over https on a phone; localhost is a secure context, so register it here to test it.
+ await off.evaluate(async()=>{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;let n=0;while(!navigator.serviceWorker.controller&&n++<60)await new Promise(r=>setTimeout(r,100));});
+ await off.waitForTimeout(2500); // let the precache list finish
+ await offCtx.setOffline(true);
+ for(const path of ['/index.html','/topics.html','/scan.html','/library.html',
+                    '/ask.html?q='+encodeURIComponent('ধমনি আর শিরার পার্থক্য কী?'),
+                    '/library.html?book=openstax-anatomy&chapter=1']){
+  await off.goto(base+path,{waitUntil:'domcontentloaded',timeout:15000});
+  assert.match(await off.title(),/নন্দিনী|Nandini/i,'offline shell loads for '+path);
+  assert.equal(await off.locator('.tabbar [data-tab]').count(),5,'offline page keeps the five-tab bar: '+path);
+ }
+ // A deep link that was never cached still lands on the app shell instead of a browser error page.
+ await off.goto(base+'/does-not-exist.html',{waitUntil:'domcontentloaded',timeout:15000});
+ assert.match(await off.title(),/নন্দিনী|Nandini/i,'uncached navigation falls back to the home shell offline');
+ assert.deepEqual(offErr,[]);
+ await offCtx.close();
+ console.log('PASS: Offline — cached pages (incl. ask?q= and library?book=) open with no network; uncached deep link falls back to the home shell');
 }finally{await browser.close();await new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()))}

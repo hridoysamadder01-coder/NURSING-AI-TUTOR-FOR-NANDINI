@@ -1,15 +1,23 @@
 <!doctype html>
-<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#11998a"><meta name="description" content="নার্সিং প্রথম বর্ষের কঠিন টপিক সহজ বাংলায়"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./src/app.css"><title>সহজ বাংলা · নন্দিনীর Nursing Study</title>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#11998a"><meta name="description" content="নন্দিনীর ছয় বিষয় — সহজ বাংলায় পাঠ, বইয়ের সূত্র আর শায়নি"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./src/app.css"><title>বিষয় ধরে পড়ি · নন্দিনীর Nursing Study</title>
 <style>
 .prog{margin-top:18px}
 .prog b{display:block;font-size:14.5px;margin-bottom:9px}
 .prog .bar{background:rgba(255,255,255,.22)}.prog .bar>div{background:#ffd27a}
-.pills{position:relative;display:flex;gap:8px;overflow-x:auto;margin:14px -16px 4px;padding:2px 16px 8px;scrollbar-width:none}
-.pills::-webkit-scrollbar{display:none}
-.pill{white-space:nowrap;border:1.5px solid var(--line-2);background:#fff;color:var(--ink-2);border-radius:999px;padding:9px 14px;font-size:13px;font-weight:680}
-.pill.selected{background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;border-color:transparent;box-shadow:0 6px 14px -8px rgba(11,116,104,.8)}
-.ai-note{font-size:12.5px;margin:10px 2px 0}
 #searchState{margin:8px 2px 0}#searchState:empty{display:none}
+/* Subject grid — the landing: pick a subject */
+.subjgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+.subjcard{display:flex;flex-direction:column;gap:3px;padding:15px;border-radius:var(--r-lg);text-decoration:none;color:var(--ink);background:#fff;box-shadow:var(--shadow-sm);border:1px solid rgba(222,234,229,.8);text-align:left}
+.subjcard:active{transform:scale(.98)}
+.subjcard .em{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;background:var(--brand-soft);margin-bottom:8px}
+.subjcard b{font-size:14.5px;line-height:1.35}
+.subjcard small{font-size:11.5px;color:var(--ink-3);font-weight:650;margin:1px 0 8px}
+.subjcard .bar{height:6px;margin-top:auto}
+.subjhead{display:flex;gap:13px;align-items:center;margin:2px 0 6px}
+.subjhead .em{width:52px;height:52px;flex:none;border-radius:16px;display:grid;place-items:center;font-size:27px;background:linear-gradient(150deg,#e3f7ef,#c9efe1)}
+.subjhead h2{font-size:19px;margin:0}.subjhead p{margin:2px 0 0}
+.backsub{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--brand-ink);font-weight:700;font-size:13.5px;padding:6px 0;margin:0 0 4px}
+.ai-note{font-size:12.5px;margin:2px 2px 12px}
 .tcard{background:#fff;border-radius:20px;box-shadow:var(--shadow-sm);border:1px solid rgba(222,234,229,.8);margin:0 0 12px;scroll-margin-top:12px}
 .tcard summary{list-style:none;display:flex;gap:12px;align-items:flex-start;padding:15px 16px;cursor:pointer}
 .tcard summary::-webkit-details-marker{display:none}
@@ -36,32 +44,38 @@
 .term b{display:block;font-size:13px;color:#1b62a3}
 .term span{font-size:12.5px;color:var(--ink-2)}
 .qcheck .question{font-size:15px;margin-top:0}
-.tbody .btn-row{margin-top:14px}
+.tbody .btn-row{margin-top:16px}
+.srcline{font-size:12px;color:var(--ink-3);margin:12px 2px 0;line-height:1.6}
 </style></head>
 <body>
 <header class="hero"><div class="wrap">
-<div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">সহজ বাংলা</span></div>
-<h1>💡 কঠিন টপিক, সহজ বাংলায়</h1><p>নার্সিং ১ম বর্ষের যে টপিকগুলো সবাই কঠিন বলে, সেগুলো ছোট ছোট করে বোঝানো।</p>
+<div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">বিষয় ধরে পড়ি</span></div>
+<h1>📚 বিষয় ধরে পড়ি</h1><p>নিজের বিষয় বেছে নাও। প্রতিটা কঠিন টপিক সহজ বাংলায়, বইয়ের সূত্র আর শায়নির সাহায্যসহ।</p>
 <div class="glass prog"><b id="doneLine">৩৫টির মধ্যে ০টি বুঝেছি</b><div class="bar"><div id="doneFill"></div></div></div>
 </div></header>
 <main>
 <label class="field" for="topicSearch">🔍 টপিক বা শব্দ খোঁজো</label>
 <input id="topicSearch" type="search" placeholder="যেমন: osmosis, ধমনি, ADPIE, RAM" maxlength="60" autocomplete="off">
 <p id="searchState" class="fine" aria-live="polite"></p>
-<div id="subjectPills" class="pills" role="group" aria-label="বিষয় বেছে নাও"></div>
-<p class="fine ai-note">⚠️ ব্যাখ্যাগুলো AI-এর সাহায্যে লেখা, শিক্ষক এখনো যাচাই করেননি। ক্লাস নোটের সঙ্গে মিলিয়ে পড়ো।</p>
-<div id="topicList"></div>
+<div id="subjectGrid" class="subjgrid"></div>
+<div id="subjectView" class="hidden">
+ <button class="backsub" id="backSubjects" type="button">← সব বিষয়</button>
+ <div class="subjhead"><span class="em" id="shEmoji">📚</span><div><h2 id="shName"></h2><p class="fine" id="shMeta"></p></div></div>
+ <p class="fine ai-note">⚠️ ব্যাখ্যাগুলো AI-এর সাহায্যে লেখা, শিক্ষক এখনো যাচাই করেননি। ক্লাস নোটের সঙ্গে মিলিয়ে পড়ো।</p>
+ <div id="topicList"></div>
+ <p class="srcline">কোন বিষয়ে অ্যাপের কোন বই আর কতটা মিল, পুরো তালিকা দেখো <a href="./faridpur-first-year.html">৬ বিষয়ের বইয়ের তালিকায় →</a></p>
+</div>
 <details class="info"><summary>ℹ️ এই ব্যাখ্যাগুলো সম্পর্কে</summary><p>এই সহজ ব্যাখ্যাগুলো পড়া বুঝতে ও মনে রাখতে সাহায্য করার জন্য AI-এর সাহায্যে বাংলায় লেখা। কোনো নার্সিং শিক্ষক এখনো এগুলো যাচাই করেননি, আর এগুলো কলেজের নির্ধারিত বইয়ের বিকল্প নয়। পরীক্ষার আগে ক্লাসের নোট, কলেজের বই ও শিক্ষকের সঙ্গে মিলিয়ে নাও।</p><p>ভাইটাল সাইন, রক্তের pH ও SpO₂-এর মতো সংখ্যা অ্যাপের Open RN বইয়ের লেখার সঙ্গে মিলিয়ে দেওয়া। "বইয়ে মূল ইংরেজি পড়ো" চাপলে বইয়ের সংশ্লিষ্ট অংশ খুলবে। শুধু শিক্ষার জন্য; রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে এগুলো ব্যবহার করবে না।</p></details>
 </main>
 <nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
 <a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
+<a href="./topics.html" data-tab="learn" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20M9 7.5h7M9 11h5"/></svg></span>পড়ি</a>
+<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>শায়নি</a>
+<a href="./scan.html" data-tab="scan"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h2M17 5h2a2 2 0 0 1 2 2v2M21 15v2a2 2 0 0 1-2 2h-2M7 19H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.2"/></svg></span>পাতা</a>
 <a href="./library.html" data-tab="books"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
-<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>Tutor</a>
-<a href="./topics.html" data-tab="easy" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.8.7 1 1.5 1 2.4h6c0-.9.2-1.7 1-2.4a6.5 6.5 0 0 0-4-11.6z"/></svg></span>সহজ বাংলা</a>
-<a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
 </div></nav>
 <script type="module">
-import {SUBJECTS} from './src/study-plan.js';
+import {SUBJECTS,subjectByCode} from './src/study-plan.js';
 import {TOPICS,EASY_SUBJECT_CODES} from './src/easy-topics.js';
 const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;if(cls)x.className=cls;return x};
 const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
@@ -69,8 +83,10 @@ const KEY='nandini-easy-v1';
 let done={};try{const o=JSON.parse(localStorage.getItem(KEY)||'{}');if(o&&typeof o==='object'&&!Array.isArray(o))done=o}catch{}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(done))}catch{}}
 const subjects=EASY_SUBJECT_CODES.map(code=>SUBJECTS.find(s=>s.code===code));
-let filter='all',query='';
+const topicsOf=code=>TOPICS.map((t,i)=>({t,i})).filter(x=>x.t.subject===code);
+let current=null,query='';
 function progress(){const n=TOPICS.filter(t=>done[t.id]).length;$('doneLine').textContent=bn(TOPICS.length)+'টির মধ্যে '+bn(n)+'টি বুঝেছি'+(n===TOPICS.length?' 🎉':'');$('doneFill').style.width=Math.round(n/TOPICS.length*100)+'%'}
+// One topic's full lesson: gist, explanation, memory trick, key terms, self-check, then actions (mark, ask Shayni, source).
 function card(t,i){
  const d=E('details',undefined,'tcard'+(done[t.id]?' done':''));d.id=t.id;
  const head=E('summary'),num=E('span',done[t.id]?'✓':bn(i+1),'tnum'),txt=E('span',undefined,'ttxt');
@@ -88,27 +104,54 @@ function card(t,i){
  const acts=E('div',undefined,'btn-row'),mark=E('button',undefined,'btn sm');mark.type='button';
  const paint=()=>{const on=Boolean(done[t.id]);d.classList.toggle('done',on);num.textContent=on?'✓':bn(i+1);mark.textContent=on?'✓ বুঝেছি':'বুঝেছি, চিহ্ন দিই';mark.classList.toggle('soft',on)};
  mark.onclick=()=>{if(done[t.id])delete done[t.id];else done[t.id]=1;save();paint();progress()};paint();acts.append(mark);
+ // Ask Shayni this exact topic — she answers in Bangla from the verified notes and allowed books.
+ const ask=E('a','🤖 শায়নিকে জিজ্ঞেস করি','btn sm');ask.href='./ask.html?q='+encodeURIComponent(t.title+' কী? সহজ করে বুঝিয়ে দাও');acts.append(ask);
  if(t.book){const a=E('a','📖 বইয়ে মূল ইংরেজি পড়ো','btn sm ghost');a.href='./library.html?book='+t.book.id+'&q='+encodeURIComponent(t.book.q);acts.append(a)}
- body.append(acts);d.append(body);return d;
+ body.append(acts);
+ if(!t.book)body.append(E('p','এই টপিকের হুবহু মিলে এমন ইংরেজি অধ্যায় অ্যাপের বইয়ে চিহ্নিত নেই। শায়নিকে জিজ্ঞেস করলে সে বইয়ের কাছাকাছি অধ্যায়ের লিংক দেবে।','srcline'));
+ d.append(body);return d;
 }
-function pills(){$('subjectPills').replaceChildren();
- for(const [code,label] of [['all','✨ সব ('+bn(TOPICS.length)+')'],...subjects.map(s=>[s.code,s.emoji+' '+s.name])]){const b=E('button',label,'pill'+(filter===code?' selected':''));b.type='button';b.setAttribute('aria-pressed',String(filter===code));b.onclick=()=>{filter=code;pills();render()};$('subjectPills').append(b)}}
-function render(){
- const list=$('topicList'),q=query.trim().toLowerCase();list.replaceChildren();
- const match=t=>!q||[t.title,t.en,t.gist,t.trick,...t.points,...t.terms.flat()].join(' ').toLowerCase().includes(q);
- let count=0;
+function subjectGrid(){
+ const g=$('subjectGrid');g.replaceChildren();
  for(const s of subjects){
-  if(filter!=='all'&&filter!==s.code)continue;
-  const shown=TOPICS.filter(t=>t.subject===s.code).map((t,i)=>[t,i]).filter(([t])=>match(t));if(!shown.length)continue;count+=shown.length;
-  const h=E('h2',undefined,'section-title');h.append(E('span',s.emoji+' '+s.bn),E('span',bn(shown.length)+'টি টপিক','chip'));list.append(h);
-  for(const [t,i] of shown)list.append(card(t,i));
+  const list=topicsOf(s.code),n=list.filter(x=>done[x.t.id]).length,pct=Math.round(n/list.length*100);
+  const a=E('button',undefined,'subjcard');a.type='button';a.onclick=()=>openSubject(s.code);
+  a.append(E('span',s.emoji,'em'),E('b',s.bn),E('small',s.code+' · '+bn(n)+'/'+bn(list.length)+' বুঝেছি'));
+  const bar=E('div',undefined,'bar');bar.append(Object.assign(document.createElement('div'),{style:'width:'+pct+'%'}));a.append(bar);
+  g.append(a);
  }
- $('searchState').textContent=q?(count?bn(count)+'টি টপিক পাওয়া গেছে।':'মিলে এমন টপিক পাওয়া যায়নি। অন্য ইংরেজি বা বাংলা শব্দে খোঁজো।'):'';
 }
-$('topicSearch').addEventListener('input',e=>{query=e.target.value;render()});
-progress();pills();render();
-// Deep link from the Study Coach (topics.html#vital-signs) opens that topic.
-function openFromHash(){const target=location.hash?document.getElementById(decodeURIComponent(location.hash.slice(1))):null;
- if(target?.classList.contains('tcard')){target.open=true;target.scrollIntoView({block:'start'})}}
-openFromHash();addEventListener('hashchange',openFromHash);
+function renderList(items){const list=$('topicList');list.replaceChildren();for(const {t,i} of items)list.append(card(t,i))}
+function openSubject(code,{push=true}={}){
+ const s=subjectByCode(code);if(!s||!EASY_SUBJECT_CODES.includes(code))return;
+ current=code;$('subjectGrid').classList.add('hidden');$('subjectView').classList.remove('hidden');
+ const list=topicsOf(code),n=list.filter(x=>done[x.t.id]).length;
+ $('shEmoji').textContent=s.emoji;$('shName').textContent=s.bn;$('shMeta').textContent=s.name+' · '+s.code+' · '+bn(list.length)+'টি টপিক, '+bn(n)+'টি বুঝেছ';
+ renderList(list);
+ if(push)history.replaceState({},'','./topics.html?subject='+code);
+ scrollTo({top:0,behavior:'instant'});
+}
+function showGrid(){current=null;$('subjectView').classList.add('hidden');$('subjectGrid').classList.remove('hidden');history.replaceState({},'','./topics.html');scrollTo({top:0,behavior:'instant'})}
+$('backSubjects').onclick=showGrid;
+function runSearch(){
+ const q=query.trim().toLowerCase();
+ if(!q){$('searchState').textContent='';if(current)openSubject(current,{push:false});else showGrid();return}
+ const match=t=>[t.title,t.en,t.gist,t.trick,...t.points,...t.terms.flat()].join(' ').toLowerCase().includes(q);
+ const hits=TOPICS.map((t,iAll)=>({t,i:topicsOf(t.subject).findIndex(x=>x.t.id===t.id)})).filter(x=>match(x.t));
+ $('subjectGrid').classList.add('hidden');$('subjectView').classList.remove('hidden');
+ $('shEmoji').textContent='🔍';$('shName').textContent='খোঁজার ফল';$('shMeta').textContent=hits.length?bn(hits.length)+'টি টপিক পাওয়া গেছে':'';
+ renderList(hits);
+ $('searchState').textContent=hits.length?'':'মিলে এমন টপিক পাওয়া যায়নি। অন্য ইংরেজি বা বাংলা শব্দে খোঁজো।';
+}
+$('topicSearch').addEventListener('input',e=>{query=e.target.value;runSearch()});
+progress();subjectGrid();
+// Open a specific topic (coach deep-link topics.html#vital-signs) or a chosen subject (?subject=D123).
+function openHashTopic(){
+ const id=location.hash?decodeURIComponent(location.hash.slice(1)):'';
+ const t=id&&TOPICS.find(x=>x.id===id);
+ if(t){openSubject(t.subject,{push:false});const el=$(id);if(el&&el.classList.contains('tcard')){el.open=true;el.scrollIntoView({block:'start'})}return true}
+ return false;
+}
+if(!openHashTopic()){const sub=new URL(location.href).searchParams.get('subject');if(sub&&EASY_SUBJECT_CODES.includes(sub))openSubject(sub,{push:false})}
+addEventListener('hashchange',openHashTopic);
 </script></body></html>

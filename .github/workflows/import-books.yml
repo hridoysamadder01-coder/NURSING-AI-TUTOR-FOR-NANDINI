@@ -1,16 +1,19 @@
-name: Import Open RN Textbooks
+name: Import licensed textbooks
+# Manual only: an import rewrites book files, so it never runs by surprise on a push.
 on:
-  push:
-    paths:
-      - scripts/import_openrn.py
-      - .github/workflows/import-books.yml
   workflow_dispatch:
+    inputs:
+      source:
+        description: Which publisher to import again
+        type: choice
+        options: [openrn, openstax, seer]
+        default: openrn
 permissions:
   contents: write
 jobs:
   import:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -18,14 +21,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Import publisher EPUB (text only)
-        run: python scripts/import_openrn.py
-      - name: Commit normalized licensed text index
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Import publisher text (text only, licence checked by the script)
+        run: python scripts/import_${{ inputs.source }}.py
+      - name: Rebuild the chapter index and check the shelf
+        run: |
+          node scripts/build-book-index.mjs
+          npm test
+      - name: Commit the imported text
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git add data/books
           if ! git diff --cached --quiet; then
-            git commit -m "Sync Open RN licensed EPUB text into Nandini shelf"
+            git commit -m "Sync ${{ inputs.source }} licensed text into Nandini's shelf"
             git push
           fi

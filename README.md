@@ -63,7 +63,7 @@ The `library.html` mobile bookshelf reads **four publisher books automatically i
 
 This is a text-only transformation of CC BY 4.0 published books (except where otherwise noted); images, embedded media, activity widgets and layouts were excluded. It is NOT a substitute for every original PDF component or for Nandini's college-mandated books. Do not claim PDF page numbers for these extracted XHTML chapters. The reader gives official direct PDF download links and a source-attributed in-app search, with optional server-configured Bengali AI.
 
-The source is refreshed by running `python scripts/import_openrn.py` on a machine with internet or by GitHub's `Import Open RN Textbooks` workflow. No manual book upload needed for these four.
+The source is refreshed by running `python scripts/import_openrn.py` on a machine with internet or by GitHub's `Import licensed textbooks` workflow (manual run only, so book files never change by surprise on a push). No manual book upload needed for these four.
 
 
 ## Android APK, no VPS required for book reading
@@ -157,3 +157,38 @@ So terms and MCQs are shown by the app, and the AI only gets the short slices it
 Desktop check of the warm prompt (13 questions including two follow-ups, Gemma 3 4B, greedy): vital signs, osmosis, RAM/ROM, Sims position and hypoxia answers were exact, numbers included. Two answers had a wrong fact: "ভাল্‌ভ থাকে ধমনিতে", and "ধমনি রক্ত ফুসফুসে নেয়" in a "simpler" re-explanation. The old prompt made the same valve error, so the topic sentence now says positively where valves are (heart, and veins of the arms and legs). The model still gets this wrong sometimes: in the latest run one of six artery/vein answers said valves are in both. A stricter "one source sentence per point" prompt was worse (a wrong "পাইনি", a reversed privacy rule). **So the 4B model is a helper, not a source of truth**: its answer always sits under the verified card with the "AI ভুল করতে পারে" note, and "প্রতিটি প্রশ্নে AI নিজে থেকে উত্তর দেবে" can be switched off in Settings. Patient dose questions ("কত mg দেব", "dose") are answered by the app with a fixed safety note and never reach the model.
 
 On the desktop CPU, Gemma 3 4B produced a full answer in roughly 4–13 seconds. **Speed on a real phone has not been measured yet**; expect it to be several times slower on a mid-range phone. Settings has a speed test for this. The Tutor always shows the instant verified card first and labels the AI answer "AI ভুল করতে পারে". Nothing here has been tested on a physical Android device yet.
+
+## November 12: evidence-based bookshelf (issue #2, phase 1)
+
+**What is in the app now: 12 bundled books, 2,676 text chapters.** `data/books/catalog.json` lists only books whose text is really in the app. `data/books/shelf.json` is the hand-kept evidence: the printed books Nandini owns, her subjects, and which bundled book may be sent to a language model.
+
+| Book (id) | Publisher | Chapters | Licence | Tutor's AI |
+|---|---|---|---|---|
+| Nursing Fundamentals 2e, Nursing Skills 2e, Medical Terminology 2e, Nursing Mental Health and Community Concepts 2e | Open RN / WisTech Open | 141 + 214 + 148 + 129 | CC BY 4.0 (unchanged since October) | allowed |
+| SEER Training Modules: Anatomy & Physiology (`seer-anatomy`) | U.S. National Cancer Institute | 105 | text free of copyright, credit NCI | allowed |
+| Anatomy and Physiology 2e, Microbiology, Biology 2e, Chemistry 2e, Psychology 2e, Introduction to Sociology 3e, Workplace Software and Skills (`openstax-*`) | OpenStax, Rice University | 310 + 333 + 445 + 251 + 185 + 221 + 194 | CC BY-NC-SA 4.0 | **not permitted** |
+
+- **OpenStax books are for reading and plain search only.** Every OpenStax book page states: "This book may not be used in the training of large language models or otherwise be ingested into large language models or generative AI offerings without OpenStax's prior written permission." `aiBookIds()` (`src/library-catalog.js`) is a fail-closed allow-list, `chunkBooks()` refuses such a book again, and the server search only loads allowed books. The reader shows the publisher's line "Access for free at ..." on every chapter and under search results.
+- **Nandini's six Neuron books are recorded as owned on paper, nothing more.** The titles, editors and the one visible edition (Anatomy & Physiology, 10th Edition) come from the owner's 20 photographs. No Neuron text is in the repository or the APK; a photograph of a cover is not permission to copy a book. The ICT title is `title_unconfirmed`. The shelf shows them without any button: there is nothing to open or search.
+- **Subjects:** the six subjects the owner gave stay in the Study Coach. Behavioral Science (she owns the book; BNMC 2018 lists it) is shown as waiting for confirmation and is not in the plan.
+- **Coverage is never called "full".** Each subject is `unverified` (a whole textbook is bundled, but it was not compared with her book or the syllabus) or `partial` (Microbiology & Parasitology: no dedicated parasitology text; English: medical words only). The chapter-by-chapter gap table is blocked until the Neuron tables of contents and the BNMC units are available.
+- **Tutor grounding:** "where do I read this" links (`src/book-finder.js`, `data/books/toc-index.json`) point to exact chapters of all bundled books using titles and headings only, with no page numbers. A question about her own printed book ("আমার বইয়ের ৫০ পৃষ্ঠায় কী আছে?") gets a fixed note that the book's text is not in the app, and the models are told not to guess its contents.
+- **Importers:** `scripts/import_openstax.py` and `scripts/import_seer.py` read the publishers' own sites, check the licence statement at import time, drop images, figures, figure captions and media, and record every skipped page. Run `node scripts/build-book-index.mjs` after any import.
+- **Import integrity is measured, not assumed.** Each importer compares every publisher page with the text it produced (`word_coverage` in `scripts/bookimport.py`) and refuses to publish a book when more than 1% of the page words are unaccounted for (12% on a single page). The catalog records the result (`source_words`, `missing_words`): at most 0.16% per book, and the remainder is counting noise from words split by markup. The first import, pushed earlier the same day, had silently lost 6.5% of the chemistry book (the sentences of every paragraph that holds an equation) and smaller amounts elsewhere; this check exists because of that.
+- **How the text is written:** questions and answer keys keep the book's own numbers as plain lines; items of an ordered list carry their number; tables keep their titles; powers, ion charges and formula subscripts are real superscript and subscript characters (10⁻¹⁴, Ca²⁺, H₂O), other equations are on one line.
+- **Credit on every view:** the reader shows, under every chapter and every list of search hits, the publisher's credit line, the licence as a link, and the note that this is a changed, text-only copy, for all 12 books.
+
+**Independent review: not completed.** A multi-reviewer check of this work was started and stopped by the account's usage limit before any reviewer reported; only what could be recovered from its partial notes was checked and fixed.
+
+**Not done yet (next phases):** private on-device import of Nandini's own pages or PDFs with OCR; the gap table; a parasitology text (candidate: CDC DPDx); a Communicative English textbook; WisTech Open general-education books. Nothing here has been checked on a real phone.
+
+## November 12 (Milestone 2B): Scan & Explain — read one page, explain it
+
+`scan.html` lets Nandini photograph or choose **one page of any book** and have Shayni explain that page — no need to import a whole six-book set.
+
+- **On-device, offline OCR.** Tesseract.js (English + Bengali) is bundled under `vendor/tesseract/` (~6.4 MB, pinned; `scripts/fetch-ocr-assets.sh` refreshes it) and cached by `sw.js`, so reading a page needs no internet. `src/page-ocr.js` loads only these bundled assets — never a CDN. The browser smoke test reads a page with zero external requests.
+- **Honest about accuracy.** The OCR result is always an **editable draft** with a confidence percentage; a low/blurry read asks for a clearer photo, and nothing is invented. Measured on clean rendered English nursing text: 100% character accuracy, ~0.5 s. Bengali accuracy could not be measured in the build environment (no Bengali font) and must be checked on a real phone photo.
+- **Page-grounded explanation.** `buildPageMessages` (`src/rag.js`) makes Shayni explain **only** the page's text, with provenance "তোমার তোলা পাতা", no outside facts, no patient dose, and an honest abstain when the text is unreadable.
+- **Privacy, on-device first.** The page **image never leaves the phone**. The explanation uses the on-device Gemma model by default (fully offline); if that is not installed, only the extracted **text** (not the image) can go to the online AI, and only after an explicit consent tick — never silently.
+- **Graceful fallback.** On a device without WebAssembly SIMD, the app says so and lets her type the text instead; Shayni still explains it.
+- Verification: `npm test` (74 pass; grounding, privacy and offline-asset tests) and `node scripts/browser-smoke.mjs` (real OCR reads a page, the on-device model explains it, the image is never sent). APK grows from ~30.7 MB to ~36.5 MB. Not verified on a real phone; Bengali OCR accuracy not yet measured.

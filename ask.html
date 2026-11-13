@@ -1,25 +1,30 @@
 <!doctype html>
 <html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"><meta name="theme-color" content="#11998a"><meta name="description" content="নন্দিনীর অফলাইন নার্সিং Tutor"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./src/app.css"><title>Tutor · নন্দিনীর Nursing Study</title>
 <style>
-.hero{padding-bottom:20px}.hero h1{margin-top:10px}
-main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
+/* ChatGPT-style full-screen chat: a slim sticky top bar, the conversation fills the rest. */
+.chathead{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 14px 11px;background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;box-shadow:0 3px 14px -10px rgba(15,58,50,.6)}
+.chback{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;text-decoration:none;font-size:21px;line-height:1}
+.chttl b{display:block;font-size:17px;line-height:1.25;font-weight:740}
+.chttl small{display:block;font-size:11.5px;color:rgba(255,255,255,.82);margin-top:1px}
+main{padding:16px 16px calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 #chat{display:flex;flex-direction:column;gap:12px}
-.msg{max-width:92%;border-radius:20px;padding:13px 15px;line-height:1.7;font-size:14.5px;animation:rise .3s ease both}
+.msg{max-width:92%;border-radius:20px;padding:15px 17px;line-height:1.78;font-size:14.5px;animation:rise .3s ease both}
 .msg.me{align-self:flex-end;background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;border-bottom-right-radius:6px;max-width:82%}
 .msg.bot{align-self:flex-start;background:#fff;border:1px solid rgba(222,234,229,.9);box-shadow:var(--shadow-sm);border-bottom-left-radius:6px}
-.msg.bot h3{font-size:16.5px;margin:8px 0 0;line-height:1.45}
+.msg.bot h3{font-size:16.5px;margin:12px 0 2px;line-height:1.45}
 .msg.bot .en{display:block;font-size:12px;color:var(--brand);font-weight:700}
-.msg.bot p{margin:8px 0}
-.msg .lead{margin:0 0 8px;font-weight:650;color:var(--brand-ink)}
-.msg .gist{background:var(--brand-soft);color:var(--brand-ink);padding:10px 12px;border-radius:13px}
-.msg ul{margin:6px 0;padding-left:20px}.msg li{margin-bottom:5px}.msg li::marker{color:var(--brand)}
-.msg .trick{background:var(--amber-soft);color:#6b4a12;padding:10px 12px;border-radius:13px;margin:8px 0;font-size:14px}
+.msg.bot p{margin:10px 0}
+.msg .lead{margin:0 0 10px;font-weight:650;color:var(--brand-ink)}
+.msg .gist{background:var(--brand-soft);color:var(--brand-ink);padding:12px 14px;border-radius:13px;margin:4px 0}
+.msg ul{margin:10px 0;padding-left:22px}.msg li{margin-bottom:8px;padding-left:3px}.msg li::marker{color:var(--brand)}
+.msg .trick{background:var(--amber-soft);color:#6b4a12;padding:12px 14px;border-radius:13px;margin:12px 0 2px;font-size:14px}
 .termrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
 .termchip{font-size:12.5px;padding:5px 10px;border-radius:10px;background:var(--sky-soft);color:#1b62a3;font-weight:650}
 .suggest{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 .suggest.quick button{background:var(--brand-soft);border-color:transparent}
 .suggest button{border:1.5px solid var(--line-2);background:#fff;color:var(--brand-ink);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:650}
 .msg .btn-row{margin-top:10px}
+.reads a{display:block;margin-top:7px;font-weight:650;text-decoration:none;line-height:1.45}
 .source{border-left:3px solid var(--brand);padding:8px 12px;margin:8px 0;background:#f5fbf9;border-radius:0 12px 12px 0;font-size:13px}
 .source p{font-family:Georgia,serif;color:var(--ink-2);margin:4px 0}
 .typing{color:var(--ink-3);font-size:13px}
@@ -53,14 +58,17 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 .aibox{margin-top:12px;padding:12px 13px;border-radius:16px;background:linear-gradient(160deg,#f3f0ff,#fff 70%);border:1px solid #e2dcff}
 .aibox>b{display:block;font-size:13px;color:#4b3dbd;margin-bottom:6px}
 .aibox .out{white-space:pre-wrap;line-height:1.75;font-size:14.5px}
+.aibox .out.rich{white-space:normal}
+.aibox .out.rich p{margin:0 0 9px}.aibox .out.rich p:last-child{margin-bottom:0}
+.aibox .out.rich strong{color:#1d2e2a;font-weight:750}
+.aibox .out.rich ul.ans{margin:6px 0 12px;padding-left:4px;list-style:none}
+.aibox .out.rich ul.ans li{position:relative;margin:8px 0;padding-left:22px;line-height:1.75}
+.aibox .out.rich ul.ans li::before{content:"";position:absolute;left:4px;top:10px;width:7px;height:7px;border-radius:50%;background:var(--brand,#13a28e)}
 .aibox .meta{font-size:11.5px;color:var(--ink-3);margin-top:8px}
 .aibox .btn{margin-top:8px}
 </style></head>
 <body>
-<header class="hero"><div class="wrap">
-<div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">অফলাইন · সঙ্গে সঙ্গে উত্তর</span></div>
-<h1>🤖 শায়নি · নন্দিনীর Tutor</h1><p>বাংলা বা ইংরেজিতে প্রশ্ন লেখো। উত্তর আসবে ফোনের ভেতর থেকেই, ইন্টারনেট লাগবে না।</p>
-</div></header>
+<header class="chathead"><a class="chback" href="./index.html" aria-label="হোমে ফিরে যাও">←</a><div class="chttl"><b>🤖 শায়নি</b><small>নন্দিনীর Tutor · অফলাইনেও চলে</small></div></header>
 <main>
 <div id="chat" aria-live="polite"></div>
 <p style="text-align:center;margin-top:14px"><button class="clear" id="clearChat" type="button">🗑️ কথোপকথন মুছে দাও</button></p>
@@ -69,10 +77,10 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 <div class="askbar"><form id="askForm" autocomplete="off"><input id="q" type="search" maxlength="200" placeholder="যেমন: osmosis কী? ধমনি আর শিরার পার্থক্য?" aria-label="তোমার প্রশ্ন" enterkeyhint="send"><button type="button" id="mic" class="mic" aria-label="কথা বলে প্রশ্ন করো" hidden>🎤</button><button type="button" id="talk" class="talkbtn" aria-label="কথা বলার মোড (ভয়েস টু ভয়েস)" hidden><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><rect x="3" y="9" width="2.6" height="6" rx="1.3"/><rect x="7.4" y="5" width="2.6" height="14" rx="1.3"/><rect x="11.8" y="2.5" width="2.6" height="19" rx="1.3"/><rect x="16.2" y="6.5" width="2.6" height="11" rx="1.3"/><rect x="20.4" y="10" width="2.2" height="4" rx="1.1"/></svg></button><button type="submit" aria-label="পাঠাও">➤</button></form></div>
 <nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
 <a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
+<a href="./topics.html" data-tab="learn"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20M9 7.5h7M9 11h5"/></svg></span>পড়ি</a>
+<a href="./ask.html" data-tab="tutor" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>শায়নি</a>
+<a href="./scan.html" data-tab="scan"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h2M17 5h2a2 2 0 0 1 2 2v2M21 15v2a2 2 0 0 1-2 2h-2M7 19H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.2"/></svg></span>পাতা</a>
 <a href="./library.html" data-tab="books"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
-<a href="./ask.html" data-tab="tutor" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>Tutor</a>
-<a href="./topics.html" data-tab="easy"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.8.7 1 1.5 1 2.4h6c0-.9.2-1.7 1-2.4a6.5 6.5 0 0 0-4-11.6z"/></svg></span>সহজ বাংলা</a>
-<a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
 </div></nav>
 <div id="talkView" class="talk" hidden role="dialog" aria-label="কথা বলার মোড"><div class="talk-top"><span id="talkEngine" class="chip"></span><button id="talkClose" class="ghosty talk-x" type="button" aria-label="বন্ধ করো">✕</button></div>
 <div class="orb-wrap"><button id="orb" class="orb" type="button" aria-label="থামাতে বা আবার শুনতে চাপো"></button></div>
@@ -84,7 +92,9 @@ import {topicById} from './src/easy-topics.js';
 import {subjectByCode} from './src/study-plan.js';
 import {rank} from './src/answer-core.js';
 import {apiUrl} from './src/api-config.js';
-import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,lookupText,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion} from './src/rag.js';
+import {retrieve,chunkBooks,buildIndex,buildMessages,buildChatMessages,lookupText,FOLLOW_STYLES,NOT_FOUND,DOSE_NOTE,isDoseQuestion,OWN_BOOK_NOTE,isOwnBookQuestion,stripBrand} from './src/rag.js';
+import {aiBookIds,sectionText} from './src/library-catalog.js';
+import {buildFinder,findChapters} from './src/book-finder.js';
 import * as llm from './src/local-llm.js';
 import * as voice from './src/voice.js';
 import * as cloud from './src/cloud-ai.js';
@@ -94,7 +104,7 @@ const $=id=>document.getElementById(id),E=(tag,text,cls)=>{const x=document.crea
 const KEY='nandini-tutor-history-v1',SUGGEST=['Osmosis কী?','ভাইটাল সাইনের স্বাভাবিক মান কত?','ধমনি আর শিরার পার্থক্য কী?','ADPIE কী?','RAM আর ROM কী?','NPO মানে কী?'];
 let asked=[];try{const h=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(h))asked=h.filter(x=>typeof x==='string').slice(-20)}catch{}
 const saveAsked=()=>{try{localStorage.setItem(KEY,JSON.stringify(asked.slice(-20)))}catch{}};
-let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null;
+let aiEnabled=false,localModel=null,localHinted=false,aiChain=Promise.resolve(),ragIndex=null,rawBooks=null,shelfData=null,finder=null;
 // The question "বুঝিনি" refers to, and how many times it has been re-explained.
 let lastQ=null,tries=0;
 // True while answering a question that was asked by voice, so the answer is read aloud.
@@ -168,14 +178,33 @@ function topicCard(b,t){
  b.append(acts);
 }
 // Reads an answer aloud: Gemini's natural Bangla voice when online with a key, otherwise the phone's own Bangla voice.
+// Render Shayni's answer cleanly: drop [S1] citation codes and stray markdown symbols, make **bold** real, and turn
+// "-"/"*"/"1." lines into a tidy bulleted list — so she reads as clean Bangla, not raw * and # characters.
+function formatAnswer(raw){
+ const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+ const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/__(.+?)__/g,'<strong>$1</strong>');
+ const t=String(raw||'').replace(/\[S\d+\]/g,'').replace(/[`]+/g,'').replace(/^\s*#{1,6}\s*/gm,'').replace(/[ \t]+\n/g,'\n').trim();
+ const lines=t.split(/\n+/).map(l=>l.trim()).filter(Boolean);
+ let html='',inList=false;
+ for(const l of lines){
+  const m=l.match(/^(?:[-*•–]\s+|\d+[.)]\s+)(.*)/);
+  if(m){if(!inList){html+='<ul class="ans">';inList=true}html+='<li>'+inline(m[1])+'</li>'}
+  else{if(inList){html+='</ul>';inList=false}html+='<p>'+inline(l)+'</p>'}
+ }
+ if(inList)html+='</ul>';
+ return html||('<p>'+inline(t)+'</p>');
+}
 async function say(text){
  stopSaying();
+ // Free first: Gemini's natural voice. Only if it is unavailable or its free limit is used up does the owner's
+ // paid OpenAI voice step in; offline, the phone's own voice. Keeps the cost to a minimum.
  if(cloud.ready()&&cloud.hasKey('gemini')){try{const r=await cloud.speechAudio(voice.forSpeech(text).slice(0,1500));await playWav(r.wav);return}catch{}}
+ if(cloud.openaiVoiceReady()){try{const r=await cloud.openaiSpeech(voice.forSpeech(text).slice(0,1500));await playWav(r.wav);return}catch{}}
  if(voice.available())return voice.speak(text);
  throw new Error('no_voice');
 }
 function stopSaying(){stopWav();voice.stopSpeaking()}
-const canSay=()=>voice.available()||cloud.hasKey('gemini');
+const canSay=()=>voice.available()||cloud.hasKey('gemini')||cloud.hasKey('openai');
 function speakButton(text){const x=E('button','🔊 শোনো','btn sm ghost');x.type='button';x.onclick=()=>say(text()).catch(e=>x.textContent='🔇 '+voiceError(e?.message));return x}
 // What to read aloud from an answer that has no AI part: the friendly line, title, gist, points and trick.
 const speechOf=b=>[...b.querySelectorAll('p:not(.fine),h3,li,.trick')].filter(x=>!x.closest('.source,.aibox')).map(x=>x.textContent).join('। ');
@@ -186,12 +215,16 @@ function voiceError(code){
   dialog_cancelled:'শোনা বন্ধ হয়ে গেছে। আবার 🎤 চাপো। বারবার এমন হলে সেটিংস → "কণ্ঠে কথা বলা" দেখো।'})[code]
   ||(['network','network_timeout','server','language','client','disconnected'].includes(code)?(voice.onlineAllowed()?'ফোনের কণ্ঠ-বোঝার ব্যবস্থা বাংলা চালাতে পারছে না ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।':'ফোনে অফলাইনে বাংলা শোনার ব্যবস্থা পাওয়া যায়নি ('+code+')। সেটিংস → "কণ্ঠে কথা বলা" দেখো।'):'কণ্ঠ চালানো যায়নি ('+code+')।');
 }
-async function loadBooks(){if(!rawBooks)rawBooks=await Promise.all(['fundamentals','skills','terminology','mentalhealth'].map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}));return rawBooks}
+// Only the books the shelf allows for AI use are loaded for the Tutor; reading-only books never reach a model.
+// A failed load is not remembered, so the next question tries again (and until it works, no book reaches the AI).
+async function loadShelf(){if(!shelfData){shelfData=Promise.all(['catalog','shelf'].map(async n=>{const r=await fetch('./data/books/'+n+'.json');if(!r.ok)throw Error('catalog_unavailable');return r.json()}));shelfData.catch(()=>{shelfData=null})}return shelfData}
+async function loadBooks(){if(!rawBooks){const [c,sh]=await loadShelf();rawBooks=await Promise.all(aiBookIds(c,sh).map(async id=>{const r=await fetch('./data/books/'+id+'.json');if(!r.ok)throw Error('book_unavailable');return r.json()}))}return rawBooks}
 let books;
 async function searchBooks(q){
+ q=stripBrand(q);
  try{const r=await fetch(apiUrl('/api/books/search')+'?q='+encodeURIComponent(q)+'&book=all');if(r.ok){const j=await r.json();return (j.matches||[]).slice(0,3)}}catch{}
  if(!books){const data=await loadBooks();
-  books=data.flatMap(b=>b.chapters.flatMap(ch=>ch.sections.map(s=>({title:ch.title+' · '+s.heading,text:s.text,bookTitle:b.title,chapter:ch.title,sourceUrl:ch.url||b.source_url}))))}
+  books=data.flatMap(b=>b.chapters.flatMap(ch=>ch.sections.map(s=>({title:ch.title+' · '+s.heading,text:sectionText(s),bookTitle:b.title,chapter:ch.title,sourceUrl:ch.url||b.source_url}))))}
  return rank(q,books,3).map(h=>({bookTitle:h.bookTitle,chapter:h.chapter,sourceUrl:h.sourceUrl,excerpt:h.text.slice(0,400)}));
 }
 function aiButton(b,q){
@@ -212,7 +245,8 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
  // Asking the same question again means it was not clear yet: explain it a new way instead of repeating.
  const follow=!talk&&(followUpKind(q)||(lastQ&&q.trim().toLowerCase()===lastQ.trim().toLowerCase()&&'simpler'));
  if(talk||follow){const b=talk?chatReply(talk):followUp(follow,lookInBooks);if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return b}
- const r=askTutor(q),chat=chatLike(q);
+ // "Neuron" as her book's publisher is not a question about the nerve cell.
+ const r=askTutor(stripBrand(q)),chat=chatLike(q);
  // Talking about herself or her feelings ("আমি খুব ক্লান্ত"): a friend's reply, not a failed search. Only a strong
  // topic match (the same bar the AI uses) counts as a study question: "amar khub tens hoitase" is not about grammar tenses.
  if(chat==='personal'&&!(r.topics[0]?.score>=6)){
@@ -220,6 +254,8 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
   localAiOffer(b,q,lookInBooks,{chat:true});if(scroll)b.scrollIntoView({behavior:'smooth',block:'start'});return b;
  }
  const b=bubble('bot');
+ // Her own printed books are not in the app: say so before answering from the app's notes and books.
+ if(isOwnBookQuestion(q))b.append(E('p','📕 '+OWN_BOOK_NOTE,'fine ownbook'));
  if(chat&&!r.topics.length){
   // One or two words ("bondhu", "diabetes"): show book passages if there are any, otherwise just chat.
   const hits=lookInBooks?await bookHits(b,q,{quiet:true}):0;
@@ -236,6 +272,8 @@ async function answer(q,{scroll=true,lookInBooks=true}={}){
   b.append(E('p',isQuestion(q)?OPENERS[q.length%OPENERS.length]:OPENERS[0],'lead'));
   topicCard(b,r.topics[0].topic);
   const more=r.topics.slice(1).map(x=>x.topic.title);if(more.length){b.append(E('p','এগুলোও কাজে লাগতে পারে:','fine'));suggestions(more,b)}
+  // Where to read more: exact chapters of the app's books (links only; replaying saved questions stays instant).
+  if(lookInBooks)await chapterLinks(b,q);
  }else{
   b.append(E('p',r.topics.length?'ঠিক মিল পাইনি, তবে এগুলো কাছাকাছি মনে হচ্ছে:':'এই প্রশ্নের সহজ বাংলা ব্যাখ্যা এখনো অ্যাপে নেই। 🙏'));
   if(r.topics.length)suggestions(r.topics.map(x=>x.topic.title),b);
@@ -307,6 +345,7 @@ function localAi(b,q,mode=null){
    if(!text.trim()){out.className='out';out.textContent=NOT_FOUND;return}
    if(asChat){chatHistory.push({role:'user',content:q},{role:'assistant',content:text});chatHistory=chatHistory.slice(-6)}
    else if(q===lastQ)lastAi=text;
+   out.className='out rich';out.innerHTML=formatAnswer(text);
    // A short answer ending in a question is the AI asking what she meant: her next message completes the question.
    askedBack=where==='cloud'&&!asChat&&text.trim().length<240&&/[?？]\s*$/.test(text.trim())?q:null;
    const secs=(performance.now()-t0)/1000;
@@ -321,12 +360,21 @@ function cloudReason(e){
  const codes=(e?.tried||[]).map(t=>t.error);
  return codes.includes('key_rejected')?'key ঠিক নেই, সেটিংসে দেখো':codes.every(c=>c==='limit')&&codes.length?'আজকের ফ্রি সীমা শেষ':codes.some(c=>c==='network'||c==='timeout')?'ইন্টারনেট দুর্বল':'সাময়িক সমস্যা';
 }
+// Exact chapters of the bundled books (titles and headings only). These are links to read, not text given to the AI.
+async function chapterLinks(b,q){
+ try{if(!finder){const r=await fetch('./data/books/toc-index.json');if(!r.ok)return 0;finder=buildFinder(await r.json())}
+  const found=findChapters(stripBrand(q),finder);if(!found.length)return 0;
+  const box=E('div',undefined,'source reads');box.append(E('b','📖 অ্যাপের বইয়ের এই অধ্যায়গুলোতে পড়ো:'));
+  for(const f of found){const a=E('a',f.bookTitle+' · '+f.chapterTitle+' →');a.href=f.href;box.append(a)}
+  b.append(box);return found.length}catch{return 0}
+}
 async function bookHits(b,q,{quiet=false}={}){
-  const wait=E('p','📚 ৪টি বইয়ের মূল ইংরেজিতে খুঁজছি…','typing');b.append(wait);
+  const wait=E('p','📚 বইয়ের মূল ইংরেজিতে খুঁজছি…','typing');b.append(wait);
   try{const hits=await searchBooks(q);wait.remove();
    if(quiet&&!hits.length)return 0;
    if(hits.length){b.append(E('p','বইয়ে এই অংশগুলো পেয়েছি (মূল ইংরেজি):','fine'));for(const h of hits){const s=E('div',undefined,'source');s.append(E('b',h.bookTitle+' · '+h.chapter),E('p',h.excerpt.slice(0,300)+(h.excerpt.length>300?'…':'')));const a=E('a','মূল অধ্যায় ↗');a.href=h.sourceUrl;a.target='_blank';a.rel='noopener noreferrer';s.append(a);b.append(s)}}
-   else b.append(E('p','বইয়েও মিল পাইনি। ইংরেজি শব্দ লিখে আবার চেষ্টা করো (যেমন: diabetes), অথবা শিক্ষককে জিজ্ঞেস করো।','fine'));
+   const reads=await chapterLinks(b,q);
+   if(!hits.length&&!reads)b.append(E('p','বইয়েও মিল পাইনি। ইংরেজি শব্দ লিখে আবার চেষ্টা করো (যেমন: diabetes), অথবা শিক্ষককে জিজ্ঞেস করো।','fine'));
    return hits.length;
   }catch{wait.textContent='বই খুলতে পারিনি। অ্যাপটি একবার ইন্টারনেটসহ খুলে নাও।';return 0}
 }
@@ -387,6 +435,8 @@ $('talk').onclick=async()=>{
  // Audio output must be created inside the tap, before anything is awaited.
  const player=pcmPlayer();
  T.view.hidden=false;T.user.textContent='';T.ai.textContent='';T.engine.textContent='';T.mute.textContent='🔇 মাইক বন্ধ';talkState('connecting');voice.keepAwake(true);
+ // Free first: Gemini Live hears and speaks with no cost. Only when its free limit runs out does the next level
+ // (below) take over, where OpenAI gives the voice instead of a robot one — so cost is kept to a minimum.
  if(cloud.ready()&&cloud.hasKey('gemini')&&navigator.mediaDevices?.getUserMedia){
   try{await startLive(player);return}
   catch(e){player.close();T.ai.textContent=e?.name==='NotAllowedError'?voiceError('mic_denied'):liveError(e?.message);if(!canStepTalk()){talkState('paused');return}}
@@ -473,8 +523,10 @@ function startPhoneTalk(){
   return voice.listen(t=>{T.user.textContent=t});
  };
  const speak=async text=>{
+  // Free Gemini voice first; OpenAI's voice only if Gemini is unavailable or its free limit is used up; offline, the phone.
+  if(cloud.ready()&&cloud.hasKey('gemini')){try{const r=await cloud.speechAudio(voice.forSpeech(text).slice(0,1500));return await playWav(r.wav)}catch{}}
+  if(cloud.openaiVoiceReady()){try{const r=await cloud.openaiSpeech(voice.forSpeech(text).slice(0,1500));return await playWav(r.wav)}catch{}}
   if(voice.available())return voice.speakWait(text);
-  if(cloud.ready()&&cloud.hasKey('gemini')){const r=await cloud.speechAudio(voice.forSpeech(text).slice(0,1500));return playWav(r.wav)}
  };
  talk={muted:false,
   stop(){stopped=true;rec?.stop();voice.stopListening();stopSaying();wake?.()},

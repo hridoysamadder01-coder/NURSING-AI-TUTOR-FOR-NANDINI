@@ -45,7 +45,9 @@ test('a rejected Gemini key falls through to Groq; everything down means the pho
  assert.equal(calls.filter(c=>c.url.includes('generativelanguage')).length,1,'other Gemini models are not tried with a rejected key');
  assert.equal(calls.at(-1).headers.Authorization,'Bearer q-key');
  cloud.setKeys({gemini:'g',groq:'q'});serve([]);
- await assert.rejects(cloud.generate(msgs),e=>e.message==='cloud_unavailable'&&e.tried.length===cloud.ROUTE.length);
+ // Only routes that have a key are tried (no OpenAI key here, so the OpenAI route is skipped).
+ const keyed=cloud.ROUTE.filter(r=>cloud.hasKey(r.provider)).length;
+ await assert.rejects(cloud.generate(msgs),e=>e.message==='cloud_unavailable'&&e.tried.length===keyed);
 });
 test('a model that rejects the thinking setting is asked again without it; a cut-off answer is not restarted',async()=>{
  cloud.setKeys({gemini:'g',groq:'q'});
@@ -92,4 +94,21 @@ test('her voice is written down by Gemini first, then Whisper large-v3; both dow
  // Everything down: the app's own fallback (the phone's recognizer) takes over.
  cloud.setKeys({gemini:'g3',groq:'q3'});serve([]);
  await assert.rejects(cloud.transcribe(voice),e=>e.message==='ears_unavailable'&&e.tried.length===cloud.EARS.length);
+});
+
+test('OpenAI voice: natural female voice via the owner key; needs a key, maps a bad key',async()=>{
+ cloud.setKeys({openai:''});
+ await assert.rejects(cloud.openaiSpeech('হ্যালো'),/no_key/,'no key → no_key');
+ cloud.setKeys({openai:'sk-test'});cloud.setOpenaiVoice('shimmer');
+ serve([['api.openai.com/v1/audio/speech',()=>new Response(new Uint8Array([1,2,3,4]),{status:200,headers:{'content-type':'audio/wav'}})]]);
+ const r=await cloud.openaiSpeech('নমস্কার');
+ assert.ok(r.wav instanceof Uint8Array&&r.wav.length===4,'returns WAV bytes playWav can play');
+ const call=calls.find(c=>c.url.includes('audio/speech'));
+ assert.equal(call.headers.Authorization,'Bearer sk-test','sends the owner key');
+ assert.equal(call.body.model,'gpt-4o-mini-tts');assert.equal(call.body.voice,'shimmer','uses the chosen voice');
+ assert.equal(call.body.response_format,'wav');assert.match(call.body.instructions,/Shayni/,'friendly tutor instructions');
+ cloud.setOpenaiVoice('nonsense');assert.equal(cloud.openaiVoice(),'shimmer','ignores an unknown voice, keeps the last valid one');
+ localStorage.removeItem('nandini-openai-voice');assert.equal(cloud.openaiVoice(),'coral','default is a friendly female voice');
+ serve([['audio/speech',()=>new Response('no',{status:401})]]);
+ await assert.rejects(cloud.openaiSpeech('x'),/key_rejected/,'401 → key_rejected');
 });

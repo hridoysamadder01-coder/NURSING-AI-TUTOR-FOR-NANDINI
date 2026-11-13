@@ -21,6 +21,10 @@ Start every session by reading `STATUS.md` (what is done, what is not verified) 
 - Only Bangla in answers and voice; English terms are allowed with their Bangla meaning. Never Hindi.
 - No patient-specific doses or treatment decisions. The Open RN books are international references, not her college's
   prescribed books; never claim otherwise.
+- **Nandini is usually online, so prioritise the online (stronger) AI path.** Make the online free-tier models the
+  default/first choice wherever quality matters (the Tutor already does this); keep the on-device phone model and the
+  verified notes as the offline fallback. (Owner preference, 12 Nov 2026.) Exception: on the Scan & Explain page the
+  page's own text goes online only after a one-time, remembered consent, and the page image never leaves the phone.
 - No paid API, server or subscription without the owner's explicit approval. Free tiers only.
 - Never rotate several accounts or keys to stretch free quotas (Google and Groq terms forbid it). Route across different
   models and providers instead.
@@ -31,6 +35,10 @@ Start every session by reading `STATUS.md` (what is done, what is not verified) 
 - Checks before every push: `npm test` and `node scripts/browser-smoke.mjs` (Playwright Chromium is preinstalled).
 - A new browser module must be listed in `sw.js`, `server.mjs` and `scripts/prepare-android.mjs` (`tests/packaging.test.js`
   enforces it). Bump the `CACHE` version in `sw.js` when web files change.
+- Books: `data/books/catalog.json` lists the bundled books (text really in the app); `data/books/shelf.json` is the hand-kept
+  evidence (Nandini's printed Neuron books, subject mapping, which book may go to AI). A printed title is never a book in the
+  app. OpenStax books are reading and search only: their text must never reach any language model (`aiBookIds`).
+- After any book import (`scripts/import_*.py`), run `node scripts/build-book-index.mjs`, then the checks.
 - After changing `icon.svg`, run `node scripts/make-icons.mjs` and commit `android-icons/`.
 - The APK is built only by GitHub Actions (`.github/workflows/build-android.yml`); give the owner the artifact link of the
   run for the pushed commit. Every APK is signed with `android-signing/debug.keystore`, so it installs over the old app.

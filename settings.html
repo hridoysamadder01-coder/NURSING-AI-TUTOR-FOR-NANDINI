@@ -1,21 +1,32 @@
 <!doctype html><html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#11998a"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./src/app.css"><title>Nandini · Settings</title><style>#result{line-height:1.7;margin:12px 0 0}.model{border:1.5px solid var(--line-2);border-radius:16px;padding:12px 14px;margin:10px 0}.model.rec{border-color:var(--brand);background:#f6fcfa}.model h3{margin:0;font-size:15.5px}.model .fine{margin:4px 0 8px}.model .bar{height:8px;margin:8px 0}#result:empty{display:none}.steps-mini{margin:4px 0 12px;padding-left:22px;line-height:1.75;font-size:14px}.steps-mini li{margin-bottom:2px}.ok-card{display:flex;gap:14px;align-items:flex-start}.ok-card .em{width:48px;height:48px;flex:none;border-radius:16px;display:grid;place-items:center;font-size:24px;background:var(--brand-soft)}.ok-card p{margin:0}</style></head><body><header class="hero"><div class="wrap"><div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">Settings</span></div><h1>⚙️ সেটিংস</h1><p>ফোনের ভেতরের AI এখান থেকে চালু করো। কোনো লিংক বা সার্ভার লাগবে না।</p></div></header><main>
 <section class="card" id="local-ai" style="scroll-margin-top:12px"><h2>🧠 ফোনের ভেতরের AI (লোকাল)</h2><p class="fine">একবার মডেল নামালে Tutor ইন্টারনেট ছাড়াই, ফোনের ভেতরেই AI দিয়ে বুঝিয়ে বলবে। মডেল বড় (প্রায় ২.৪ GB), তাই Wi-Fi দিয়ে নামাও। ছোট AI মাঝে মাঝে ভুল করে; উত্তর সবসময় অ্যাপের যাচাই করা ব্যাখ্যার সঙ্গে মিলিয়ে নেবে।</p><ol class="steps-mini"><li>Wi-Fi চালু করো (প্রায় ২.৪ GB নামবে)।</li><li>নিচের <b>⬇️ নামাও</b> বোতাম চাপো। <b>কোনো লিংক দিতে হবে না।</b></li><li>নামা শেষ হলে <b>⚡ গতি পরীক্ষা</b> চাপো, তারপর Tutor-এ প্রশ্ন করো।</li></ol><div id="aiDevice" class="callout mint">এটা শুধু Android অ্যাপে কাজ করবে।</div><div id="aiModels"></div><label class="consent" id="autoRow" hidden style="display:flex;gap:9px;align-items:center;font-size:13.5px;margin-top:12px"><input type="checkbox" id="aiAuto" style="width:auto;min-height:0"> প্রতিটি প্রশ্নে AI নিজে থেকে উত্তর দেবে</label><p id="aiTest" class="fine" aria-live="polite" style="white-space:pre-line"></p><p class="fine">মডেল: Google Gemma, <a href="https://ai.google.dev/gemma/terms" target="_blank" rel="noopener noreferrer">Gemma Terms of Use</a> অনুযায়ী Hugging Face থেকে নামানো হয়। চালায় llama.cpp (MIT)।</p></section>
-<section class="card" id="cloud" style="scroll-margin-top:12px"><h2>🌐 শক্তিশালী মোড (অনলাইন)</h2><p class="fine">নেট থাকলে বড় AI উত্তর দেবে: আগে Google Gemini, ওর ফ্রি সীমা শেষ হলে Groq। নেট না থাকলে বা দুটোই না পেলে ফোনের ভেতরের AI। key শুধু এই ফোনেই থাকে, কোথাও পাঠানো হয় না।</p>
+<section class="card" id="cloud" style="scroll-margin-top:12px"><h2>🌐 শক্তিশালী মোড (অনলাইন)</h2><p class="fine">নেট থাকলে বড় AI উত্তর দেবে: আগে Google Gemini (৩টা মডেল, প্রতিটার আলাদা ফ্রি কোটা), তারপর Groq — সবই ফ্রি। নেট না থাকলে ফোনের ভেতরের AI। <b>OpenAI শুধু শায়নির কণ্ঠের জন্য</b> — নিচে “🎤 কণ্ঠে কথা বলা” অংশে। key শুধু এই ফোনেই থাকে — একবার দিলেই সেভ থাকে, নন্দিনীকে আর দিতে হবে না।</p>
 <label class="field" for="geminiKey">Gemini API key (<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com</a> থেকে)</label><input id="geminiKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza…">
 <label class="field" for="groqKey" style="margin-top:10px">Groq API key (<a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com</a> থেকে)</label><input id="groqKey" type="password" autocomplete="off" spellcheck="false" placeholder="gsk_…">
 <div class="btn-row" style="margin-top:12px"><button id="cloudSave" class="btn" type="button">সেভ করো</button><button id="cloudTest" class="btn soft" type="button">🔌 পরীক্ষা করো</button></div>
 <label class="consent" style="display:flex;gap:9px;align-items:center;font-size:13.5px;margin-top:12px"><input type="checkbox" id="cloudOn" style="width:auto;min-height:0"> শক্তিশালী মোড চালু</label>
 <p id="cloudResult" class="fine" aria-live="polite" style="white-space:pre-line"></p>
 <p class="fine">ফ্রি প্ল্যানে প্রশ্নগুলো Google বা Groq নিজেদের সার্ভিস উন্নত করতে ব্যবহার করতে পারে। কথা বলার মোডে (〰️) আর 🎤-তে কণ্ঠের রেকর্ডও তাদের কাছে যায়। তাই নিজের নাম, ফোন নম্বর বা রোগীর ব্যক্তিগত তথ্য বলবে বা লিখবে না।</p></section>
-<section class="card" id="voice" hidden style="scroll-margin-top:12px"><h2>🎤 কণ্ঠে কথা বলা</h2><p class="fine">Tutor-এ 🎤 চেপে বাংলায় প্রশ্ন বললে উত্তর লিখে পড়েও শোনাবে। ফোনের নিজের Android কণ্ঠ-ব্যবস্থা ব্যবহার হয়।</p><div id="voiceStatus" class="callout mint" style="white-space:pre-line">দেখছি…</div><div class="btn-row" id="voiceBtns" style="margin-top:10px"></div><label class="consent" style="display:flex;gap:9px;align-items:center;font-size:13.5px;margin-top:12px"><input type="checkbox" id="voiceAuto" style="width:auto;min-height:0"> কণ্ঠে প্রশ্ন করলে উত্তর পড়ে শোনাবে</label><label class="consent" style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;margin-top:10px"><input type="checkbox" id="voiceOnline" style="width:auto;min-height:0;margin-top:3px"> ফোনে অফলাইন বাংলা শোনার প্যাক না থাকলে ইন্টারনেট দিয়ে কণ্ঠ বোঝো (তখন কণ্ঠের রেকর্ড Google-এর কাছে যাবে)</label></section>
+<section class="card" id="voice" style="scroll-margin-top:12px"><h2>🎤 কণ্ঠে কথা বলা</h2><p class="fine">Tutor-এ 🎤 চেপে বাংলায় প্রশ্ন বললে উত্তর লিখে পড়েও শোনাবে।</p>
+<div style="margin:4px 0 16px;padding:14px;border-radius:14px;background:var(--brand-soft)">
+ <label class="field" for="openaiKey">🎙️ শায়নির মানুষের মতো কণ্ঠ · OpenAI API key (<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com</a> থেকে)</label>
+ <input id="openaiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+ <label class="field" for="openaiVoice" style="margin-top:10px">কণ্ঠ বেছে নাও</label>
+ <select id="openaiVoice"><option value="coral">Coral — বন্ধুত্বপূর্ণ নারীকণ্ঠ</option><option value="shimmer">Shimmer — কোমল নারীকণ্ঠ</option><option value="nova">Nova — প্রাণবন্ত নারীকণ্ঠ</option><option value="sage">Sage — শান্ত নারীকণ্ঠ</option></select>
+ <div class="btn-row" style="margin-top:10px"><button id="voiceTest" class="btn soft" type="button">🔊 কণ্ঠ পরীক্ষা করো</button></div>
+ <p id="voiceTestResult" class="fine" aria-live="polite" style="margin-top:6px;white-space:pre-line"></p>
+ <p class="fine" style="margin-top:8px">⚠️ OpenAI কণ্ঠ <b>ফ্রি নয়</b> — তোমার নিজের key, তোমার বিলে চলবে (ব্যবহার কম হলে খরচও কম)। key এই ফোনেই থাকে, একবার দিলেই সেভ। নেট থাকলে এই স্বাভাবিক কণ্ঠে পড়বে; নেট না থাকলে ফোনের নিজের কণ্ঠে।</p>
+</div>
+<p class="fine" style="margin:0 0 10px">নিচের অংশ ফোনের নিজের Android কণ্ঠ-ব্যবস্থা (অফলাইন, বিনামূল্যে):</p>
+<div id="voiceStatus" class="callout mint" style="white-space:pre-line">দেখছি…</div><div class="btn-row" id="voiceBtns" style="margin-top:10px"></div><label class="consent" style="display:flex;gap:9px;align-items:center;font-size:13.5px;margin-top:12px"><input type="checkbox" id="voiceAuto" style="width:auto;min-height:0"> কণ্ঠে প্রশ্ন করলে উত্তর পড়ে শোনাবে</label><label class="consent" style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;margin-top:10px"><input type="checkbox" id="voiceOnline" style="width:auto;min-height:0;margin-top:3px"> ফোনে অফলাইন বাংলা শোনার প্যাক না থাকলে ইন্টারনেট দিয়ে কণ্ঠ বোঝো (তখন কণ্ঠের রেকর্ড Google-এর কাছে যাবে)</label></section>
 <p class="fine" style="margin:0 4px 14px">📖 বই পড়া, নোট, রিভিশন, MCQ আর সহজ বাংলা ব্যাখ্যা AI বা সার্ভার ছাড়াই চলে।</p>
 <details class="info" id="advanced"><summary>🔧 উন্নত: নিজের VPS সার্ভার (এখন দরকার নেই)</summary><section><h2 style="font-size:16px">🔗 নিজস্ব VPS-এর HTTPS ঠিকানা</h2><p class="fine">যখন আমাদের নিজস্ব AI Tutor সার্ভার চালু হবে, তার HTTPS ঠিকানা এখানে একবার সেভ করলেই হবে। এখন সার্ভার প্রস্তুত না থাকলে ফাঁকা রাখো।</p><label class="field" for="apiBase">AI Tutor URL (শুধু HTTPS)</label><input id="apiBase" inputmode="url" autocomplete="url" placeholder="https://your-nursing-subdomain.example" spellcheck="false"><div class="btn-row" style="margin-top:14px"><button id="save" class="btn" type="button">ঠিকানা সেভ</button><button id="test" class="btn soft" type="button">সংযোগ পরীক্ষা</button><button id="clear" class="btn ghost" type="button">বন্ধ করো</button></div><p id="result" class="callout mint" aria-live="polite"></p><div class="callout">⚠️ <span>এখানে API key বা ব্যক্তিগত পাসওয়ার্ড লিখবে না। শুধু আমাদের নিজের সার্ভারের প্রকাশ্য HTTPS ঠিকানা লিখবে। AI ব্যবহার করার ব্যক্তিগত access code আলাদা করে চাইবে এবং ফোনে সংরক্ষণ করবে না।</span></div></section></details></main>
 <nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
 <a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
+<a href="./topics.html" data-tab="learn"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20M9 7.5h7M9 11h5"/></svg></span>পড়ি</a>
+<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>শায়নি</a>
+<a href="./scan.html" data-tab="scan"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h2M17 5h2a2 2 0 0 1 2 2v2M21 15v2a2 2 0 0 1-2 2h-2M7 19H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.2"/></svg></span>পাতা</a>
 <a href="./library.html" data-tab="books"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
-<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>Tutor</a>
-<a href="./topics.html" data-tab="easy"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.8.7 1 1.5 1 2.4h6c0-.9.2-1.7 1-2.4a6.5 6.5 0 0 0-4-11.6z"/></svg></span>সহজ বাংলা</a>
-<a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
 </div></nav>
 <script type="module">
 import {savedApiBase,setApiBase,normalizedApiBase,healthUrl} from './src/api-config.js';
@@ -72,8 +83,8 @@ async function speedTest(m){
 $('aiAuto').onchange=e=>llm.setAuto(e.target.checked);
 // Voice: Android's Bangla text-to-speech and speech recognition (src/voice.js). The TTS engine starts a moment after the app.
 async function renderVoice(retry=true){
- if(!voice.available())return;
- $('voice').hidden=false;$('voiceAuto').checked=voice.autoSpeak();$('voiceOnline').checked=voice.onlineAllowed();
+ if(!voice.available()){$('voiceStatus').textContent='🔊 ফোনের নিজের অফলাইন কণ্ঠ শুধু Android অ্যাপে চলে। উপরে OpenAI কণ্ঠ যেকোনো জায়গায় চলে।';return}
+ $('voiceAuto').checked=voice.autoSpeak();$('voiceOnline').checked=voice.onlineAllowed();
  const st=await voice.status();
  if(!st.tts&&retry){setTimeout(()=>renderVoice(false),1500);return}
  $('voiceStatus').textContent=(st.bangla?'🔊 বাংলা কণ্ঠ: আছে ✅':'🔊 বাংলা কণ্ঠ: নেই। নিচের বোতাম চেপে "বাংলা" কণ্ঠ নামাও (একবার, Wi-Fi দিয়ে)।')+'\n'+
@@ -85,16 +96,42 @@ async function renderVoice(retry=true){
  if(!st.bangla){const inst=E('button','⬇️ বাংলা কণ্ঠ নামাও','btn sm');inst.type='button';inst.onclick=()=>voice.installVoice();row.append(inst)}
 }
 // Strong mode keys: kept only in this phone's storage (src/cloud-ai.js).
-{const k=cloud.keys();$('geminiKey').value=k.gemini;$('groqKey').value=k.groq;$('cloudOn').checked=cloud.enabled()}
-const keyHint=()=>{const g=$('geminiKey').value.trim(),q=$('groqKey').value.trim();return [g&&!g.startsWith('AIza')?'Gemini key সাধারণত "AIza" দিয়ে শুরু হয়, ঠিক কপি হয়েছে তো?':'',q&&!q.startsWith('gsk_')?'Groq key সাধারণত "gsk_" দিয়ে শুরু হয়, ঠিক কপি হয়েছে তো?':''].filter(Boolean).join('\n')};
-$('cloudSave').onclick=()=>{cloud.setKeys({gemini:$('geminiKey').value,groq:$('groqKey').value});const k=cloud.keys();$('cloudResult').textContent=(k.gemini||k.groq?'✅ সেভ হয়েছে। এবার "পরীক্ষা করো" চাপো।':'key মুছে দেওয়া হয়েছে। শক্তিশালী মোড বন্ধ থাকবে।')+(keyHint()?'\n⚠️ '+keyHint():'')};
+{const k=cloud.keys();$('geminiKey').value=k.gemini;$('groqKey').value=k.groq;$('openaiKey').value=k.openai;$('openaiVoice').value=cloud.openaiVoice();$('cloudOn').checked=cloud.enabled()}
+const saveCloud=()=>{cloud.setKeys({gemini:$('geminiKey').value,groq:$('groqKey').value,openai:$('openaiKey').value});cloud.setOpenaiVoice($('openaiVoice').value)};
+$('openaiVoice').onchange=()=>cloud.setOpenaiVoice($('openaiVoice').value);
+// The OpenAI voice key now lives in the voice section, away from the "সেভ করো" button, so save it as soon as it is typed.
+$('openaiKey').onchange=()=>{saveCloud();if($('openaiKey').value.trim())$('voiceTestResult').textContent='✅ OpenAI কণ্ঠের key সেভ হয়েছে। "🔊 কণ্ঠ পরীক্ষা করো" চেপে শুনে দেখো।'};
+// A key either works or it does not — the "পরীক্ষা করো" test says which. No prefix guessing, so a valid key that
+// doesn't start with "AIza"/"gsk_"/"sk-" is never wrongly flagged (which made the owner re-enter a working key).
+const keyHint=()=>'';
+$('cloudSave').onclick=()=>{saveCloud();const k=cloud.keys();$('cloudResult').textContent=(k.gemini||k.groq||k.openai?'✅ সেভ হয়েছে।'+(k.openai?' শায়নি এখন OpenAI কণ্ঠে পড়বে।':'')+' এবার "পরীক্ষা করো" চাপো।':'key মুছে দেওয়া হয়েছে। শক্তিশালী মোড বন্ধ থাকবে।')+(keyHint()?'\n⚠️ '+keyHint():'')};
 $('cloudTest').onclick=async()=>{
- cloud.setKeys({gemini:$('geminiKey').value,groq:$('groqKey').value});const k=cloud.keys();
- if(!k.gemini&&!k.groq){$('cloudResult').textContent='আগে অন্তত একটা key দাও।';return}
+ saveCloud();const k=cloud.keys();
+ if(!k.gemini&&!k.groq){$('cloudResult').textContent=k.openai?'উত্তরের জন্য Gemini বা Groq key দাও (ফ্রি)। OpenAI key শুধু কণ্ঠের — নিচে "🔊 কণ্ঠ পরীক্ষা করো" দিয়ে সেটা দেখো।':'আগে অন্তত একটা key দাও।';return}
  $('cloudResult').textContent='🔌 পরীক্ষা চলছে…';const lines=[];
  for(const p of ['gemini','groq']){if(!k[p])continue;const r=await cloud.testProvider(p);
   lines.push(r.ok?'✅ '+r.label+': কাজ করছে ('+bn((r.ms/1000).toFixed(1))+' সেকেন্ড)':'❌ '+r.label+': '+({key_rejected:'key ভুল বা বন্ধ',limit:'আজকের ফ্রি সীমা শেষ',network:'ইন্টারনেট পাওয়া যাচ্ছে না',timeout:'সাড়া দিচ্ছে না'}[r.error]||r.error))}
  $('cloudResult').textContent=lines.join('\n')+(keyHint()?'\n⚠️ '+keyHint():'');
+};
+// Play a short sample in Shayni's OpenAI voice, so the owner hears it works — and sees the real reason if it does not.
+$('voiceTest').onclick=async()=>{
+ saveCloud();
+ if(!cloud.keys().openai){$('voiceTestResult').textContent='আগে উপরে OpenAI key বসিয়ে সেভ করো।';return}
+ if(globalThis.navigator?.onLine===false){$('voiceTestResult').textContent='এখন নেট নেই — OpenAI কণ্ঠের জন্য ইন্টারনেট লাগবে।';return}
+ $('voiceTest').disabled=true;$('voiceTestResult').textContent='🔊 শায়নির কণ্ঠ আনছি…';
+ let url;
+ try{
+  const r=await cloud.openaiSpeech('হ্যালো নন্দিনী! আমি শায়নি, তোমার পড়ার বন্ধু। চলো আজ একটু পড়ি।');
+  url=URL.createObjectURL(new Blob([r.wav],{type:'audio/wav'}));
+  const a=new Audio(url);a.onended=()=>{try{URL.revokeObjectURL(url)}catch{}};
+  await a.play();
+  $('voiceTestResult').textContent='✅ শায়নির OpenAI কণ্ঠ কাজ করছে! এখন প্রশ্নের উত্তর এই কণ্ঠেই পড়ে শোনাবে।';
+ }catch(e){
+  if(url)try{URL.revokeObjectURL(url)}catch{}
+  const m=e?.message||'';
+  const map={key_rejected:'OpenAI key ভুল, নয়তো অ্যাকাউন্টে টাকা/ক্রেডিট যোগ করা নেই। platform.openai.com → Billing-এ গিয়ে payment method আর অল্প ক্রেডিট (যেমন $৫) যোগ করো।',limit:'OpenAI quota বা ক্রেডিট শেষ (অথবা খুব দ্রুত অনেকবার)। platform.openai.com → Billing দেখো।',no_key:'আগে OpenAI key বসাও।',http_400:'অনুরোধে সমস্যা — key আর কণ্ঠ ঠিক আছে কি না দেখো।'};
+  $('voiceTestResult').textContent='❌ '+(map[m]||('কণ্ঠ আনা গেল না ('+m+')। নেট আর key দেখে আবার চেষ্টা করো।'));
+ }finally{$('voiceTest').disabled=false}
 };
 $('cloudOn').onchange=e=>cloud.setEnabled(e.target.checked);
 $('voiceAuto').onchange=e=>voice.setAutoSpeak(e.target.checked);

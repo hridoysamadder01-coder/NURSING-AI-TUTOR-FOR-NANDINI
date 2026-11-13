@@ -16,20 +16,16 @@ body:not([data-view=home]) .home-only,body[data-view=home] .sub-only{display:non
 .continue b{display:block;font-size:15px;line-height:1.4;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .continue .meta{display:block;font-size:12.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .continue .play{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;font-size:15px}
-.rail{display:flex;gap:10px;overflow-x:auto;margin:0 -16px;padding:2px 16px 8px;scroll-snap-type:x mandatory;scrollbar-width:none}
-.rail::-webkit-scrollbar{display:none}
-.subj{flex:0 0 138px;scroll-snap-align:start;background:#fff;border-radius:18px;padding:13px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow-sm);border:1px solid rgba(222,234,229,.8)}
-.subj .em{font-size:24px;line-height:1.2}.subj b{display:block;font-size:13.5px;line-height:1.4;margin:7px 0 2px;min-height:38px}
-.subj small{display:block;font-size:11px;color:var(--ink-3);font-weight:650;margin-bottom:8px}
-.subj .bar{height:6px}
-.easy-banner{position:relative;display:flex;align-items:center;gap:14px;overflow:hidden;margin:4px 0 0;padding:18px;border-radius:var(--r-lg);text-decoration:none;color:#fff;background:linear-gradient(135deg,#ffa25c,#f2606a 70%,#d9487f);box-shadow:0 14px 28px -16px rgba(226,80,100,.9)}
-.easy-banner::after{content:"";position:absolute;width:160px;height:160px;right:-50px;top:-60px;border-radius:50%;background:rgba(255,255,255,.16)}
-.easy-banner .em{font-size:38px;line-height:1;flex:none}.easy-banner .txt{flex:1;min-width:0;position:relative;z-index:1}
-.easy-banner b{display:block;font-size:17px;line-height:1.4}.easy-banner small{display:block;font-size:12.5px;line-height:1.55;color:rgba(255,255,255,.9);margin-top:2px}
-.easy-banner .go{position:relative;z-index:1;flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#e0565b;font-weight:800}
-.lesson-card{position:relative;overflow:hidden;background:linear-gradient(150deg,#fff6ef,#fff 65%)}
-.lesson-card::after{content:"🛡️";position:absolute;right:-6px;bottom:-14px;font-size:84px;opacity:.13}
-.lesson-card h3{font-size:17px;margin:10px 0 4px}
+/* Three primary paths — the home screen's whole job is to point here */
+.paths{display:flex;flex-direction:column;gap:11px;margin-top:4px}
+.path{display:flex;align-items:center;gap:14px;background:#fff;border-radius:var(--r-lg);padding:15px 16px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow-sm);border:1px solid rgba(222,234,229,.8);transition:transform .14s}
+.path:active{transform:scale(.985)}
+.path .pico{width:52px;height:52px;flex:none;border-radius:16px;display:grid;place-items:center;font-size:27px}
+.path .pico.mint{background:#c8efe0}.path .pico.sky{background:#cde5fb}.path .pico.peach{background:#ffd9c7}
+.path .ptxt{flex:1;min-width:0}
+.path .ptxt b{display:block;font-size:16.5px;line-height:1.4}
+.path .ptxt small{display:block;font-size:12.5px;color:var(--ink-2);line-height:1.5;margin-top:2px}
+.path .parrow{flex:none;color:var(--ink-3);font-size:20px;font-weight:700}
 .steps{list-style:none;counter-reset:s;padding:0;margin:8px 0 0}
 .steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:8px 0;line-height:1.6;font-size:14px}
 .steps li::before{content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--sky-soft);color:var(--sky);font-weight:800;font-size:13px}
@@ -45,7 +41,7 @@ body:not([data-view=home]) .home-only,body[data-view=home] .sub-only{display:non
   <p class="kicker" style="margin-top:18px">Amazan Nursing College · ১ম বর্ষ</p>
   <h1 id="greet">শুভ সকাল, নন্দিনী 🌿</h1>
   <p>তোমার পড়াশোনা, তোমার গতিতে। বাংলা ভাষায়।</p>
-  <form class="askhome" action="./ask.html" method="get" role="search"><span aria-hidden="true">🤖</span><input name="q" type="search" maxlength="200" placeholder="Tutor-কে প্রশ্ন করো… যেমন: osmosis কী?" aria-label="Tutor-কে প্রশ্ন করো" enterkeyhint="send"><button type="submit" aria-label="প্রশ্ন পাঠাও">➤</button></form>
+  <form class="askhome" action="./ask.html" method="get" role="search"><span aria-hidden="true">🤖</span><input name="q" type="search" maxlength="200" placeholder="শায়নিকে প্রশ্ন করো… যেমন: osmosis কী?" aria-label="শায়নিকে প্রশ্ন করো" enterkeyhint="send"><button type="submit" aria-label="প্রশ্ন পাঠাও">➤</button></form>
   <a class="glass today" href="./coach.html" aria-label="আজকের পড়ার পরিকল্পনা খুলো">
    <div class="ring" id="ring"><b id="ringPct">০%</b></div>
    <div class="txt"><b id="todayTitle">আজকের পড়া শুরু করো</b><span id="todayLine">৪১টি শেখার লক্ষ্যের মধ্যে ০টি শেষ</span><em class="go">আজকের পড়া →</em></div>
@@ -59,24 +55,22 @@ body:not([data-view=home]) .home-only,body[data-view=home] .sub-only{display:non
 <main>
 <section class="view active" id="v-home">
  <a class="card continue hidden" id="continueCard" href="./library.html"><span class="cover" id="contCover">NF</span><span class="txt"><small>যেখানে থেমেছিলে, সেখান থেকে পড়ো</small><b id="contTitle"></b><span class="meta" id="contMeta"></span></span><span class="play" aria-hidden="true">▶</span></a>
- <a class="easy-banner" href="./topics.html"><span class="em">💡</span><span class="txt"><b>কঠিন টপিক, সহজ বাংলায়</b><small id="easyLine">৬ বিষয়ের ৩৫টি কঠিন টপিক · মনে রাখার কৌশল ও MCQ সহ</small></span><span class="go" aria-hidden="true">→</span></a>
- <h2 class="section-title">আজ কী করবে?</h2>
- <div class="tiles">
-  <a class="tile mint" href="./library.html"><span class="ico">📚</span><b>বই পড়ি</b><small>৪টি নার্সিং বই · English + বাংলা</small></a>
-  <a class="tile violet" href="./coach.html"><span class="ico">🗓️</span><b>Study Coach</b><small>৬ বিষয়ের পড়া ও রিভিশন</small></a>
-  <a class="tile peach" href="./index.html#quiz" data-nav="quiz"><span class="ico">🧠</span><b>MCQ অনুশীলন</b><small>নিজেকে যাচাই করো</small></a>
-  <a class="tile sky" href="./index.html#notes" data-nav="notes"><span class="ico">📝</span><b>আমার নোট</b><small>নিজের ভাষায় লিখে রাখো</small></a>
+ <div class="paths">
+  <a class="path" href="./topics.html"><span class="pico mint" aria-hidden="true">📚</span><span class="ptxt"><b>বিষয় ধরে পড়ি</b><small>৬টি বিষয় · সহজ বাংলায় পাঠ, বইয়ের সূত্র ও যাচাই</small></span><span class="parrow" aria-hidden="true">→</span></a>
+  <a class="path" href="./ask.html"><span class="pico sky" aria-hidden="true">🤖</span><span class="ptxt"><b>শায়নিকে জিজ্ঞেস করি</b><small>নার্সিং প্রশ্নের সহজ বাংলা উত্তর, বইয়ের অধ্যায়সহ</small></span><span class="parrow" aria-hidden="true">→</span></a>
+  <a class="path" href="./scan.html"><span class="pico peach" aria-hidden="true">📷</span><span class="ptxt"><b>পাতার ছবি বুঝি</b><small>বইয়ের একটা পাতার ছবি নিয়ে প্রশ্ন করো</small></span><span class="parrow" aria-hidden="true">→</span></a>
  </div>
- <h2 class="section-title">আমার ৬টি বিষয় <a href="./coach.html">সব দেখো →</a></h2>
- <div class="rail" id="subjectRail"></div>
- <a class="card lesson-card" href="./tutor.html"><span class="chip coral">✨ বাংলা পাঠ</span><h3>সংক্রমণ প্রতিরোধ · Infection Prevention</h3><p class="muted">সহজ বাংলা ব্যাখ্যা, মূল উৎস ও ৫টি অধ্যায়ভিত্তিক MCQ।</p><span class="btn sm">পাঠটা শুরু করি →</span></a>
- <h2 class="section-title">আরও যা আছে</h2>
+ <h2 class="section-title">আরও</h2>
  <nav class="menu" aria-label="আরও">
-  <a href="./faridpur-first-year.html"><span class="ico">📦</span><span class="txt">১ম বর্ষের সব বইয়ের তালিকা<small>BNMC সিলেবাস ও ৬ বিষয়ের উৎস</small></span><span class="chev">›</span></a>
-  <a href="./index.html#pdf" data-nav="pdf"><span class="ico">📄</span><span class="txt">নিজের PDF বই খুলো<small>ফোনেই খুলবে, কোথাও আপলোড হবে না</small></span><span class="chev">›</span></a>
+  <a href="./library.html"><span class="ico">📖</span><span class="txt">সব বই পড়ি<small>১২টি বই · English + বাংলা, নেট ছাড়াই</small></span><span class="chev">›</span></a>
+  <a href="./coach.html"><span class="ico">🗓️</span><span class="txt">পড়ার প্ল্যান ও রিভিশন<small>৬ বিষয়ের অগ্রগতি</small></span><span class="chev">›</span></a>
+  <a href="./index.html#quiz" data-nav="quiz"><span class="ico">🧠</span><span class="txt">MCQ অনুশীলন<small>নিজেকে যাচাই করো</small></span><span class="chev">›</span></a>
+  <a href="./index.html#notes" data-nav="notes"><span class="ico">📝</span><span class="txt">আমার নোট<small>নিজের ভাষায় লিখে রাখো</small></span><span class="chev">›</span></a>
+  <a href="./index.html#pdf" data-nav="pdf"><span class="ico">📄</span><span class="txt">নিজের পুরো PDF বই খুলো<small>ফোনেই খুলবে, কোথাও আপলোড হবে না</small></span><span class="chev">›</span></a>
+  <a href="./faridpur-first-year.html"><span class="ico">📦</span><span class="txt">৬ বিষয়ের সব বইয়ের তালিকা<small>হাতের বই, অ্যাপের বই, উৎস</small></span><span class="chev">›</span></a>
   <a href="./settings.html"><span class="ico">⚙️</span><span class="txt">সেটিংস · ফোনের ভেতরের AI<small>একবার নামালে ইন্টারনেট ছাড়াই AI শিক্ষক</small></span><span class="chev">›</span></a>
  </nav>
- <details class="info"><summary>ℹ️ বই ও AI সম্পর্কে জানো</summary><p>বইগুলো Open RN-এর প্রকাশিত রেফারেন্স, কলেজের নির্দিষ্ট প্রকাশনার সেট নয়। ফোনের বাংলা অনুবাদ স্বয়ংক্রিয়, তাই চিকিৎসার গুরুত্বপূর্ণ শব্দ মূল ইংরেজির সঙ্গে মিলিয়ে পড়বে। আলাদা AI Teacher সার্ভার চালু হলে প্রশ্নোত্তর পাওয়া যাবে।</p><p>শুধু শিক্ষার জন্য। বাস্তব রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে এই অ্যাপ ব্যবহার করবে না।</p></details>
+ <details class="info"><summary>ℹ️ বই ও AI সম্পর্কে জানো</summary><p>অ্যাপের বইগুলো প্রকাশকের বিনামূল্যের রেফারেন্স (Open RN, OpenStax, NCI), নন্দিনীর কলেজের নির্দিষ্ট প্রকাশনার সেট নয়। OpenStax-এর বই শুধু পড়া ও খোঁজার জন্য, AI-তে যায় না। ফোনের বাংলা অনুবাদ স্বয়ংক্রিয়, তাই চিকিৎসার গুরুত্বপূর্ণ শব্দ মূল ইংরেজির সঙ্গে মিলিয়ে পড়বে।</p><p>শুধু শিক্ষার জন্য। বাস্তব রোগীর চিকিৎসা বা ওষুধের সিদ্ধান্তে এই অ্যাপ ব্যবহার করবে না।</p></details>
 </section>
 <section class="view" id="v-quiz">
  <nav class="menu" aria-label="কুইজ সেট">
@@ -112,14 +106,13 @@ body:not([data-view=home]) .home-only,body[data-view=home] .sub-only{display:non
 </main>
 <nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
 <a href="./index.html" data-tab="home" data-nav="home" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
+<a href="./topics.html" data-tab="learn"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20M9 7.5h7M9 11h5"/></svg></span>পড়ি</a>
+<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>শায়নি</a>
+<a href="./scan.html" data-tab="scan"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h2M17 5h2a2 2 0 0 1 2 2v2M21 15v2a2 2 0 0 1-2 2h-2M7 19H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.2"/></svg></span>পাতা</a>
 <a href="./library.html" data-tab="books"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
-<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>Tutor</a>
-<a href="./topics.html" data-tab="easy"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.8.7 1 1.5 1 2.4h6c0-.9.2-1.7 1-2.4a6.5 6.5 0 0 0-4-11.6z"/></svg></span>সহজ বাংলা</a>
-<a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
 </div></nav>
 <script type="module">
 import {SUBJECTS,TOTAL_TOPICS,taskId} from './src/study-plan.js';
-import {TOPICS} from './src/easy-topics.js';
 const questions=[{q:"কোনটি হাত পরিষ্কারের একটি প্রধান উদ্দেশ্য?",options:["জীবাণু সংক্রমণের ঝুঁকি কমানো","পালস বাড়ানো","শরীরের তাপমাত্রা বাড়ানো","রক্তচাপ মাপা"],a:0,why:"হাত পরিচ্ছন্নতা স্বাস্থ্যসেবায় সংক্রমণ প্রতিরোধের একটি গুরুত্বপূর্ণ উপায়।"},{q:"মানবদেহে অক্সিজেন গ্রহণ ও কার্বন ডাই-অক্সাইড ত্যাগের প্রধান অঙ্গ কোনটি?",options:["কিডনি","ফুসফুস","যকৃত","পাকস্থলী"],a:1,why:"ফুসফুসের অ্যালভিওলাইতে গ্যাসের বিনিময় ঘটে।"},{q:"নিচের কোনটি সাধারণত Vital Sign হিসেবে দেখা হয়?",options:["চুলের দৈর্ঘ্য","জুতার মাপ","শরীরের তাপমাত্রা","চোখের রং"],a:2,why:"শরীরের তাপমাত্রা, পালস, শ্বাসপ্রশ্বাস, রক্তচাপ ইত্যাদি vital sign।"}];
 const views={home:['',''],quiz:['🧠 MCQ অনুশীলন','পড়া কতটা মনে আছে, একটু যাচাই করে নাও।'],notes:['📝 আমার নোট','বিষয় বেছে নিজের ভাষায় লিখে রাখো।'],pdf:['📄 নিজের PDF বই','ফোনে থাকা যেকোনো PDF এখানে খুলে পড়ো।']};
 const $=id=>document.getElementById(id);let index=0,score=0,answered=false,readerURL=null;const safeStore={get:(k)=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v);return true}catch{return false}}};
@@ -133,15 +126,13 @@ addEventListener('popstate',()=>nav(location.hash.slice(1)));
 // Greeting, today's progress and per-subject bars come from the Study Coach's saved state.
 const hour=new Date().getHours();$('greet').textContent=(hour>=5&&hour<12?'শুভ সকাল':hour<16&&hour>=12?'শুভ দুপুর':hour<18&&hour>=16?'শুভ বিকেল':hour<21&&hour>=18?'শুভ সন্ধ্যা':'শুভ রাত্রি')+', নন্দিনী 🌿';
 let coach={};try{const o=JSON.parse(safeStore.get('nandini-coach-v1')||'{}');if(o&&typeof o==='object'&&!Array.isArray(o))coach=o}catch{}
-try{const easy=JSON.parse(safeStore.get('nandini-easy-v1')||'{}'),n=TOPICS.filter(t=>easy?.[t.id]).length;if(n)$('easyLine').textContent=bn(TOPICS.length)+'টির মধ্যে '+bn(n)+'টি বুঝেছ · বাকিগুলো পড়ে ফেলো!'}catch{}
 const today=(()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()})();
 const VALID=new Set(SUBJECTS.flatMap(s=>s.topics.map((t,i)=>taskId(s.code,i))));
 const doneTasks=Object.entries(coach).filter(([k,v])=>VALID.has(k)&&v&&v.done).map(([,v])=>v),dueTasks=doneTasks.filter(v=>v.nextReview&&v.nextReview<=today).length,pct=Math.round(doneTasks.length/TOTAL_TOPICS*100);
 $('ring').style.setProperty('--p',pct);$('ringPct').textContent=bn(pct)+'%';
 $('todayTitle').textContent=dueTasks?'🔁 আজ '+bn(dueTasks)+'টি রিভিশন বাকি':doneTasks.length?'দারুণ চলছে! আরেকটু এগোও 💪':'আজকের পড়া শুরু করো';
 $('todayLine').textContent=bn(TOTAL_TOPICS)+'টি শেখার লক্ষ্যের মধ্যে '+bn(doneTasks.length)+'টি শেষ';
-$('subjectRail').innerHTML=SUBJECTS.map(s=>{const done=s.topics.filter((t,i)=>coach[taskId(s.code,i)]?.done).length;return '<a class="subj" href="./coach.html?subject='+s.code+'"><span class="em">'+s.emoji+'</span><b>'+esc(s.bn)+'</b><small>'+s.code+' · '+bn(done)+'/'+bn(s.topics.length)+'</small><div class="bar"><div style="width:'+Math.round(done/s.topics.length*100)+'%"></div></div></a>'}).join('');
-try{const last=JSON.parse(safeStore.get('nandini-last-read')||'null');if(last&&['fundamentals','skills','terminology','mentalhealth'].includes(last.book)&&Number.isInteger(last.chapter)&&last.chapter>=0){$('continueCard').href='./library.html?book='+last.book+'&chapter='+last.chapter;$('contCover').textContent=String(last.cover||'').slice(0,2)||'📖';$('contTitle').textContent=String(last.chapterTitle||'');$('contMeta').textContent=String(last.title||'')+' · অধ্যায় '+bn(last.chapter+1)+(last.total?' / '+bn(last.total):'');$('continueCard').classList.remove('hidden')}}catch{}
+try{const last=JSON.parse(safeStore.get('nandini-last-read')||'null');if(last&&/^[a-z0-9-]{2,40}$/.test(String(last.book))&&Number.isInteger(last.chapter)&&last.chapter>=0){$('continueCard').href='./library.html?book='+last.book+'&chapter='+last.chapter;$('contCover').textContent=String(last.cover||'').slice(0,3)||'📖';$('contTitle').textContent=String(last.chapterTitle||'');$('contMeta').textContent=String(last.title||'')+' · অধ্যায় '+bn(last.chapter+1)+(last.total?' / '+bn(last.total):'');$('continueCard').classList.remove('hidden')}}catch{}
 $('noteSubject').innerHTML=SUBJECTS.map(s=>'<option value="'+s.code+'">'+s.emoji+' '+esc(s.name)+'</option>').join('');
 function loadNote(){$('noteText').value=safeStore.get('nandini-note-'+$('noteSubject').value)||'';$('noteStatus').textContent='নোট শুধু এই ফোনেই থাকবে।'}
 $('noteSubject').addEventListener('change',loadNote);$('saveNote').addEventListener('click',()=>{$('noteStatus').textContent=safeStore.set('nandini-note-'+$('noteSubject').value,$('noteText').value)?'✓ নোট সেভ হয়েছে।':'সেভ হয়নি। ব্রাউজারের storage অনুমতি দেখো।'});loadNote();

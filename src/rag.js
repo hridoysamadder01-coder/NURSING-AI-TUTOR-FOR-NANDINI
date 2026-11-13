@@ -14,7 +14,8 @@ function stem(w){
  if(w.length>5&&w.endsWith('ed'))return w.slice(0,-2);
  return w;
 }
-export function enTokens(text){return (String(text||'').toLowerCase().match(/[a-z0-9]+/g)||[]).filter(w=>w.length>1&&!EN_STOP.has(w)).map(stem)}
+// NFKC first, so H₂O and 10⁻¹⁴ in the books match H2O and 10-14 as typed.
+export function enTokens(text){return (String(text||'').normalize('NFKC').toLowerCase().match(/[a-z0-9]+/g)||[]).filter(w=>w.length>1&&!EN_STOP.has(w)).map(stem)}
 // Bangla question words → English book vocabulary. Topic term pairs are added below automatically.
 const BN_EN={'রক্ত':'blood','রক্তচাপ':'blood pressure','হার্ট':'heart','হৃদ্‌যন্ত্র':'heart','ফুসফুস':'lung','শ্বাস':'breathing respiration','শ্বাসকষ্ট':'dyspnea shortness breath',
  'জ্বর':'fever temperature','ব্যথা':'pain','ক্ষত':'wound','ঘা':'ulcer wound','বেডসোর':'pressure injury','ওষুধ':'medication','ইনজেকশন':'injection','রোগী':'patient','নার্স':'nurse',
@@ -27,7 +28,9 @@ const BN_EN={'রক্ত':'blood','রক্তচাপ':'blood pressure','�
  'নেফ্রন':'nephron','হাইপোক্সিয়া':'hypoxia oxygen','স্টেরাইল':'sterile','গ্লাভস':'gloves','ইনসুলিন':'insulin','প্যারাসিটামল':'acetaminophen',
  'অ্যান্টিবায়োটিক':'antibiotic','ক্যানুলা':'cannula intravenous','নেবুলাইজার':'nebulizer','স্টেথোস্কোপ':'stethoscope','থার্মোমিটার':'thermometer','পালস':'pulse',
  'প্রেশার':'blood pressure','ইউরিন':'urine','ব্লাড':'blood','সুগার':'glucose','ডায়েট':'diet nutrition','ভিটামিন':'vitamin','এনিমা':'enema','সিরিঞ্জ':'syringe',
- 'স্ট্রেস':'stress','দুশ্চিন্তা':'anxiety stress','চাপ':'stress','পরার':'don','খোলার':'doff','মাপতে':'measure assess','মাপা':'measure assess','চোখ':'eye','কান':'ear','মুখ':'mouth oral','দাঁত':'teeth oral','পা':'leg foot','হাঁটা':'ambulation walking','বিছানা':'bed','গোসল':'bathing hygiene','ব্যান্ডেজ':'bandage dressing'};
+ 'স্ট্রেস':'stress','দুশ্চিন্তা':'anxiety stress','চাপ':'stress','পরার':'don','খোলার':'doff','মাপতে':'measure assess','মাপা':'measure assess','চোখ':'eye','কান':'ear','মুখ':'mouth oral','দাঁত':'teeth oral','পা':'leg foot','হাঁটা':'ambulation walking','বিছানা':'bed','গোসল':'bathing hygiene','ব্যান্ডেজ':'bandage dressing',
+ 'ব্যাকটেরিয়া':'bacteria','ভাইরাস':'virus','ছত্রাক':'fungi','ফাঙ্গাস':'fungi','পরজীবী':'parasite','কৃমি':'helminth worm','ম্যালেরিয়া':'malaria','অণুজীব':'microorganism microbe',
+ 'টিস্যু':'tissue','এনজাইম':'enzyme','নিউরন':'neuron','অ্যান্টিবডি':'antibody','কঙ্কাল':'skeleton skeletal','কম্পিউটার':'computer','ইমেইল':'email','ইন্টারনেট':'internet'};
 const LEX=new Map();
 // Words listed in BN_EN are kept even when the topic matcher ignores them (লক্ষণ, যত্ন…).
 const KEEP=new Set();
@@ -40,15 +43,16 @@ export function queryTerms(question){
  return [...out];
 }
 // Split every book section into ~160-word passages on paragraph boundaries.
+// A book the publisher does not allow in AI tools (ai_use "not_permitted") is refused here as well, whatever the caller passes.
 export function chunkBooks(books,maxWords=160){
  const chunks=[];
- for(const b of books)b.chapters.forEach((ch,ci)=>{for(const s of ch.sections){
+ for(const b of books){if(b.ai_use==='not_permitted')continue;b.chapters.forEach((ch,ci)=>{for(const s of ch.sections){
   const parts=Array.isArray(s.blocks)&&s.blocks.length?s.blocks.map(x=>x.text):String(s.text||'').split(/\n\s*\n/);
   let buf=[],n=0;
   const flush=()=>{const text=buf.join(' ').replace(/\s+/g,' ').trim();if(text.length>40)chunks.push({book:b.id,bookTitle:b.title,ci,chapter:ch.title,heading:s.heading,url:ch.url||b.source_url,text});buf=[];n=0};
   for(const p of parts){const w=String(p||'').split(/\s+/).length;if(n&&n+w>maxWords)flush();buf.push(p);n+=w}
   flush();
- }});
+ }})}
  return chunks;
 }
 export function buildIndex(chunks){
@@ -67,6 +71,8 @@ export function search(index,terms,k=3){
  return [...scores].sort((a,b)=>b[1]-a[1]).slice(0,k).map(([id,score])=>({...index.chunks[id],score:Math.round(score*100)/100}));
 }
 export function retrieve(question,index,{k=2}={}){
+ // The publisher's name in "Neuron বই" must not be searched as the nerve cell.
+ question=stripBrand(question);
  // A wrong topic would mislead the model, so the Bangla explanation is only used on a strong match.
  const tutor=askTutor(question),topic=tutor.topics[0]?.score>=6?tutor.topics[0].topic:null;
  const terms=queryTerms(question);
@@ -79,6 +85,17 @@ export function retrieve(question,index,{k=2}={}){
  return {topic,terms:[...new Set(terms)],passages:grounded?passages:[],grounded};
 }
 const trim=(s,words)=>{const w=String(s).split(/\s+/);return w.length>words?w.slice(0,words).join(' ')+' …':String(s)};
+// Her own printed books (the Neuron set) are not in the app, so nobody may say what they contain or on which page.
+export const OWN_BOOK_NOTE='তোমার হাতের ছাপা বইয়ের লেখা অ্যাপে নেই, তাই ওই বইয়ে বা তার কোন পৃষ্ঠায় কী আছে আমি বলতে পারব না। অ্যাপের বই আর নোট থেকে যা পাই, সেটাই বলছি।';
+// "Neuron" as the publisher's name (before a book word or one of her titles), not the nerve cell.
+const BRAND=/(neuron|নিউরন)(?=\s*(fundamentals|behaviou?ral\s+science|basic\s+science|anatomy\s*(&|and|ও|আর)\s*physiology|microbiology|communicative\s+english|publication|প্রকাশন|(এর|র)?\s*(বই|boi|book|guide|গাইড)))/gi;
+// The question without the publisher's name, for every search (topics, book passages, chapter pointers).
+export const stripBrand=q=>String(q||'').normalize('NFC').replace(BRAND,' ');
+export function isOwnBookQuestion(q){
+ const s=String(q||'').normalize('NFC');
+ if(s.search(BRAND)>=0)return true;
+ return /(আমার|আমাদের|কলেজের|ক্লাসের|হাতের|amar|amader|my|our|college(?:er)?)\s+(\S+\s+){0,3}(বই|বইয়ে|বইয়ের|বইতে|বইটা|boi|boite|boier|book)/i.test(s);
+}
 export const NOT_FOUND='এই প্রশ্নের উত্তর অ্যাপের বইয়ে পাইনি। শিক্ষককে জিজ্ঞেস করো।';
 // Patient doses are never left to a small model, whatever the retrieved text says ("১ গ্রাম কত mg" is still a unit question).
 export const DOSE_NOTE='ওষুধের ডোজ রোগী অনুযায়ী চিকিৎসক ঠিক করেন, তাই AI ডোজ বলবে না। ডোজ নিয়ে সবসময় ইনচার্জ নার্স বা চিকিৎসককে জিজ্ঞেস করো। 🙏';
@@ -130,6 +147,7 @@ export function buildMessages(question,ctx,{passageWords,followUp=null,attempt=0
   '৫) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত দেবে না।'+
   (cloud?'\n৬) প্রশ্নটা অস্পষ্ট হলে বা দুই রকম মানে হতে পারলে আন্দাজ করবে না; ছোট একটা প্রশ্ন করে জেনে নেবে সে কোনটা জানতে চায়।':'');
  let user='তথ্য:\n'+(sources.length?sources.join('\n\n'):'(কিছু নেই)')+'\n\nপ্রশ্ন: '+String(question).trim();
+ if(isOwnBookQuestion(question))user+='\n\nমনে রাখবে: নন্দিনীর নিজের ছাপা বইয়ের লেখা তোমার কাছে নেই। ওই বইয়ে বা তার কোনো পৃষ্ঠায় কী আছে, তা বলবে না বা আন্দাজ করবে না; শুধু উপরের "তথ্য" থেকে বলবে।';
  if(style){
   if(cloud&&previous)user+='\n\nআগে তুমি এভাবে বলেছিলে (এটা আবার বলবে না, অন্যভাবে বলবে):\n'+trim(previous,120);
   user+='\n\n'+style.say;
@@ -147,13 +165,36 @@ export function buildChatMessages(message,{history=[]}={}){
  // history: the last few turns of this chat ({role:'user'|'assistant',content}), so a friend remembers what was just said.
  return [{role:'system',content:system},...history.slice(-4),{role:'user',content:String(message).trim()}];
 }
+// Scan & Explain: the student photographed one page of her own book, the app read it on-device (OCR), and she may
+// have fixed the text. Shayni explains THAT page only — never adds facts from elsewhere, never invents what the page
+// does not show. The image never leaves the phone; only this text does, and online only with her explicit consent.
+export const PAGE_SOURCE='তোমার তোলা পাতা';
+export const PAGE_UNREADABLE='এই পাতার লেখা আমি পরিষ্কার পড়তে পারিনি, তাই ভুল কিছু বলব না। ভালো আলোয়, সোজা করে, কাছ থেকে আরেকবার ছবি তোলো, অথবা লেখাটা নিজে একটু ঠিক করে দাও।';
+// Enough real words to explain? (Guards against OCR noise or a blank page reaching the model.)
+export function pageTextUsable(text){
+ const s=String(text||'').trim();
+ return (s.match(/[A-Za-zঀ-৿]/g)||[]).length>=20&&s.split(/\s+/).filter(Boolean).length>=5;
+}
+export function buildPageMessages(pageText,question,{cloud=false}={}){
+ const text=String(pageText||'').trim().split(/\s+/).slice(0,1800).join(' ');
+ const q=String(question||'').trim();
+ const system=IDENTITY+' তুমি নন্দিনীর বন্ধুর মতো, ধৈর্যশীল নার্সিং শিক্ষক। নন্দিনী তার বইয়ের একটা পাতার ছবি তুলেছে, আর অ্যাপ সেই পাতা থেকে লেখা বের করেছে। '+LANGUAGE+(cloud?' '+EXAMPLES:'')+' নিয়ম:\n'+
+  '১) শুধু নিচের "পাতার লেখা" থেকে বোঝাবে। নিজের থেকে বা অন্য বই থেকে কোনো তথ্য যোগ করবে না; পাতায় যা নেই, তা বলবে না বা আন্দাজ করবে না।\n'+
+  '২) প্রথমে এক-দুই লাইনে পাতাটা কী নিয়ে বলবে, তারপর ৩–৫টি ছোট সহজ পয়েন্টে মূল কথাগুলো বোঝাবে। ইংরেজি পরিভাষা (যেমন Nephron) বন্ধনীতে রেখে সহজ বাংলায় মানে বলবে, কিন্তু পুরো লেখা হুবহু অনুবাদ করবে না।\n'+
+  '৩) পাতার লেখা অস্পষ্ট, এলোমেলো বা খুব কম হলে সেটা সৎভাবে বলবে আর পরিষ্কার ছবি তুলতে বলবে; বানিয়ে ব্যাখ্যা দেবে না।\n'+
+  '৪) কোনো রোগীর ওষুধের ডোজ বা চিকিৎসার সিদ্ধান্ত দেবে না, পাতায় লেখা থাকলেও সাধারণভাবে বোঝাবে, রোগীর জন্য ডোজ বলবে না।\n'+
+  '৫) শেষে মনে করিয়ে দেবে এটা তার তোলা পাতা থেকে বলা, আর পরীক্ষার আগে ক্লাস নোট/শিক্ষকের সঙ্গে মিলিয়ে নিতে বলবে।';
+ const user='পাতার লেখা:\n"""\n'+(text||'(কিছু পড়া যায়নি)')+'\n"""\n\n'+(q?('নন্দিনীর প্রশ্ন (এই পাতা নিয়ে): '+q):'নন্দিনী বলেছে: এই পাতাটা সহজ বাংলায় বুঝিয়ে দাও।');
+ return [{role:'system',content:system},{role:'user',content:user}];
+}
 // What the voice conversation's lookup_nursing tool returns: the verified topic (with trick) or book passages,
 // a fixed note for dose questions, or NOT_FOUND so the model says it is not in the books.
 export function lookupText(query,index){
  if(isDoseQuestion(query))return 'DOSE: '+DOSE_NOTE+' এই নোটটাই বলবে, কোনো ডোজ বলবে না।';
+ const own=isOwnBookQuestion(query)?'OWN_BOOK: '+OWN_BOOK_NOTE+' ওই বইয়ের কোনো অধ্যায় বা পৃষ্ঠার কথা বানিয়ে বলবে না।\n\n':'';
  const ctx=retrieve(query,index);
- if(!ctx.grounded)return 'NOT_FOUND';
+ if(!ctx.grounded)return own?own+'NOT_FOUND':'NOT_FOUND';
  const book=ctx.passages.map(p=>p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,150)).join('\n\n');
- if(ctx.topic)return topicSource(ctx.topic,'points',query)+'\nমনে রাখার কৌশল: '+ctx.topic.trick+(book?'\n\n'+book:'');
- return ctx.passages.map(p=>p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,150)).join('\n\n');
+ if(ctx.topic)return own+topicSource(ctx.topic,'points',query)+'\nমনে রাখার কৌশল: '+ctx.topic.trick+(book?'\n\n'+book:'');
+ return own+ctx.passages.map(p=>p.bookTitle+' · '+p.chapter+' · '+p.heading+': '+trim(p.text,150)).join('\n\n');
 }

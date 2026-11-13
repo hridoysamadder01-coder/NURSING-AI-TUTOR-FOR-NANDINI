@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#11998a"><meta name="description" content="বইয়ের পাতার ছবি তুলে লেখা পড়ো, আর শায়নির কাছে সেই পাতার ব্যাখ্যা নাও">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./src/app.css">
+<title>পাতার ছবি বুঝি · নন্দিনীর Nursing Study</title>
+<script src="./vendor/tesseract/tesseract.min.js"></script>
+<style>
+.dropzone{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:26px 16px;border:2px dashed var(--line-2);border-radius:18px;background:#f8fcfa;cursor:pointer}
+.dropzone .em{font-size:38px;line-height:1}.dropzone b{font-size:16px}.dropzone small{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+.sr-file{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.pick-row{display:flex;gap:10px;margin-top:12px}.pick-row .btn{flex:1}
+#preview{display:none;margin-top:14px}#preview.on{display:block}
+#pageImg{width:100%;max-height:52vh;object-fit:contain;border-radius:14px;border:1px solid var(--line-2);background:#fff}
+.pagemeta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.pagemeta .fine{margin:0}
+.step-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:720;color:var(--brand-ink);background:var(--brand-soft);border-radius:999px;padding:4px 11px;margin-bottom:10px}
+.ocrbar{height:8px;border-radius:99px;background:var(--brand-soft);overflow:hidden;margin:12px 0}
+.ocrbar>div{height:100%;width:0;background:linear-gradient(90deg,#22bfa4,#0b7468);transition:width .2s}
+.qline{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.6;padding:11px 13px;border-radius:13px;margin:0 0 10px}
+.qline.good{background:var(--ok-soft);color:#0d5b3d}.qline.ok{background:var(--amber-soft);color:#6b4a12}.qline.low,.qline.none{background:var(--bad-soft);color:#8a2b2f}
+.conf{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:#eef5f2;color:var(--ink-2);white-space:nowrap}
+#ocrText{min-height:140px;font-size:14.5px;line-height:1.7;font-family:Georgia,"Noto Serif Bengali",serif}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6;background:#f5f9fc;border:1px solid #e2edf5;border-radius:13px;padding:11px 13px;margin:10px 0}
+.consent input{width:20px;height:20px;min-height:0;flex:none;margin-top:1px}
+#answer{line-height:1.8;font-size:15px}#answer:empty{display:none}
+#answer p{margin:0 0 10px}
+.prov{font-size:12px;color:var(--ink-3);margin-top:10px;line-height:1.6}
+.soon{display:flex;gap:11px;align-items:flex-start;padding:13px;border-radius:14px;background:var(--amber-soft);color:#6b4a12;line-height:1.65;font-size:13px;margin:0 0 14px}
+.soon .em{font-size:20px;line-height:1.3;flex:none}
+.muted-strong{color:var(--ink-2);font-weight:650}
+</style></head>
+<body>
+<header class="hero"><div class="wrap">
+<div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">পাতার ছবি</span></div>
+<h1>📷 পাতার ছবি বুঝি</h1><p>যেকোনো বইয়ের একটা পাতার ছবি তোলো। অ্যাপ লেখা পড়বে, শায়নি সেই পাতাটা বুঝিয়ে দেবে।</p>
+</div></header>
+<main>
+<section class="card">
+ <span class="step-chip">ধাপ ১ · পাতা নাও</span>
+ <label class="dropzone" for="pageFile"><span class="em">📄</span><b>একটা পাতার ছবি নাও</b><small>পাতার ছবি তোলো, অথবা ফোন থেকে একটা ছবি বেছে নাও।</small></label>
+ <input id="pageFile" class="sr-file" type="file" accept="image/*" capture="environment">
+ <div class="pick-row">
+  <button class="btn" id="camBtn" type="button">📸 ছবি তোলো</button>
+  <button class="btn ghost" id="fileBtn" type="button">🖼️ ছবি বেছে নাও</button>
+ </div>
+ <p id="pickMsg" class="fine" style="margin:12px 0 0;text-align:center">এখনো কোনো পাতা বেছে নেওয়া হয়নি।</p>
+ <div id="preview">
+  <img id="pageImg" alt="তোমার বেছে নেওয়া পাতা">
+  <div class="pagemeta"><span class="fine" id="pageName"></span><button class="btn ghost sm" id="removeBtn" type="button">সরাও</button></div>
+ </div>
+</section>
+
+<section class="card hidden" id="readCard">
+ <span class="step-chip">ধাপ ২ · লেখা পড়ো</span>
+ <div class="soon hidden" id="noOcr"><span class="em">ℹ️</span><div>এই ফোনে অ্যাপ নিজে ছবি থেকে লেখা পড়তে পারছে না। অসুবিধা নেই — পাতাটা দেখে লেখাটা নিচে নিজে টাইপ করে দাও, শায়নি সেটাই বুঝিয়ে দেবে।</div></div>
+ <div class="btn-row"><button class="btn" id="readBtn" type="button">📖 ছবি থেকে লেখা পড়ো</button><button class="btn ghost hidden" id="stopRead" type="button">থামাও</button></div>
+ <div class="ocrbar hidden" id="ocrbar"><div id="ocrfill"></div></div>
+ <p id="readMsg" class="fine" aria-live="polite" style="margin:8px 0 0">বোতামে চাপলে অ্যাপ ছবির লেখা বের করবে — নেট থাকলে দ্রুত (ছবিটা Google-এ পড়া হয়), নেট না থাকলে ধীরে ফোনেই (ছবি বাইরে যায় না)। লেখা ভুল থাকলে নিচে ঠিক করে নিতে পারবে।</p>
+ <div id="ocrOut" class="hidden" style="margin-top:12px">
+  <div class="qline" id="qline"><span id="qicon">📝</span><span id="qmsg"></span><span class="conf" id="conf"></span></div>
+  <label class="field" for="ocrText">পাতার লেখা (দরকারে ঠিক করে নাও)</label>
+  <textarea id="ocrText" placeholder="পাতার লেখা এখানে আসবে… ভুল হলে ঠিক করে দাও।"></textarea>
+ </div>
+</section>
+
+<section class="card hidden" id="explainCard">
+ <span class="step-chip">ধাপ ৩ · শায়নিকে বোঝাতে বলো</span>
+ <label class="field" for="pageQ">এই পাতা নিয়ে কিছু জিজ্ঞেস করতে চাও? (না লিখলে পুরো পাতা বুঝিয়ে দেবে)</label>
+ <input id="pageQ" type="search" maxlength="200" placeholder="যেমন: nephron অংশটা সহজ করে বোঝাও">
+ <div class="consent hidden" id="consent"><input type="checkbox" id="consentChk"><label for="consentChk"><b class="muted-strong">পাতার এই লেখাটুকু</b> অনলাইন শায়নিকে পাঠিয়ে সবচেয়ে ভালো ব্যাখ্যা নিতে রাজি আছি। <b>ছবিটা পাঠানো হবে না</b>, শুধু উপরের লেখা যাবে। (একবার রাজি হলে পরেরবার থেকে সরাসরি হবে।)</label></div>
+ <div class="btn-row" style="margin-top:12px"><button class="btn" id="explainBtn" type="button">🤖 এই পাতা বুঝিয়ে দাও</button><a class="btn ghost hidden" id="toSettings" href="./settings.html">⚙️ অনলাইন শায়নি চালু করো</a><button class="btn ghost hidden" id="stopExplain" type="button">থামাও</button></div>
+ <p id="engineMsg" class="fine" style="margin:8px 0 0"></p>
+ <div id="answer" style="margin-top:12px"></div>
+ <p class="prov hidden" id="prov">উৎস: তোমার তোলা পাতা · AI ভুল করতে পারে, পাতার লেখা ও ক্লাস নোটের সঙ্গে মিলিয়ে নাও।</p>
+</section>
+
+<details class="info"><summary>🔒 তোমার ছবি ও লেখা কোথায় যায়?</summary>
+<p>পাতাটা পড়ার সময়: <b>নেট থাকলে দ্রুত পড়তে ছবিটা Google (Gemini)-এ যায়</b>; নেট না থাকলে ছবি ফোনেই থাকে, বাইরে যায় না। ব্যাখ্যার সময় শুধু পাতার লেখা যায়, ছবি নয়।</p>
+<p>ফোনের ভেতরের AI (একবার নামানো থাকলে) ব্যাখ্যাও নেট ছাড়া ফোনেই করে। সেটা না থাকলে তুমি চাইলে <b>শুধু পাতার লেখাটুকু</b> অনলাইন AI-তে পাঠানো যায় — তার আগে তোমার সম্মতি চাওয়া হবে, নিজে থেকে পাঠানো হয় না।</p>
+</details>
+</main>
+<nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
+<a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
+<a href="./topics.html" data-tab="learn"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20M9 7.5h7M9 11h5"/></svg></span>পড়ি</a>
+<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>শায়নি</a>
+<a href="./scan.html" data-tab="scan" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h2M17 5h2a2 2 0 0 1 2 2v2M21 15v2a2 2 0 0 1-2 2h-2M7 19H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.2"/></svg></span>পাতা</a>
+<a href="./library.html" data-tab="books"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
+</div></nav>
+<script type="module">
+import {recognizePage,ocrAvailable,readQuality} from './src/page-ocr.js';
+import {buildPageMessages,pageTextUsable,PAGE_UNREADABLE,isDoseQuestion,DOSE_NOTE} from './src/rag.js';
+import * as llm from './src/local-llm.js';
+import * as cloud from './src/cloud-ai.js';
+const $=id=>document.getElementById(id);
+let url=null,localModel=null;
+// --- Step 1: pick a page (stays on device) ---
+function show(file){
+ if(!file)return;
+ if(!/^image\//.test(file.type)){$('pickMsg').textContent='শুধু ছবি বেছে নাও (JPG, PNG)।';return}
+ if(file.size>25*1024*1024){$('pickMsg').textContent='ছবিটা বড় (২৫ MB-এর বেশি)। আরেকটা ছবি নাও।';return}
+ if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(file);
+ $('pageImg').src=url;$('pageName').textContent='✓ '+(file.name||'তোলা ছবি')+' · শুধু তোমার ফোনে';
+ $('preview').classList.add('on');$('readCard').classList.remove('hidden');
+ $('pickMsg').textContent='পাতাটা বড় করে দেখো। এবার "ছবি থেকে লেখা পড়ো" চাপো।';
+ resetRead();$('readCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+$('pageFile').addEventListener('change',e=>show(e.target.files[0]));
+$('camBtn').onclick=()=>{$('pageFile').setAttribute('capture','environment');$('pageFile').click()};
+$('fileBtn').onclick=()=>{$('pageFile').removeAttribute('capture');$('pageFile').click();$('pageFile').setAttribute('capture','environment')};
+$('removeBtn').onclick=()=>{if(url)URL.revokeObjectURL(url);url=null;$('pageFile').value='';$('pageImg').removeAttribute('src');$('preview').classList.remove('on');$('readCard').classList.add('hidden');$('explainCard').classList.add('hidden');$('pickMsg').textContent='এখনো কোনো পাতা বেছে নেওয়া হয়নি।'};
+// --- Step 2: on-device OCR (optional; she can also type) ---
+function resetRead(){$('ocrOut').classList.add('hidden');$('ocrbar').classList.add('hidden');$('ocrfill').style.width='0';$('explainCard').classList.add('hidden');$('ocrText').value=''}
+const noOcr=!ocrAvailable();
+if(noOcr){$('noOcr').classList.remove('hidden');$('readBtn').classList.add('hidden');$('readMsg').textContent='পাতাটা দেখে লেখাটা নিচে টাইপ করে দাও।';$('ocrOut').classList.remove('hidden');$('qline').className='qline ok';$('qicon').textContent='✍️';$('qmsg').textContent='লেখাটা নিজে টাইপ করে দাও।';$('conf').classList.add('hidden')}
+let ocrCtl=null;
+$('readBtn').onclick=async()=>{
+ if(!$('pageImg').src){return}
+ ocrCtl=new AbortController();
+ $('readBtn').disabled=true;$('stopRead').classList.remove('hidden');$('ocrbar').classList.remove('hidden');$('ocrfill').style.width='6%';
+ // Net on? Read the page fast with online Gemini vision (the image goes to Google for this). Offline or if that fails,
+ // the on-device reader keeps the image fully on the phone.
+ const useOnline=cloud.ready()&&cloud.hasKey('gemini');
+ try{
+  let r=null,viaOnline=false;
+  if(useOnline){
+   $('readMsg').textContent='⚡ নেট দিয়ে দ্রুত পড়ছি… (ছবিটা পড়ার জন্য Google-এ যাচ্ছে)';$('ocrfill').style.width='45%';
+   try{
+    const blob=$('pageFile').files[0]||await (await fetch($('pageImg').src)).blob();
+    const text=await cloud.geminiImageText(blob,{signal:ocrCtl.signal});
+    if(text&&text.trim()){r={text:text.trim(),confidence:96};viaOnline=true}
+   }catch(e){if(e?.message==='stopped')throw new Error('cancelled')}
+  }
+  if(!r){
+   $('readMsg').textContent=useOnline?'নেটে পড়া গেল না, ফোনেই পড়ছি… একটু সময় লাগতে পারে।':'ছবির লেখা পড়ছি… (ফোনেই, নেট ছাড়া) এতে কিছু সময় লাগতে পারে।';
+   r=await recognizePage($('pageImg'),{signal:ocrCtl.signal,onProgress:p=>{$('ocrfill').style.width=Math.round(6+p*94)+'%'}});
+  }
+  const quality=viaOnline?{level:'good',bn:'⚡ নেট দিয়ে দ্রুত পড়া হয়েছে।'}:readQuality(r);
+  $('ocrOut').classList.remove('hidden');$('qline').className='qline '+quality.level;
+  $('qicon').textContent=quality.level==='good'?'✅':quality.level==='ok'?'📝':'⚠️';
+  $('qmsg').textContent=quality.bn;$('conf').classList.remove('hidden');$('conf').textContent='আস্থা '+r.confidence+'%';
+  $('ocrText').value=r.text;$('readMsg').textContent='লেখা পড়া হয়েছে। মিলিয়ে ঠিক করে নিচে "বুঝিয়ে দাও" চাপো।';
+  $('explainCard').classList.remove('hidden');
+ }catch(e){
+  const msg=e?.message==='no_simd'?'এই ফোনে অ্যাপ নিজে ছবি পড়তে পারল না। পাতাটা দেখে লেখাটা নিচে টাইপ করে দাও।':e?.message==='cancelled'?'থামানো হয়েছে।':'লেখা পড়া গেল না। আরেকবার পরিষ্কার ছবি তোলো, বা লেখাটা নিজে টাইপ করে দাও।';
+  $('readMsg').textContent=msg;$('ocrOut').classList.remove('hidden');$('qline').className='qline low';$('qicon').textContent='⚠️';$('qmsg').textContent='নিজে টাইপ করে দিলেও শায়নি বুঝিয়ে দেবে।';$('conf').classList.add('hidden');$('explainCard').classList.remove('hidden');
+ }finally{$('readBtn').disabled=false;$('stopRead').classList.add('hidden');$('ocrfill').style.width='100%'}
+};
+$('stopRead').onclick=()=>ocrCtl?.abort();
+// Typing text (no OCR) should also open step 3.
+$('ocrText').addEventListener('input',()=>{if($('ocrText').value.trim().length>8)$('explainCard').classList.remove('hidden')});
+// --- Step 3: Shayni explains THIS page. Online is the strong, default path (Nandini is usually online);
+// the phone's own model is the offline fallback. The image never leaves the phone; the page TEXT goes online
+// only after a one-time consent, which is then remembered. ---
+const CONSENT='nandini-scan-online-consent';
+const consented=()=>{try{return localStorage.getItem(CONSENT)==='yes'}catch{return false}};
+const rememberConsent=()=>{try{localStorage.setItem(CONSENT,'yes')}catch{}};
+async function pickEngine(){
+ // Check the phone's own model first so Scan still explains with no connection: online is best, but only when
+ // there actually is a connection. If she is offline and the on-device model is ready, use it instead of
+ // sending her to an online call that would just fail.
+ if(llm.available()&&llm.autoEnabled()){try{localModel=llm.activeModel(await llm.status())}catch{localModel=null}}
+ const online=navigator.onLine!==false;
+ if(cloud.ready()&&online)return {mode:'online',msg:'ব্যাখ্যা অনলাইন শায়নি থেকে আসবে (সবচেয়ে ভালো)। শুধু পাতার লেখা যাবে, ছবি নয়।'};
+ if(localModel)return {mode:'local',msg:(cloud.ready()?'এখন নেট নেই — ':'নেট নেই — ')+'ব্যাখ্যা ফোনের ভেতরে হবে ('+localModel.label+')। ছবি বা লেখা কোথাও যাবে না।'};
+ if(cloud.ready())return {mode:'online',msg:'এখন নেট নেই মনে হচ্ছে — ইন্টারনেট এলে শায়নি পাতাটা বুঝিয়ে দেবে। শুধু পাতার লেখা যাবে, ছবি নয়।'};
+ return {mode:'none',msg:'ব্যাখ্যার জন্য অনলাইন শায়নি চালু করো (সেটিংসে বিনামূল্যের key — সবচেয়ে ভালো), অথবা ফোনের ভেতরের AI নামাও।'};
+}
+let engine={mode:'none'};
+async function refreshEngine(){engine=await pickEngine();$('engineMsg').textContent=engine.msg;
+ $('consent').classList.toggle('hidden',engine.mode!=='online');
+ if(engine.mode==='online'&&consented())$('consentChk').checked=true;
+ $('toSettings').classList.toggle('hidden',engine.mode!=='none');
+ $('explainBtn').disabled=engine.mode==='none'}
+refreshEngine();
+let exCtl=null;
+$('stopExplain').onclick=()=>{exCtl?.abort();llm.stop?.()};
+$('explainBtn').onclick=async()=>{
+ const text=$('ocrText').value.trim(),q=$('pageQ').value.trim();
+ const out=$('answer');out.replaceChildren();$('prov').classList.add('hidden');
+ const sayStatic=t=>{out.replaceChildren(Object.assign(document.createElement('p'),{textContent:t}))};
+ if(isDoseQuestion(q)){sayStatic(DOSE_NOTE);return}
+ if(!pageTextUsable(text)){sayStatic(PAGE_UNREADABLE);return}
+ await refreshEngine();
+ if(engine.mode==='none'){sayStatic('ব্যাখ্যা করতে পারলাম না — সেটিংসে অনলাইন শায়নির বিনামূল্যের key দাও, অথবা ফোনের ভেতরের AI নামাও।');return}
+ if(engine.mode==='online'){if(!$('consentChk').checked){$('engineMsg').textContent='পাতার লেখা অনলাইন শায়নিকে পাঠাতে উপরের ঘরে একবার টিক দাও।';return}rememberConsent()}
+ const p=document.createElement('p');out.append(p);let acc='';const push=t=>{acc+=t;p.textContent=acc};
+ exCtl=new AbortController();$('explainBtn').disabled=true;$('stopExplain').classList.remove('hidden');p.textContent='পাতাটা পড়ে বোঝাচ্ছি…';
+ try{
+  if(engine.mode==='local'){
+   const messages=buildPageMessages(text,q);acc='';p.textContent='';
+   await llm.load(localModel);
+   await llm.generate(messages,{maxTokens:360,temperature:0,onToken:push});
+  }else{
+   const messages=buildPageMessages(text,q,{cloud:true});acc='';p.textContent='';
+   await cloud.generate(messages,{signal:exCtl.signal,maxTokens:700,temperature:0.3,onToken:push});
+  }
+  if(!acc.trim())p.textContent='এই পাতা থেকে স্পষ্ট ব্যাখ্যা তৈরি করতে পারলাম না। লেখাটা একটু ঠিক করে আবার চেষ্টা করো।';
+  $('prov').classList.remove('hidden');
+ }catch(e){p.textContent=e?.name==='AbortError'||exCtl?.signal.aborted?'থামানো হয়েছে।':'ব্যাখ্যা তৈরি করা গেল না। নেট বা সেটিংস দেখে আবার চেষ্টা করো।'}
+ finally{$('explainBtn').disabled=false;$('stopExplain').classList.add('hidden')}
+};
+$('consentChk')?.addEventListener('change',()=>{if($('consentChk').checked)$('engineMsg').textContent='ঠিক আছে — শুধু পাতার লেখা অনলাইন AI-তে যাবে, ছবি নয়।'});
+if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script></body></html>

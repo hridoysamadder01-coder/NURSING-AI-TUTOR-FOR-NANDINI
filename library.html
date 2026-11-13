@@ -17,6 +17,9 @@
 .bookrow .actions{margin-top:auto;padding-top:10px;display:flex;flex-direction:column;gap:6px;align-items:stretch}
 .use{font-size:11.5px;font-weight:700;color:var(--brand-ink);background:var(--brand-soft);border-radius:10px;padding:5px 8px;margin:7px 2px 0;line-height:1.45}
 .pdf-link{font-size:12px;text-align:center;font-weight:650;text-decoration:none;padding:3px}
+.ai-note{font-size:11.5px;margin-top:3px}
+.owned{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--line)}
+.owned .em{font-size:22px;line-height:1.3}.owned b{display:block;font-size:14px;line-height:1.4}.owned small{display:block;font-size:12px;color:var(--ink-2);margin:2px 0 6px;line-height:1.5}.owned .chip{margin:0 6px 4px 0}
 /* Sticky reading bar */
 .readbar{display:none;position:sticky;top:0;z-index:20;color:#fff;background:linear-gradient(135deg,#13a08d,#0a6a62 60%,#0a4f5e);padding:calc(8px + env(safe-area-inset-top)) 12px 0;box-shadow:0 8px 20px -14px rgba(10,60,60,.9)}
 .readbar-in{display:flex;align-items:center;gap:8px;max-width:780px;margin:0 auto;padding-bottom:8px}
@@ -48,7 +51,7 @@ body:not(.reading) #readPanel{display:none}
 .result{padding:12px 0;border-bottom:1px solid var(--line)}
 .result:last-child{border-bottom:0}
 .result strong{display:block;font-size:14px;line-height:1.45}.result p{font-family:Georgia,serif;line-height:1.6;margin:6px 0;font-size:14px;color:var(--ink-2)}
-.text-link{border:0;padding:0;background:none;color:var(--brand);font-weight:750;font-size:13px;text-align:left}
+.text-link{border:0;padding:9px 0;background:none;color:var(--brand);font-weight:750;font-size:13px;text-align:left}
 /* Chapter text */
 #article{scroll-margin-top:80px;background:#fff;border-radius:var(--r-lg);padding:24px 18px 10px;box-shadow:var(--shadow);border:1px solid rgba(222,234,229,.8)}
 .chapter-title{font-family:Georgia,"Noto Serif Bengali",serif;font-size:clamp(24px,5vw,32px);line-height:1.35;font-weight:700;letter-spacing:-.015em;margin:12px 0 10px;color:var(--ink)}
@@ -60,7 +63,7 @@ body:not(.reading) #readPanel{display:none}
 .original{font-family:Georgia,"Noto Serif",serif;line-height:1.8;font-size:var(--reader-size,16px);color:#213a36;white-space:normal;overflow-wrap:anywhere}
 .bn{font-family:"Noto Serif Bengali","Noto Sans Bengali",serif;line-height:1.85;font-size:var(--reader-size,16px);color:#0f4f45;margin-top:9px;padding:11px 14px;background:#f1faf6;border-left:3px solid #7cc8b4;border-radius:0 12px 12px 0;overflow-wrap:anywhere}
 .translation-unready{display:none}
-.mode-english .bn{display:none}.mode-bangla .original{display:none}.mode-bangla .bn.translation-unready{display:block;color:var(--ink-3);background:#f6f8f7;border-left-color:var(--line-2)}
+.mode-english .bn{display:none}.mode-bangla .paragraph.translated .original{display:none}
 .mode-both .bn.translation-unready{display:none}
 .nav-chapter{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
 .chapter-btn{display:flex;flex-direction:column;gap:3px;min-height:64px;padding:11px 14px;border-radius:16px;border:1.5px solid var(--line-2);background:#fff;text-align:left;color:var(--ink);min-width:0}
@@ -68,7 +71,7 @@ body:not(.reading) #readPanel{display:none}
 .chapter-btn span{font-size:12.5px;color:var(--ink-2);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .chapter-btn.next{text-align:right;background:linear-gradient(150deg,#eefaf6,#fff)}
 .chapter-btn:disabled{opacity:.4;cursor:default}
-.source-foot{font-size:12px;color:var(--ink-3);line-height:1.7;margin:4px 2px 16px}
+.source-foot{font-size:12px;color:var(--ink-3);line-height:1.7;margin:4px 2px 16px;overflow-wrap:anywhere}
 @media(min-width:720px){.bookgrid{grid-template-columns:repeat(4,1fr)}#article{padding:34px 40px 16px}}
 @media(max-width:350px){.bookgrid{grid-template-columns:1fr}}
 </style></head>
@@ -84,18 +87,21 @@ body:not(.reading) #readPanel{display:none}
 </div><div class="rb-progress"><div id="scrollProgress"></div></div></div>
 <main>
 <section id="shelfPanel">
-<h2 class="section-title">৪টি রেফারেন্স বই <span class="chip">✓ অফলাইনে পড়া যায়</span></h2>
+<h2 class="section-title"><span id="shelfCount">অ্যাপের বই</span> <span class="chip">✓ অফলাইনে পড়া যায়</span></h2>
 <div id="shelf" class="bookgrid"></div>
+<h2 class="section-title">নন্দিনীর হাতের বই <span class="chip amber">অ্যাপে লেখা নেই</span></h2>
+<div class="card" id="owned"><p class="fine" style="margin:0 0 4px">এগুলো নন্দিনীর কাছে থাকা ছাপা বই; ছবি দেখে নাম লেখা হয়েছে। কপিরাইটের কারণে এদের লেখা অ্যাপে নেই, তাই এখানে খোলা বা খোঁজা যায় না। কোন বিষয়ে অ্যাপের কোন বই মিলবে, নিচের তালিকায় দেখো।</p></div>
 <h2 class="section-title">আরও বই</h2>
 <nav class="menu" aria-label="আরও বই">
-<a href="./faridpur-first-year.html"><span class="ico">📦</span><span class="txt">৬ বিষয়ের সব বইয়ের তালিকা<small>BNMC সিলেবাস ও কলেজের বইয়ের উৎস</small></span><span class="chev">›</span></a>
+<a href="./faridpur-first-year.html"><span class="ico">📦</span><span class="txt">৬ বিষয়ের সব বইয়ের তালিকা<small>কোন বিষয়ে কোন বই: হাতের বই, অ্যাপের বই, অনলাইন</small></span><span class="chev">›</span></a>
 <a href="./index.html#pdf"><span class="ico">📄</span><span class="txt">নিজের PDF বই খুলো<small>ফোনেই খুলবে, আপলোড হবে না</small></span><span class="chev">›</span></a>
 </nav>
-<details class="info"><summary>ℹ️ এই বইগুলো সম্পর্কে</summary><p>Open RN / WisTech Open-এর প্রকাশিত বই (CC BY 4.0, অন্যভাবে উল্লেখিত অংশ ব্যতীত)। অ্যাপে শুধু লেখা আছে; ছবি ও আসল পৃষ্ঠা-বিন্যাস নেই। মূল ইংরেজি লেখা অক্ষত থাকবে। ফোনে বাংলা অনুবাদের জন্য আলাদা টাকা বা API লাগবে না।</p></details>
+<details class="info"><summary>ℹ️ এই বইগুলো সম্পর্কে</summary><p>অ্যাপের বইগুলো তিন প্রকাশকের: Open RN / WisTech Open (CC BY 4.0, অন্যভাবে উল্লেখিত অংশ ব্যতীত), OpenStax (CC BY-NC-SA 4.0) আর মার্কিন National Cancer Institute (কপিরাইট-মুক্ত লেখা)। অ্যাপে শুধু লেখা আছে; ছবি ও আসল পৃষ্ঠা-বিন্যাস নেই। মূল ইংরেজি লেখা অক্ষত থাকবে। ফোনে বাংলা অনুবাদের জন্য আলাদা টাকা বা API লাগবে না।</p><p>OpenStax লিখিত অনুমতি ছাড়া তাদের বই AI-তে দিতে নিষেধ করেছে। তাই ওই বইগুলো শুধু পড়া আর খোঁজার জন্য; শায়নির AI ওগুলোর লেখা পায় না। এগুলো আন্তর্জাতিক রেফারেন্স বই, কলেজের নির্ধারিত বই নয়।</p></details>
 </section>
 <section id="readPanel">
 <div class="card">
 <div class="tools-head"><span class="mini" id="miniCover">NF</span><div><h2 id="chosenTitle"></h2><div id="attribution" class="fine"></div></div></div>
+<p id="readOnly" class="fine hidden" style="margin:-6px 0 12px">📖 এই বই শুধু পড়া আর খোঁজার জন্য। প্রকাশকের শর্তে শায়নির AI এই বইয়ের লেখা ব্যবহার করে না।</p>
 <label class="field" for="chapters">📑 অধ্যায় বেছে নাও</label><select id="chapters" aria-label="অধ্যায়"></select>
 <div class="tools-row">
 <div class="switch" role="group" aria-label="পড়ার ভাষা">
@@ -127,24 +133,36 @@ body:not(.reading) #readPanel{display:none}
 </main>
 <nav class="tabbar" aria-label="প্রধান মেনু"><div class="tabs">
 <a href="./index.html" data-tab="home"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>হোম</a>
+<a href="./topics.html" data-tab="learn"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20M9 7.5h7M9 11h5"/></svg></span>পড়ি</a>
+<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>শায়নি</a>
+<a href="./scan.html" data-tab="scan"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h2M17 5h2a2 2 0 0 1 2 2v2M21 15v2a2 2 0 0 1-2 2h-2M7 19H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.2"/></svg></span>পাতা</a>
 <a href="./library.html" data-tab="books" class="active" aria-current="page"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5C5 4 9 4 12 6.5 15 4 19 4 22 5.5v13c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6.5v13"/></svg></span>বই</a>
-<a href="./ask.html" data-tab="tutor"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-4.9a8 8 0 1 1 15.6-3.6z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></span>Tutor</a>
-<a href="./topics.html" data-tab="easy"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.8.7 1 1.5 1 2.4h6c0-.9.2-1.7 1-2.4a6.5 6.5 0 0 0-4-11.6z"/></svg></span>সহজ বাংলা</a>
-<a href="./coach.html" data-tab="coach"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M9 15.5l2 2 4-4"/></svg></span>প্ল্যান</a>
 </div></nav>
 <script type="module">
 import {rank} from './src/answer-core.js';
 import {savedApiBase,apiUrl} from './src/api-config.js';
 import {paragraphKey,readTranslation,saveTranslation} from './src/translation-cache.js';
-const meta=[
-{id:'fundamentals',title:'Nursing Fundamentals 2e',label:'নার্সিংয়ের মৌলিক বিষয়',use:'Fundamentals · Microbiology · Basic Science',cover:'NF',emoji:'🩺',tone:'linear-gradient(150deg,#23b59d,#0a5f63)',home:'https://wtcs.pressbooks.pub/nursingfundamentals/'},
-{id:'skills',title:'Nursing Skills 2e',label:'নার্সিং দক্ষতা ও ব্যবহারিক কাজ',use:'Fundamentals (ব্যবহারিক)',cover:'NS',emoji:'💉',tone:'linear-gradient(150deg,#ff9a6c,#e4536b)',home:'https://wtcs.pressbooks.pub/nursingskills/'},
-{id:'terminology',title:'Medical Terminology 2e',label:'চিকিৎসাবিজ্ঞানের শব্দার্থ',use:'Anatomy & Physiology · English',cover:'MT',emoji:'🔤',tone:'linear-gradient(150deg,#8f7ff7,#5140c9)',home:'https://wtcs.pressbooks.pub/medterm/'},
-{id:'mentalhealth',title:'Nursing Mental Health and Community Concepts 2e',label:'মানসিক স্বাস্থ্য ও কমিউনিটি',use:'অতিরিক্ত পড়া (৬ বিষয়ের বাইরে)',cover:'MH',emoji:'💚',tone:'linear-gradient(150deg,#4fb0ef,#2161b5)',home:'https://wtcs.pressbooks.pub/nursingmhcc/'}
-];
+import {sectionText,aiBookIds,subjectsOfBook,licenseShort,PHYSICAL_BN} from './src/library-catalog.js';
+import * as cloud from './src/cloud-ai.js';
+const LOOK={
+fundamentals:{label:'নার্সিংয়ের মৌলিক বিষয়',cover:'NF',emoji:'🩺',tone:'linear-gradient(150deg,#23b59d,#0a5f63)'},
+skills:{label:'নার্সিং দক্ষতা ও ব্যবহারিক কাজ',cover:'NS',emoji:'💉',tone:'linear-gradient(150deg,#ff9a6c,#e4536b)'},
+terminology:{label:'চিকিৎসাবিজ্ঞানের শব্দার্থ',cover:'MT',emoji:'🔤',tone:'linear-gradient(150deg,#8f7ff7,#5140c9)'},
+mentalhealth:{label:'মানসিক স্বাস্থ্য ও কমিউনিটি',cover:'MH',emoji:'💚',tone:'linear-gradient(150deg,#4fb0ef,#2161b5)'},
+'seer-anatomy':{label:'শরীরের গঠন ও কাজ: ছোট পরিচিতি',cover:'AP',emoji:'🧬',tone:'linear-gradient(150deg,#3cc4b4,#17708a)'},
+'openstax-anatomy':{label:'অ্যানাটমি ও ফিজিওলজি: পুরো বই',cover:'A&P',emoji:'🫀',tone:'linear-gradient(150deg,#f0787f,#b3324f)'},
+'openstax-microbiology':{label:'মাইক্রোবায়োলজি: পুরো বই',cover:'MB',emoji:'🦠',tone:'linear-gradient(150deg,#7ccf6d,#2f8a4c)'},
+'openstax-biology':{label:'জীববিজ্ঞান: পুরো বই',cover:'BIO',emoji:'🌱',tone:'linear-gradient(150deg,#58c98a,#1f7d6a)'},
+'openstax-chemistry':{label:'রসায়ন: পুরো বই',cover:'CH',emoji:'⚗️',tone:'linear-gradient(150deg,#f5b14d,#d9682f)'},
+'openstax-psychology':{label:'মনোবিজ্ঞান: পুরো বই',cover:'PSY',emoji:'🧠',tone:'linear-gradient(150deg,#b58cf2,#6a45c4)'},
+'openstax-sociology':{label:'সমাজবিজ্ঞান: পুরো বই',cover:'SOC',emoji:'👥',tone:'linear-gradient(150deg,#6fa8f5,#3157b8)'},
+'openstax-workplace':{label:'কম্পিউটার: Word, Excel, ইমেইল',cover:'ICT',emoji:'💻',tone:'linear-gradient(150deg,#7d8fa6,#3d4f6b)'}};
+// Everything factual about a book (title, publisher, licence, links) comes from the catalog; LOOK only decorates the cover.
+function metaOf(info){const look=LOOK[info.id]||{label:info.publisher,cover:info.title.split(/\s+/).map(w=>w[0]).join('').slice(0,3).toUpperCase(),emoji:'📘',tone:'linear-gradient(150deg,#22b39c,#0a5f63)'};
+ return {id:info.id,title:info.title,publisher:info.publisher,home:info.read_url||info.source_url,pdf:info.official_pdf||null,tag:/Open RN/.test(info.publisher)?'Open RN · 2e':/OpenStax/.test(info.publisher)?'OpenStax':/Cancer Institute/.test(info.publisher)?'NCI · SEER':'',...look}}
 const $=id=>document.getElementById(id),E=(tag,value,className)=>{const el=document.createElement(tag);if(value!==undefined)el.textContent=value;if(className)el.className=className;return el};
 const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
-let catalog=null,book=null,bookMeta=null,chapterIndex=0,sections=[],view='both',font=16,token=0,working=false;
+let catalog=null,shelf=null,aiIds=[],serverAi=false,book=null,bookMeta=null,chapterIndex=0,sections=[],view='both',font=16,token=0,working=false;
 let nativeTranslator=null,nativeChecked=false,remaining=[];
 function localValue(k,d){try{return localStorage.getItem(k)||d}catch{return d}}
 function saveValue(k,v){try{localStorage.setItem(k,v)}catch{}}
@@ -154,7 +172,7 @@ font=Math.max(14,Math.min(21,safeInt(localValue('nandini-reader-font','16'),16))
 function mode(next){view=next;saveValue('nandini-reader-mode',view);
 $('article').className='mode-'+view;
 document.querySelectorAll('[data-mode]').forEach(b=>{const on=b.dataset.mode===view;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))});
-if(view==='bangla'&&remaining.length)$('translateStatus').textContent='বাংলা পড়ার জন্য “এই অধ্যায় বাংলায় আনো” চাপো। যেগুলো অনুবাদ হয়েছে, সেগুলো আগে দেখাবে।';
+if(view==='bangla'&&remaining.length)$('translateStatus').textContent='যেটুকু এখনো বাংলায় আনা হয়নি, সেটুকু আপাতত মূল ইংরেজিতে পড়তে পারবে। পুরো বাংলা পেতে “এই অধ্যায় বাংলায় আনো” চাপো।';
 }
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>mode(b.dataset.mode));
 document.documentElement.style.setProperty('--reader-size',font+'px');
@@ -162,18 +180,37 @@ $('smaller').onclick=()=>changeFont(-1);$('bigger').onclick=()=>changeFont(1);
 function changeFont(d){font=Math.max(14,Math.min(21,font+d));saveValue('nandini-reader-font',String(font));document.documentElement.style.setProperty('--reader-size',font+'px')}
 function readBookId(){return new URL(location.href).searchParams.get('book')}
 async function init(){
-try{const r=await fetch('./data/books/catalog.json');if(!r.ok)throw Error('catalog_missing');catalog=await r.json()}catch{}
-for(const m of meta){const info=catalog?.books?.find(x=>x.id===m.id),row=E('div',undefined,'bookrow'),cover=E('div',undefined,'cover');
-cover.style.setProperty('--tone',m.tone);cover.append(E('span',m.emoji,'em'),E('b',m.cover),E('small','Open RN · 2e'));
-row.append(cover,E('h3',m.title),E('div',m.label,'meta'),E('div','📌 '+m.use,'use'));
-row.append(E('div',info?bn(info.chapters)+'টি অধ্যায়':'প্রকাশকের মূল বই','meta'));
+try{const [c,sh]=await Promise.all(['catalog','shelf'].map(async n=>{const r=await fetch('./data/books/'+n+'.json');if(!r.ok)throw Error(n+'_missing');return r.json()}));catalog=c;shelf=sh;aiIds=aiBookIds(c,sh)}catch{}
+if(!catalog||!shelf){$('shelf').append(E('p','বইয়ের তালিকা খুলতে পারিনি। অ্যাপ বন্ধ করে আবার খোলো।','muted'));return}
+$('shelfCount').textContent=bn(catalog.books.length)+'টি বই অ্যাপে আছে';
+for(const info of catalog.books){const m=metaOf(info),row=E('div',undefined,'bookrow'),cover=E('div',undefined,'cover');row.dataset.book=info.id;
+cover.style.setProperty('--tone',m.tone);cover.append(E('span',m.emoji,'em'),E('b',m.cover),E('small',m.tag));
+row.append(cover,E('h3',m.title),E('div',m.label,'meta'));
+const use=subjectsOfBook(shelf,info.id).map(x=>x.name+(x.status==='pending_confirmation'?' (নিশ্চিত নয়)':'')).join(' · ');if(use)row.append(E('div','📌 '+use,'use'));
+row.append(E('div',bn(info.chapters)+'টি অধ্যায় · '+licenseShort(info),'meta'));
+row.append(E('div',aiIds.includes(info.id)?'🤖 শায়নি এই বই থেকে উত্তর খোঁজে':'📖 শুধু পড়া ও খোঁজা (AI-তে যায় না)','meta ai-note'));
 const links=E('div',undefined,'actions');
-if(info){const btn=E('button','পড়া শুরু →','btn sm');btn.type='button';btn.onclick=()=>loadBook(m);links.append(btn)}
-const src=E('a','মূল PDF ↗','pdf-link');src.href=m.home+'open/download?type=pdf';src.rel='noopener noreferrer';src.target='_blank';links.append(src);
+const btn=E('button','পড়া শুরু →','btn sm');btn.type='button';btn.onclick=()=>loadBook(m);links.append(btn);
+const src=E('a',m.pdf?'মূল PDF ↗':'প্রকাশকের পাতা ↗','pdf-link');src.href=m.pdf||m.home;src.rel='noopener noreferrer';src.target='_blank';links.append(src);
 row.append(links);$('shelf').append(row)}
-const saved=meta.find(x=>x.id===readBookId());if(saved&&catalog)await loadBook(saved);
+// Printed books she owns are only names here: no text is in the app, so there is nothing to open or search.
+for(const p of shelf.physical_titles){const row=E('div',undefined,'owned'),body=E('div');row.dataset.owned=p.id;
+ const sub=shelf.subjects.find(x=>x.code===p.subject);
+ body.append(E('b',p.title||(sub?sub.bn:p.subject)+': বইয়ের নাম এখনো জানা নেই'));
+ const detail=[p.edition,p.editors.length?'সম্পাদক: '+p.editors.concat(p.co_editors).join(', '):''].filter(Boolean).join(' · ');if(detail)body.append(E('small',detail));
+ body.append(E('span',PHYSICAL_BN[p.status],'chip amber'),E('span','অ্যাপে লেখা নেই · খোঁজা যায় না','chip'));
+ row.append(E('span',p.title?'📕':'❓','em'),body);$('owned').append(row)}
+const saved=catalog.books.find(b=>b.id===readBookId());if(saved)await loadBook(metaOf(saved));
 await aiReady();
 }
+// Shown with every chapter and every list of search hits: the publisher's credit, the licence as a link, and the note
+// that this is a changed (text-only) copy. The Creative Commons licences ask for all three.
+function creditLine(){
+ const p=E('p',(book.attribution||book.title+' · '+book.publisher)+' · লাইসেন্স: ','source-foot attribution');
+ if(/^https:\/\//.test(book.license_url||'')){const a=E('a',licenseShort(book));a.href=book.license_url;a.target='_blank';a.rel='noopener noreferrer license';p.append(a)}else p.append(licenseShort(book));
+ p.append(' · বদলানো কপি: শুধু লেখা রাখা হয়েছে; ছবি ও পাতার নকশা বাদ।');return p;
+}
+function showAi(){$('aiPanel').classList.toggle('hidden',!(serverAi&&book&&aiIds.includes(book.id)))}
 function showShelf(){token++;remaining=[];document.body.classList.remove('reading');if(history?.replaceState)history.replaceState({},'','./library.html');scrollTo(0,0)}
 $('backShelf').onclick=showShelf;
 async function loadBook(m){
@@ -181,17 +218,18 @@ async function loadBook(m){
  const askQ=(new URL(location.href).searchParams.get('q')||'').trim().slice(0,150);
  $('chosenTitle').textContent=m.title;$('rbBook').textContent=m.title;$('rbChapter').textContent='বই খুলছে…';
  $('miniCover').textContent=m.cover;$('miniCover').style.setProperty('--tone',m.tone);
- $('attribution').textContent=m.label+' · Open RN / WisTech Open';
- $('results').replaceChildren();
+ $('attribution').textContent=m.label+' · '+m.publisher;
+ $('readOnly').classList.toggle('hidden',aiIds.includes(m.id));
+ $('results').replaceChildren();if(!askQ)$('searchText').value='';
  $('article').replaceChildren(E('p','বইয়ের অধ্যায় খুলছে…','fine'));
  try{
  const r=await fetch('./data/books/'+m.id+'.json');if(!r.ok)throw Error('book_unavailable');
  const doc=await r.json();if(!doc.chapters?.length)throw Error('chapters_unavailable');
- book=doc;sections=book.chapters.flatMap((ch,ci)=>ch.sections.map((s,si)=>({title:ch.title+' · '+s.heading,text:s.text,ci,si})));
+ book=doc;showAi();sections=book.chapters.flatMap((ch,ci)=>ch.sections.map((s,si)=>({title:ch.title+' · '+s.heading,text:sectionText(s),ci,si})));
  $('chapters').replaceChildren();
  // Group "1.1, 1.2 …" sections under their parent chapter number so the long list is easier to scan.
  let group=null,groupKey=null;
- book.chapters.forEach((ch,i)=>{const key=(String(ch.title).match(/^(\d+|[IVXLC]+)[.\s]/)||[])[1]||'';if(!group||key!==groupKey){groupKey=key;group=E('optgroup');group.label=key?'অধ্যায় '+key:'অন্যান্য';$('chapters').append(group)}const o=E('option',ch.title);o.value=i;group.append(o)});
+ book.chapters.forEach((ch,i)=>{const key=ch.group||(String(ch.title).match(/^(\d+|[IVXLC]+)[.\s]/)||[])[1]||'';if(!group||key!==groupKey){groupKey=key;group=E('optgroup');group.label=ch.group||(key?'অধ্যায় '+key:'অন্যান্য');$('chapters').append(group)}const o=E('option',ch.title);o.value=i;group.append(o)});
  const raw=Number(new URL(location.href).searchParams.get('chapter')||0);
  chapterIndex=Number.isInteger(raw)&&raw>=0&&raw<book.chapters.length?raw:0;
  $('chapters').onchange=()=>showChapter(Number($('chapters').value));
@@ -215,13 +253,15 @@ async function showChapter(i,scroll=true){
  const sec=ch.sections[si],section=E('section',undefined,'readsection');
  if(sec.heading&&sec.heading!==ch.title)section.append(E('h3',sec.heading));
  const ps=Array.isArray(sec.blocks)&&sec.blocks.length
-    ?sec.blocks.filter(b=>b&&typeof b.text==='string'&&b.text.trim().length>10)
-    :paragraphs(sec.text).map(text=>({text,type:'paragraph'}));
+    ?sec.blocks.filter(b=>b&&typeof b.text==='string'&&b.text.trim().length>(book.section_shape?0:10))
+    :paragraphs(sectionText(sec)).map(text=>({text,type:'paragraph'}));
  let listNode=null,listType=null;
  for(let pi=0;pi<ps.length;pi++){
    const {text:value,type}=ps[pi];
    const key=paragraphKey(book.id,i,si,pi,value);
    const wrapper=E(type==='bullet'||type==='numbered'?'li':'div',undefined,'paragraph');
+   // An ordered item knows its own number, so a list that was interrupted (by sub-points, a note) does not restart at 1.
+   if(type==='numbered'&&Number.isInteger(ps[pi].n))wrapper.value=ps[pi].n;
    wrapper.append(E('p',value,'original'));
    const translated=E('div',undefined,'bn translation-unready');
    translated.lang='bn';translated.textContent='বাংলা অনুবাদ বাকি…';
@@ -235,6 +275,7 @@ async function showChapter(i,scroll=true){
  root.append(section);
  }
  root.append(E('p','উৎস: '+book.title+' · '+ch.title+' · অনলাইন বইয়ের অধ্যায় (PDF পৃষ্ঠা নয়)','source-foot'));
+ root.append(creditLine());
  remaining=all;$('officialLink').href=ch.url||book.source_url;
  $('prevChapter').disabled=$('prevTop').disabled=i===0;
  $('nextChapter').disabled=$('nextTop').disabled=i===book.chapters.length-1;
@@ -251,7 +292,7 @@ async function showChapter(i,scroll=true){
  await Promise.all(all.map(async item=>{
     const saved=await readTranslation(item.key);
     if(current!==token)return;
-    if(saved){item.node.textContent=saved;item.node.classList.remove('translation-unready');item.done=true}
+    if(saved){item.node.textContent=saved;item.node.classList.remove('translation-unready');item.node.parentElement.classList.add('translated');item.done=true}
  }));
  if(current!==token)return;
  remaining=all.filter(p=>!p.done);
@@ -270,12 +311,18 @@ async function getNative(){
  try{const n=await import('./src/native-translation.bundle.js');if(n.isAvailable())nativeTranslator=n}catch{}
  return nativeTranslator;
 }
+// When the phone's on-device translator is not available (e.g. on the web, or before the APK model loads), translate
+// online with the owner's key (OpenAI first) so "বাংলায় আনো" still works everywhere instead of asking for the APK.
+function onlineTranslateReady(){try{const k=cloud.keys();return Boolean(k.gemini||k.groq)&&globalThis.navigator?.onLine!==false}catch{return false}}
+function cloudTranslator(){return onlineTranslateReady()?{prepare:async()=>{},translate:t=>cloud.cloudTranslate(t)}:null}
+// Net on → online translation first (faster, stronger). The phone's on-device translator is the offline fallback.
+async function getTranslator(){return cloudTranslator()||(await getNative())}
 $('stopTranslate').onclick=()=>{token++;working=false;$('stopTranslate').disabled=true;$('stopTranslate').classList.add('hidden');$('translateChapter').disabled=false;$('translateStatus').textContent='অনুবাদ থামানো হয়েছে। তৈরি অংশগুলো সংরক্ষিত আছে।'};
 $('translateChapter').onclick=async()=>{
  if(working){return}
  if(!book)return;
- const translate=await getNative();
- if(!translate){$('translateStatus').textContent='বাংলা অনুবাদ Android APK-তে কাজ করবে। ব্রাউজারে মূল ইংরেজি বই পড়া যাবে; ফোনে নতুন APK ইনস্টল করো।';return}
+ const translate=await getTranslator();
+ if(!translate){$('translateStatus').textContent=(globalThis.navigator?.onLine===false?'এখন নেট নেই। নেট এলে Settings-এ OpenAI/Gemini key দিয়ে বাংলায় আনা যাবে; ':'বাংলায় আনতে Settings-এ একটা online key (OpenAI/Gemini) দাও, নয়তো ফোনের অ্যাপের অনুবাদ লাগবে। ')+'আপাতত মূল ইংরেজি পড়তে পারো।';return}
  if(!remaining.length){$('translateStatus').textContent='✓ এই অধ্যায়ের বাংলা অনুবাদ ইতিমধ্যে সংরক্ষিত আছে।';mode('both');return}
  const myToken=token;
  working=true;$('translateChapter').disabled=true;$('stopTranslate').disabled=false;$('stopTranslate').classList.remove('hidden');
@@ -292,7 +339,7 @@ $('translateChapter').onclick=async()=>{
   if(token!==myToken)break;
   const result=translated.join(' ').trim();
   if(result){
-   item.node.textContent=result;item.node.classList.remove('translation-unready');item.done=true;
+   item.node.textContent=result;item.node.classList.remove('translation-unready');item.node.parentElement.classList.add('translated');item.done=true;
    await saveTranslation(item.key,result);
   }
   const doneTotal=Array.from($('article').querySelectorAll('.paragraph .bn:not(.translation-unready)')).length;
@@ -318,9 +365,10 @@ $('searchBtn').onclick=()=>{
   const jump=E('button','অধ্যায়টি পড়ো →','text-link');jump.type='button';jump.onclick=()=>showChapter(hit.ci);
   row.append(jump);$('results').append(row)
  }
+ $('results').append(creditLine());
 };
 $('searchText').addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();$('searchBtn').click()}});
-async function aiReady(){try{const r=await fetch(apiUrl('/api/status'),{cache:'no-store'});if(r.ok&&(await r.json()).ai_enabled)$('aiPanel').classList.remove('hidden')}catch{}}
+async function aiReady(){try{const r=await fetch(apiUrl('/api/status'),{cache:'no-store'});if(r.ok&&(await r.json()).ai_enabled){serverAi=true;showAi()}}catch{}}
 $('aiAsk').onclick=async()=>{
  if(!book)return;
  const q=$('aiQuestion').value.trim(),code=$('aiCode').value.trim();

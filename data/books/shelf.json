@@ -1,0 +1,463 @@
+{
+  "schema": 1,
+  "updated": "2026-11-12",
+  "about": "Hand-kept evidence for Nandini's bookshelf: which printed books she owns, which subjects she studies, and which bundled or online books go with each subject. The importers never write this file. A title listed under physical_titles is NOT a book in the app: it has no text, cannot be searched and is never evidence for an answer.",
+  "learner": {
+    "college": "Amazan Nursing College",
+    "course": "Diploma in Nursing Science & Midwifery",
+    "year": 1,
+    "college_book_list": "not_received"
+  },
+  "evidence": [
+    {
+      "id": "owner-photos-2026-11-12",
+      "kind": "owner_photographs",
+      "date": "2026-11-12",
+      "count": 20,
+      "recorded_in": "https://github.com/hridoysamadder01-coder/NURSING-AI-TUTOR-FOR-NANDINI/issues/2",
+      "shows": "Covers and title pages of six Neuron Publication books, some photographed more than once.",
+      "does_not_show": [
+        "an electronic or licensed copy of any book",
+        "a table of contents",
+        "that the college prescribes these books",
+        "an ICT book"
+      ]
+    },
+    {
+      "id": "owner-subject-list-2026-10-24",
+      "kind": "owner_statement",
+      "date": "2026-10-24",
+      "shows": "Nandini's six first-year subjects, in her order."
+    },
+    {
+      "id": "bnmc-syllabus-2018",
+      "kind": "official_syllabus",
+      "date": "2026-10-23",
+      "url": "https://objectstorage.ap-dcc-gazipur-1.oraclecloud15.com/n/axvjbnqprylg/b/V2Ministry/o/office-bnmc/2024/12/e2a139a550364b0f9711ccfd07432c28.pdf",
+      "shows": "BNMC Diploma in Nursing Science and Midwifery Course Syllabus 2018: seven first-year subjects, Behavioral Science among them. Subject codes were taken from it on 2026-10-23.",
+      "does_not_show": [
+        "which books a college must use"
+      ],
+      "note": "The file could not be opened from the build environment on 2026-11-12, so its units and learning outcomes have not been read into the app."
+    }
+  ],
+  "physical_titles": [
+    {
+      "id": "neuron-fundamentals",
+      "title": "Neuron Fundamentals of Nursing",
+      "publisher": "Neuron Publication",
+      "course_on_cover": "Diploma in Nursing Science & Midwifery",
+      "year_on_cover": "1st year",
+      "editors": [
+        "H. Al-Hasib",
+        "Dr. Md. Tanvir Islam",
+        "Md. Salahuddin Madber"
+      ],
+      "co_editors": [],
+      "edition": null,
+      "edition_status": "unconfirmed",
+      "subject": "D135",
+      "status": "physical_verified",
+      "full_text": "not_imported",
+      "toc": "not_supplied",
+      "user_local_copy": "not_imported",
+      "searchable": false,
+      "evidence": "owner-photos-2026-11-12"
+    },
+    {
+      "id": "neuron-behavioral-science",
+      "title": "Neuron Behavioral Science",
+      "publisher": "Neuron Publication",
+      "course_on_cover": null,
+      "year_on_cover": "1st year",
+      "editors": [
+        "H. Al-Hasib",
+        "Dr. Md. Tanvir Islam"
+      ],
+      "co_editors": [],
+      "edition": null,
+      "edition_status": "unconfirmed",
+      "subject": "D111",
+      "status": "physical_verified",
+      "full_text": "not_imported",
+      "toc": "not_supplied",
+      "user_local_copy": "not_imported",
+      "searchable": false,
+      "evidence": "owner-photos-2026-11-12"
+    },
+    {
+      "id": "neuron-basic-science",
+      "title": "Neuron Basic Science",
+      "publisher": "Neuron Publication",
+      "course_on_cover": null,
+      "year_on_cover": "1st year",
+      "editors": [
+        "H. Al-Hasib",
+        "Dr. Md. Tanvir Islam"
+      ],
+      "co_editors": [],
+      "edition": null,
+      "edition_status": "unconfirmed",
+      "subject": "D112",
+      "status": "physical_verified",
+      "full_text": "not_imported",
+      "toc": "not_supplied",
+      "user_local_copy": "not_imported",
+      "searchable": false,
+      "evidence": "owner-photos-2026-11-12"
+    },
+    {
+      "id": "neuron-anatomy-physiology",
+      "title": "Neuron Anatomy & Physiology for Nurses & Midwives",
+      "publisher": "Neuron Publication",
+      "course_on_cover": null,
+      "year_on_cover": null,
+      "editors": [
+        "Dr. Md. Tanvir Islam",
+        "Md. Salahuddin Madber"
+      ],
+      "co_editors": [
+        "Dr. S. M. Mosharraf Hossain"
+      ],
+      "edition": "10th Edition",
+      "edition_status": "seen_on_title_page",
+      "subject": "D123",
+      "status": "physical_verified",
+      "full_text": "not_imported",
+      "toc": "not_supplied",
+      "user_local_copy": "not_imported",
+      "searchable": false,
+      "evidence": "owner-photos-2026-11-12"
+    },
+    {
+      "id": "neuron-microbiology-parasitology",
+      "title": "Neuron Microbiology & Parasitology for Nurses",
+      "publisher": "Neuron Publication",
+      "course_on_cover": "Diploma in Nursing Science & Midwifery",
+      "year_on_cover": null,
+      "editors": [
+        "H. Al-Hasib",
+        "Dr. Md. Tanvir Islam"
+      ],
+      "co_editors": [],
+      "edition": null,
+      "edition_status": "unconfirmed",
+      "subject": "D124",
+      "status": "physical_verified",
+      "full_text": "not_imported",
+      "toc": "not_supplied",
+      "user_local_copy": "not_imported",
+      "searchable": false,
+      "evidence": "owner-photos-2026-11-12"
+    },
+    {
+      "id": "neuron-communicative-english",
+      "title": "Neuron Communicative English for Nurses",
+      "publisher": "Neuron Publication",
+      "course_on_cover": null,
+      "year_on_cover": null,
+      "editors": [
+        "H. Al-Hasib",
+        "A. H. Khanam",
+        "Dr. Md. Tanvir Islam"
+      ],
+      "co_editors": [],
+      "edition": null,
+      "edition_status": "unconfirmed",
+      "subject": "D116",
+      "status": "physical_verified",
+      "full_text": "not_imported",
+      "toc": "not_supplied",
+      "user_local_copy": "not_imported",
+      "searchable": false,
+      "evidence": "owner-photos-2026-11-12"
+    },
+    {
+      "id": "ict-book",
+      "title": null,
+      "publisher": null,
+      "course_on_cover": null,
+      "year_on_cover": null,
+      "editors": [],
+      "co_editors": [],
+      "edition": null,
+      "edition_status": "unconfirmed",
+      "subject": "D117",
+      "status": "title_unconfirmed",
+      "full_text": "not_imported",
+      "toc": "not_supplied",
+      "user_local_copy": "not_imported",
+      "searchable": false,
+      "evidence": "owner-photos-2026-11-12"
+    }
+  ],
+  "coverage_levels": {
+    "full": "Checked chapter by chapter against Nandini's own book or the BNMC syllabus. Nothing has this level yet.",
+    "partial": "The bundled text is known to cover only part of the subject.",
+    "none": "No bundled text for the subject.",
+    "unverified": "A whole textbook on the subject is bundled, but it has not been compared with Nandini's own book or the BNMC syllabus."
+  },
+  "subjects": [
+    {
+      "code": "D135",
+      "name": "Fundamentals of Nursing",
+      "bn": "নার্সিংয়ের মৌলিক বিষয়",
+      "emoji": "🩺",
+      "status": "owner_listed",
+      "in_coach": true,
+      "physical": [
+        "neuron-fundamentals"
+      ],
+      "bundled": [
+        {
+          "book": "fundamentals",
+          "note": "International nursing fundamentals textbook."
+        },
+        {
+          "book": "skills",
+          "note": "Practical nursing procedures."
+        }
+      ],
+      "online": [],
+      "coverage": "unverified",
+      "coverage_note": "Two whole Open RN textbooks. Not compared with the Neuron book: its table of contents has not been supplied.",
+      "coverage_bn": "Open RN-এর দুটো পুরো বই আছে। Neuron বইয়ের সূচিপত্র না পাওয়ায় অধ্যায় ধরে মিলিয়ে দেখা হয়নি।",
+      "gap_table": "blocked_no_contents"
+    },
+    {
+      "code": "D123",
+      "name": "Anatomy & Physiology",
+      "bn": "অ্যানাটমি ও ফিজিওলজি",
+      "emoji": "🫀",
+      "status": "owner_listed",
+      "in_coach": true,
+      "physical": [
+        "neuron-anatomy-physiology"
+      ],
+      "bundled": [
+        {
+          "book": "openstax-anatomy",
+          "note": "Whole anatomy and physiology textbook. Reading and search only."
+        },
+        {
+          "book": "seer-anatomy",
+          "note": "Short introductory overview of every body system. The Tutor's AI may use it."
+        },
+        {
+          "book": "terminology",
+          "note": "Body-system words and their meanings."
+        }
+      ],
+      "online": [],
+      "coverage": "unverified",
+      "coverage_note": "A whole textbook and a short overview. Not compared with the Neuron 10th Edition: its table of contents has not been supplied.",
+      "coverage_bn": "একটা পুরো বই আর একটা ছোট পরিচিতি আছে। Neuron ১০ম সংস্করণের সূচিপত্র না পাওয়ায় অধ্যায় ধরে মিলিয়ে দেখা হয়নি।",
+      "gap_table": "blocked_no_contents"
+    },
+    {
+      "code": "D112",
+      "name": "Basic Science",
+      "bn": "মৌলিক বিজ্ঞান",
+      "emoji": "⚛️",
+      "status": "owner_listed",
+      "in_coach": true,
+      "physical": [
+        "neuron-basic-science"
+      ],
+      "bundled": [
+        {
+          "book": "openstax-biology",
+          "note": "Whole biology textbook. Reading and search only."
+        },
+        {
+          "book": "openstax-chemistry",
+          "note": "Whole chemistry textbook. Reading and search only. Equations are written on one line."
+        }
+      ],
+      "online": [],
+      "coverage": "unverified",
+      "coverage_note": "Biology and chemistry textbooks. No physics book is bundled; whether her syllabus needs one is not known until the Neuron contents or the BNMC units are read.",
+      "coverage_bn": "জীববিজ্ঞান আর রসায়নের পুরো বই আছে। পদার্থবিজ্ঞানের বই নেই; সিলেবাসে লাগে কি না, Neuron বইয়ের সূচিপত্র পেলে জানা যাবে।",
+      "gap_table": "blocked_no_contents"
+    },
+    {
+      "code": "D124",
+      "name": "Microbiology & Parasitology",
+      "bn": "মাইক্রোবায়োলজি ও প্যারাসাইটোলজি",
+      "emoji": "🦠",
+      "status": "owner_listed",
+      "in_coach": true,
+      "physical": [
+        "neuron-microbiology-parasitology"
+      ],
+      "bundled": [
+        {
+          "book": "openstax-microbiology",
+          "note": "Whole microbiology textbook. Reading and search only. Parasites are covered in a few chapters, not as a full parasitology course."
+        },
+        {
+          "book": "fundamentals",
+          "note": "Infection prevention and control chapters."
+        }
+      ],
+      "online": [],
+      "coverage": "partial",
+      "coverage_note": "Microbiology has a whole textbook. Parasitology is only partly covered: no dedicated parasitology book is bundled.",
+      "coverage_bn": "মাইক্রোবায়োলজির পুরো বই আছে। প্যারাসাইটোলজি আংশিক: আলাদা কোনো প্যারাসাইটোলজি বই অ্যাপে নেই।",
+      "gap_table": "blocked_no_contents"
+    },
+    {
+      "code": "D117",
+      "name": "ICT",
+      "bn": "আইসিটি (কম্পিউটার)",
+      "emoji": "💻",
+      "status": "owner_listed",
+      "in_coach": true,
+      "physical": [
+        "ict-book"
+      ],
+      "bundled": [
+        {
+          "book": "openstax-workplace",
+          "note": "Word processing, spreadsheets, presentations, email and the internet. Reading and search only."
+        }
+      ],
+      "online": [
+        {
+          "title": "GCFGlobal Computer Basics",
+          "url": "https://edu.gcfglobal.org/en/computerbasics/",
+          "terms": "Free to read online; not an open licence, so it is linked, not bundled.",
+          "checked": "2026-11-12"
+        }
+      ],
+      "coverage": "unverified",
+      "coverage_note": "One office-software textbook. Nandini's ICT book has not been photographed, so its title and contents are unknown.",
+      "coverage_bn": "অফিস সফটওয়্যারের একটা বই আছে। নন্দিনীর ICT বইয়ের ছবি পাইনি, তাই তার নাম ও বিষয়বস্তু জানা নেই।",
+      "gap_table": "blocked_no_contents"
+    },
+    {
+      "code": "D116",
+      "name": "English",
+      "bn": "ইংরেজি",
+      "emoji": "💬",
+      "status": "owner_listed",
+      "in_coach": true,
+      "physical": [
+        "neuron-communicative-english"
+      ],
+      "bundled": [
+        {
+          "book": "terminology",
+          "note": "Medical words only. It does not teach grammar, reading or conversation."
+        }
+      ],
+      "online": [
+        {
+          "title": "Professional communication (extra reading)",
+          "url": "https://opentextbc.ca/technicalwritingh5p/",
+          "terms": "Extra reading, linked only. Title, licence and link not re-checked on 2026-11-12: the site refused the build environment.",
+          "checked": null
+        }
+      ],
+      "coverage": "partial",
+      "coverage_note": "No Communicative English textbook with a licence that allows bundling has been found and imported yet.",
+      "coverage_bn": "শুধু মেডিকেল শব্দের বই আছে। Communicative English-এর মতো, অ্যাপে রাখার অনুমতি আছে এমন বই এখনো পাইনি।",
+      "gap_table": "blocked_no_contents"
+    },
+    {
+      "code": "D111",
+      "name": "Behavioral Science",
+      "bn": "বিহেভিয়ারাল সায়েন্স (আচরণ বিজ্ঞান)",
+      "emoji": "🧠",
+      "status": "pending_confirmation",
+      "status_note": "Nandini owns a Neuron Behavioral Science book and the BNMC 2018 syllabus lists the subject for first year, but it is not in the six subjects the owner gave. It stays out of the study plan until the owner or the college confirms it.",
+      "status_bn": "নন্দিনীর কাছে Neuron Behavioral Science বই আছে, আর BNMC সিলেবাসেও বিষয়টি আছে। কিন্তু নন্দিনীর দেওয়া ৬ বিষয়ে এটি নেই। মামা বা কলেজ নিশ্চিত করলে পড়ার প্ল্যানে যোগ হবে।",
+      "in_coach": false,
+      "physical": [
+        "neuron-behavioral-science"
+      ],
+      "bundled": [
+        {
+          "book": "openstax-psychology",
+          "note": "Whole introductory psychology textbook. Reading and search only."
+        },
+        {
+          "book": "openstax-sociology",
+          "note": "Whole introductory sociology textbook. Reading and search only."
+        },
+        {
+          "book": "mentalhealth",
+          "note": "Mental health and community nursing concepts."
+        }
+      ],
+      "online": [],
+      "coverage": "unverified",
+      "coverage_note": "Psychology and sociology textbooks. Not compared with the Neuron book: its table of contents has not been supplied.",
+      "coverage_bn": "মনোবিজ্ঞান আর সমাজবিজ্ঞানের পুরো বই আছে। Neuron বইয়ের সূচিপত্র না পাওয়ায় অধ্যায় ধরে মিলিয়ে দেখা হয়নি।",
+      "gap_table": "blocked_no_contents"
+    }
+  ],
+  "ai_use": {
+    "rule": "A bundled book may be sent to a language model (the phone's model, the online models, the voice tool, or the owner's server) only when it is listed under allowed. Every other book is for reading and plain search only.",
+    "allowed": [
+      {
+        "books": [
+          "fundamentals",
+          "skills",
+          "terminology",
+          "mentalhealth"
+        ],
+        "basis": "CC BY 4.0 (Open RN / WisTech Open), which allows reuse for any purpose with attribution. No AI restriction was recorded when the books were imported.",
+        "evidence_url": "https://wtcs.pressbooks.pub/nursingfundamentals/",
+        "checked": "2026-10-23",
+        "note": "Not re-checked on 2026-11-12: the publisher's site refused the build environment."
+      },
+      {
+        "books": [
+          "seer-anatomy"
+        ],
+        "basis": "U.S. National Cancer Institute, Reuse of Text policy: \"Unless otherwise indicated, all text within National Cancer Institute (NCI) products is free of copyright and may be reused without our permission. Credit the National Cancer Institute as the source.\"",
+        "evidence_url": "https://www.cancer.gov/policies/copyright-reuse",
+        "checked": "2026-11-12"
+      }
+    ],
+    "not_permitted": [
+      {
+        "books": [
+          "openstax-anatomy",
+          "openstax-microbiology",
+          "openstax-biology",
+          "openstax-chemistry",
+          "openstax-psychology",
+          "openstax-sociology",
+          "openstax-workplace"
+        ],
+        "basis": "OpenStax statement on every book's web page: \"This book may not be used in the training of large language models or otherwise be ingested into large language models or generative AI offerings without OpenStax's prior written permission.\" The books are CC BY-NC-SA 4.0: free to share for non-commercial study with the attribution line on every page view.",
+        "evidence_url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/preface",
+        "checked": "2026-11-12"
+      }
+    ]
+  },
+  "not_imported_yet": [
+    {
+      "what": "The six Neuron books' full text",
+      "why": "Copyrighted commercial books. A photo of a cover is not permission to copy them, and no pages or files have been supplied for private study on the phone."
+    },
+    {
+      "what": "A dedicated parasitology text (for example the CDC DPDx parasite pages, U.S. Government)",
+      "why": "Candidate found; licence evidence and importer not done yet."
+    },
+    {
+      "what": "WisTech Open general-education books (communication, writing)",
+      "why": "The publisher's site refuses the build environment; an import has to run in GitHub Actions and the licence of each book has to be read first."
+    },
+    {
+      "what": "A Communicative English textbook",
+      "why": "No complete, openly licensed match identified yet."
+    },
+    {
+      "what": "BNMC syllabus units and learning outcomes",
+      "why": "The official PDF could not be opened from the build environment on 2026-11-12."
+    }
+  ]
+}
