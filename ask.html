@@ -173,12 +173,14 @@ function topicCard(b,t){
 // Reads an answer aloud: Gemini's natural Bangla voice when online with a key, otherwise the phone's own Bangla voice.
 async function say(text){
  stopSaying();
+ // Shayni's friendliest voice first: OpenAI (the owner's key) → Gemini's natural voice → the phone's own voice.
+ if(cloud.openaiVoiceReady()){try{const r=await cloud.openaiSpeech(voice.forSpeech(text).slice(0,1500));await playWav(r.wav);return}catch{}}
  if(cloud.ready()&&cloud.hasKey('gemini')){try{const r=await cloud.speechAudio(voice.forSpeech(text).slice(0,1500));await playWav(r.wav);return}catch{}}
  if(voice.available())return voice.speak(text);
  throw new Error('no_voice');
 }
 function stopSaying(){stopWav();voice.stopSpeaking()}
-const canSay=()=>voice.available()||cloud.hasKey('gemini');
+const canSay=()=>voice.available()||cloud.hasKey('gemini')||cloud.hasKey('openai');
 function speakButton(text){const x=E('button','🔊 শোনো','btn sm ghost');x.type='button';x.onclick=()=>say(text()).catch(e=>x.textContent='🔇 '+voiceError(e?.message));return x}
 // What to read aloud from an answer that has no AI part: the friendly line, title, gist, points and trick.
 const speechOf=b=>[...b.querySelectorAll('p:not(.fine),h3,li,.trick')].filter(x=>!x.closest('.source,.aibox')).map(x=>x.textContent).join('। ');
@@ -494,6 +496,8 @@ function startPhoneTalk(){
   return voice.listen(t=>{T.user.textContent=t});
  };
  const speak=async text=>{
+  // Online with an OpenAI key → her natural friendly voice; otherwise the phone's own voice (offline), then Gemini.
+  if(cloud.openaiVoiceReady()){try{const r=await cloud.openaiSpeech(voice.forSpeech(text).slice(0,1500));return await playWav(r.wav)}catch{}}
   if(voice.available())return voice.speakWait(text);
   if(cloud.ready()&&cloud.hasKey('gemini')){const r=await cloud.speechAudio(voice.forSpeech(text).slice(0,1500));return playWav(r.wav)}
  };

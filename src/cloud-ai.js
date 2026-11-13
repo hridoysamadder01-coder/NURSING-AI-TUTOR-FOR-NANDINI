@@ -14,8 +14,8 @@ export const ROUTE=[
 const GEMINI='https://generativelanguage.googleapis.com/v1beta/models/',GROQ='https://api.groq.com/openai/v1/';
 
 const store=globalThis.localStorage;
-export function keys(){try{const k=JSON.parse(store?.getItem(KEYS)||'{}');return {gemini:String(k.gemini||''),groq:String(k.groq||'')}}catch{return {gemini:'',groq:''}}}
-export function setKeys(next){const k={...keys(),...next};for(const p of ['gemini','groq'])k[p]=String(k[p]||'').trim();try{store?.setItem(KEYS,JSON.stringify(k))}catch{}cooldown.clear()}
+export function keys(){try{const k=JSON.parse(store?.getItem(KEYS)||'{}');return {gemini:String(k.gemini||''),groq:String(k.groq||''),openai:String(k.openai||'')}}catch{return {gemini:'',groq:'',openai:''}}}
+export function setKeys(next){const k={...keys(),...next};for(const p of ['gemini','groq','openai'])k[p]=String(k[p]||'').trim();try{store?.setItem(KEYS,JSON.stringify(k))}catch{}cooldown.clear()}
 export function enabled(){try{return store?.getItem(ENABLED)!=='off'}catch{return true}}
 export function setEnabled(on){try{store?.setItem(ENABLED,on?'on':'off')}catch{}}
 export function hasKey(provider){return Boolean(keys()[provider])}
@@ -204,4 +204,22 @@ export async function speechAudio(text,{voice='Aoede',signal}={}){
   }
  }
  throw Object.assign(new Error('tts_unavailable'),{tried});
+}
+
+// OpenAI voice for Shayni: a warm, natural, friendly female voice. PAID — the owner's own key (sk-…), kept only on this
+// phone's storage, never in the code, repository or APK. Returns WAV bytes that playWav() plays, like the Gemini TTS above.
+export const OPENAI_VOICE_KEY='nandini-openai-voice';
+export const OPENAI_VOICES=['coral','shimmer','nova','sage'];
+export function openaiVoice(){try{const v=store?.getItem(OPENAI_VOICE_KEY);return OPENAI_VOICES.includes(v)?v:'coral'}catch{return 'coral'}}
+export function setOpenaiVoice(v){try{if(OPENAI_VOICES.includes(v))store?.setItem(OPENAI_VOICE_KEY,v)}catch{}}
+const OPENAI_TTS_STYLE='You are Shayni, a warm, friendly, encouraging young female nursing tutor speaking to a first-year student in Bangla. Speak naturally and calmly, clear and gentle, like a caring friend — never robotic or monotone.';
+// True when Shayni can use the OpenAI voice right now: a key is set and the phone is online.
+export function openaiVoiceReady(){return Boolean(keys().openai)&&globalThis.navigator?.onLine!==false}
+export async function openaiSpeech(text,{signal}={}){
+ const key=keys().openai;if(!key)throw new Error('no_key');
+ const res=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',signal,
+  headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
+  body:JSON.stringify({model:'gpt-4o-mini-tts',voice:openaiVoice(),input:String(text||'').slice(0,1800),instructions:OPENAI_TTS_STYLE,response_format:'wav'})});
+ if(!res.ok)throw Object.assign(new Error(res.status===429?'limit':res.status===401||res.status===403?'key_rejected':'http_'+res.status),{status:res.status});
+ return {wav:new Uint8Array(await res.arrayBuffer()),model:'gpt-4o-mini-tts'};
 }

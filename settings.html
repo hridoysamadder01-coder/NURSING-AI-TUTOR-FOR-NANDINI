@@ -3,6 +3,13 @@
 <section class="card" id="cloud" style="scroll-margin-top:12px"><h2>🌐 শক্তিশালী মোড (অনলাইন)</h2><p class="fine">নেট থাকলে বড় AI উত্তর দেবে: আগে Google Gemini, ওর ফ্রি সীমা শেষ হলে Groq। নেট না থাকলে বা দুটোই না পেলে ফোনের ভেতরের AI। key শুধু এই ফোনেই থাকে, কোথাও পাঠানো হয় না।</p>
 <label class="field" for="geminiKey">Gemini API key (<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com</a> থেকে)</label><input id="geminiKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza…">
 <label class="field" for="groqKey" style="margin-top:10px">Groq API key (<a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com</a> থেকে)</label><input id="groqKey" type="password" autocomplete="off" spellcheck="false" placeholder="gsk_…">
+<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-2)">
+ <label class="field" for="openaiKey">🎙️ শায়নির কণ্ঠ · OpenAI API key (<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com</a> থেকে)</label>
+ <input id="openaiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+ <label class="field" for="openaiVoice" style="margin-top:10px">কণ্ঠ বেছে নাও</label>
+ <select id="openaiVoice"><option value="coral">Coral — বন্ধুত্বপূর্ণ নারীকণ্ঠ</option><option value="shimmer">Shimmer — কোমল নারীকণ্ঠ</option><option value="nova">Nova — প্রাণবন্ত নারীকণ্ঠ</option><option value="sage">Sage — শান্ত নারীকণ্ঠ</option></select>
+ <p class="fine" style="margin-top:8px">⚠️ OpenAI কণ্ঠ <b>ফ্রি নয়</b> — তোমার নিজের key, তোমার বিলে চলবে (ব্যবহার কম হলে খরচও কম)। key শুধু এই ফোনে থাকে। নেট থাকলে শায়নি এই স্বাভাবিক কণ্ঠে পড়ে শোনাবে; নেট না থাকলে ফোনের নিজের কণ্ঠে।</p>
+</div>
 <div class="btn-row" style="margin-top:12px"><button id="cloudSave" class="btn" type="button">সেভ করো</button><button id="cloudTest" class="btn soft" type="button">🔌 পরীক্ষা করো</button></div>
 <label class="consent" style="display:flex;gap:9px;align-items:center;font-size:13.5px;margin-top:12px"><input type="checkbox" id="cloudOn" style="width:auto;min-height:0"> শক্তিশালী মোড চালু</label>
 <p id="cloudResult" class="fine" aria-live="polite" style="white-space:pre-line"></p>
@@ -85,12 +92,14 @@ async function renderVoice(retry=true){
  if(!st.bangla){const inst=E('button','⬇️ বাংলা কণ্ঠ নামাও','btn sm');inst.type='button';inst.onclick=()=>voice.installVoice();row.append(inst)}
 }
 // Strong mode keys: kept only in this phone's storage (src/cloud-ai.js).
-{const k=cloud.keys();$('geminiKey').value=k.gemini;$('groqKey').value=k.groq;$('cloudOn').checked=cloud.enabled()}
-const keyHint=()=>{const g=$('geminiKey').value.trim(),q=$('groqKey').value.trim();return [g&&!g.startsWith('AIza')?'Gemini key সাধারণত "AIza" দিয়ে শুরু হয়, ঠিক কপি হয়েছে তো?':'',q&&!q.startsWith('gsk_')?'Groq key সাধারণত "gsk_" দিয়ে শুরু হয়, ঠিক কপি হয়েছে তো?':''].filter(Boolean).join('\n')};
-$('cloudSave').onclick=()=>{cloud.setKeys({gemini:$('geminiKey').value,groq:$('groqKey').value});const k=cloud.keys();$('cloudResult').textContent=(k.gemini||k.groq?'✅ সেভ হয়েছে। এবার "পরীক্ষা করো" চাপো।':'key মুছে দেওয়া হয়েছে। শক্তিশালী মোড বন্ধ থাকবে।')+(keyHint()?'\n⚠️ '+keyHint():'')};
+{const k=cloud.keys();$('geminiKey').value=k.gemini;$('groqKey').value=k.groq;$('openaiKey').value=k.openai;$('openaiVoice').value=cloud.openaiVoice();$('cloudOn').checked=cloud.enabled()}
+const saveCloud=()=>{cloud.setKeys({gemini:$('geminiKey').value,groq:$('groqKey').value,openai:$('openaiKey').value});cloud.setOpenaiVoice($('openaiVoice').value)};
+$('openaiVoice').onchange=()=>cloud.setOpenaiVoice($('openaiVoice').value);
+const keyHint=()=>{const g=$('geminiKey').value.trim(),q=$('groqKey').value.trim(),o=$('openaiKey').value.trim();return [g&&!g.startsWith('AIza')?'Gemini key সাধারণত "AIza" দিয়ে শুরু হয়, ঠিক কপি হয়েছে তো?':'',q&&!q.startsWith('gsk_')?'Groq key সাধারণত "gsk_" দিয়ে শুরু হয়, ঠিক কপি হয়েছে তো?':'',o&&!o.startsWith('sk-')?'OpenAI key সাধারণত "sk-" দিয়ে শুরু হয়, ঠিক কপি হয়েছে তো?':''].filter(Boolean).join('\n')};
+$('cloudSave').onclick=()=>{saveCloud();const k=cloud.keys();$('cloudResult').textContent=(k.gemini||k.groq||k.openai?'✅ সেভ হয়েছে।'+(k.openai?' শায়নি এখন OpenAI কণ্ঠে পড়বে।':'')+' এবার "পরীক্ষা করো" চাপো।':'key মুছে দেওয়া হয়েছে। শক্তিশালী মোড বন্ধ থাকবে।')+(keyHint()?'\n⚠️ '+keyHint():'')};
 $('cloudTest').onclick=async()=>{
- cloud.setKeys({gemini:$('geminiKey').value,groq:$('groqKey').value});const k=cloud.keys();
- if(!k.gemini&&!k.groq){$('cloudResult').textContent='আগে অন্তত একটা key দাও।';return}
+ saveCloud();const k=cloud.keys();
+ if(!k.gemini&&!k.groq){$('cloudResult').textContent=k.openai?'✅ OpenAI কণ্ঠের key সেভ হয়েছে। নেট থাকলে শায়নি এই কণ্ঠে পড়ে শোনাবে। (প্রশ্নের উত্তরের জন্য Gemini বা Groq key আলাদা করে দিতে পারো।)':'আগে অন্তত একটা key দাও।';return}
  $('cloudResult').textContent='🔌 পরীক্ষা চলছে…';const lines=[];
  for(const p of ['gemini','groq']){if(!k[p])continue;const r=await cloud.testProvider(p);
   lines.push(r.ok?'✅ '+r.label+': কাজ করছে ('+bn((r.ms/1000).toFixed(1))+' সেকেন্ড)':'❌ '+r.label+': '+({key_rejected:'key ভুল বা বন্ধ',limit:'আজকের ফ্রি সীমা শেষ',network:'ইন্টারনেট পাওয়া যাচ্ছে না',timeout:'সাড়া দিচ্ছে না'}[r.error]||r.error))}
