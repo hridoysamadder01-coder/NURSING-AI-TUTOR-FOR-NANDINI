@@ -45,7 +45,9 @@ test('a rejected Gemini key falls through to Groq; everything down means the pho
  assert.equal(calls.filter(c=>c.url.includes('generativelanguage')).length,1,'other Gemini models are not tried with a rejected key');
  assert.equal(calls.at(-1).headers.Authorization,'Bearer q-key');
  cloud.setKeys({gemini:'g',groq:'q'});serve([]);
- await assert.rejects(cloud.generate(msgs),e=>e.message==='cloud_unavailable'&&e.tried.length===cloud.ROUTE.length);
+ // Only routes that have a key are tried (no OpenAI key here, so the OpenAI route is skipped).
+ const keyed=cloud.ROUTE.filter(r=>cloud.hasKey(r.provider)).length;
+ await assert.rejects(cloud.generate(msgs),e=>e.message==='cloud_unavailable'&&e.tried.length===keyed);
 });
 test('a model that rejects the thinking setting is asked again without it; a cut-off answer is not restarted',async()=>{
  cloud.setKeys({gemini:'g',groq:'q'});
@@ -109,4 +111,14 @@ test('OpenAI voice: natural female voice via the owner key; needs a key, maps a 
  localStorage.removeItem('nandini-openai-voice');assert.equal(cloud.openaiVoice(),'coral','default is a friendly female voice');
  serve([['audio/speech',()=>new Response('no',{status:401})]]);
  await assert.rejects(cloud.openaiSpeech('x'),/key_rejected/,'401 → key_rejected');
+});
+
+test('OpenAI answers first when its key is set (online-first, owner preference)',async()=>{
+ cloud.setKeys({openai:'sk-ans',gemini:'g',groq:'q'});cloud.setEnabled(true);
+ serve([['api.openai.com/v1/chat/completions',body=>{assert.equal(body.model,'gpt-4o-mini');assert.equal(body.stream,true);return sse([groqChunk('OpenAI '),groqChunk('উত্তর'),'[DONE]'])}]]);
+ const r=await cloud.generate(msgs);
+ assert.equal(r.route.provider,'openai','OpenAI is tried before Gemini/Groq');
+ assert.equal(r.text,'OpenAI উত্তর');
+ assert.ok(calls[0].url.includes('api.openai.com/v1/chat/completions'));
+ assert.equal(calls[0].headers.Authorization,'Bearer sk-ans');
 });

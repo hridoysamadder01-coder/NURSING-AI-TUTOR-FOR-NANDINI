@@ -6,12 +6,14 @@ export const KEYS='nandini-cloud-keys',ENABLED='nandini-cloud-on';
 // Each Gemini model has its own free quota, so several of them (plus Groq) give more free answers per day within the rules.
 // Flash-Lite models are first: they think the least, so the first words arrive fastest.
 export const ROUTE=[
+ // OpenAI first when the owner has set its key: Nandini is usually online, so her best answers come from here.
+ {id:'openai-gpt-4o-mini',provider:'openai',model:'gpt-4o-mini',label:'OpenAI GPT-4o mini'},
  {id:'gemini-3.5-flash-lite',provider:'gemini',model:'gemini-3.5-flash-lite',label:'Gemini 3.5 Flash-Lite',thinking:'minimal'},
  {id:'gemini-3.1-flash-lite',provider:'gemini',model:'gemini-3.1-flash-lite',label:'Gemini 3.1 Flash-Lite',thinking:'minimal'},
  {id:'gemini-2.5-flash-lite',provider:'gemini',model:'gemini-2.5-flash-lite',label:'Gemini 2.5 Flash-Lite'},
  {id:'groq-gpt-oss-120b',provider:'groq',model:'openai/gpt-oss-120b',label:'Groq · GPT-OSS 120B',extra:{reasoning_effort:'low',include_reasoning:false}},
  {id:'groq-qwen3.8-27b',provider:'groq',model:'qwen/qwen3.8-27b',label:'Groq · Qwen3.8 27B',extra:{reasoning_effort:'none'}}];
-const GEMINI='https://generativelanguage.googleapis.com/v1beta/models/',GROQ='https://api.groq.com/openai/v1/';
+const GEMINI='https://generativelanguage.googleapis.com/v1beta/models/',GROQ='https://api.groq.com/openai/v1/',OPENAI='https://api.openai.com/v1/';
 
 const store=globalThis.localStorage;
 export function keys(){try{const k=JSON.parse(store?.getItem(KEYS)||'{}');return {gemini:String(k.gemini||''),groq:String(k.groq||''),openai:String(k.openai||'')}}catch{return {gemini:'',groq:'',openai:''}}}
@@ -61,7 +63,7 @@ async function call(route,messages,{onToken,signal,maxTokens,temperature,firstTo
   let res;
   const send=body=>route.provider==='gemini'
    ?fetch(GEMINI+route.model+':streamGenerateContent?alt=sse',{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)})
-   :fetch(GROQ+'chat/completions',{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify(body)});
+   :fetch((route.provider==='openai'?OPENAI:GROQ)+'chat/completions',{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify(body)});
   const body=route.provider==='gemini'?geminiBody(messages,{maxTokens,temperature,thinking:route.thinking})
    :{model:route.model,messages:messages.map(m=>({role:m.role,content:m.content})),stream:true,temperature,max_tokens:maxTokens,...route.extra};
   res=await send(body);
@@ -99,6 +101,13 @@ export async function generate(messages,{onToken,signal,maxTokens=900,temperatur
   }
  }
  throw Object.assign(new Error('cloud_unavailable'),{tried});
+}
+// Translate English book text to simple Bangla with the online models (OpenAI first), so the reader's "বাংলায় আনো"
+// works on any device — not only through the Android app's on-device translator. One call per paragraph; results cached.
+export async function cloudTranslate(text,{signal}={}){
+ const sys='You translate English nursing-textbook text into clear, simple Bangla for a first-year nursing student. Keep important English medical or technical terms in English inside brackets right after the Bangla word, for example "ধমনি (Artery)". Do not add anything and do not explain — output ONLY the Bangla translation of the given text.';
+ const {text:out}=await generate([{role:'system',content:sys},{role:'user',content:String(text||'').slice(0,2000)}],{signal,maxTokens:1200,temperature:0.2,firstTokenMs:20000});
+ return out.replace(/\[S\d+\]/g,'').trim();
 }
 // Settings "পরীক্ষা করো": one tiny request per provider.
 export async function testProvider(provider){

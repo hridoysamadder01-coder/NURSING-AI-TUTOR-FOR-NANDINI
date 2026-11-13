@@ -54,6 +54,12 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 .aibox{margin-top:12px;padding:12px 13px;border-radius:16px;background:linear-gradient(160deg,#f3f0ff,#fff 70%);border:1px solid #e2dcff}
 .aibox>b{display:block;font-size:13px;color:#4b3dbd;margin-bottom:6px}
 .aibox .out{white-space:pre-wrap;line-height:1.75;font-size:14.5px}
+.aibox .out.rich{white-space:normal}
+.aibox .out.rich p{margin:0 0 9px}.aibox .out.rich p:last-child{margin-bottom:0}
+.aibox .out.rich strong{color:#1d2e2a;font-weight:750}
+.aibox .out.rich ul.ans{margin:4px 0 10px;padding-left:4px;list-style:none}
+.aibox .out.rich ul.ans li{position:relative;margin:5px 0;padding-left:20px;line-height:1.7}
+.aibox .out.rich ul.ans li::before{content:"";position:absolute;left:4px;top:10px;width:7px;height:7px;border-radius:50%;background:var(--brand,#13a28e)}
 .aibox .meta{font-size:11.5px;color:var(--ink-3);margin-top:8px}
 .aibox .btn{margin-top:8px}
 </style></head>
@@ -171,6 +177,22 @@ function topicCard(b,t){
  b.append(acts);
 }
 // Reads an answer aloud: Gemini's natural Bangla voice when online with a key, otherwise the phone's own Bangla voice.
+// Render Shayni's answer cleanly: drop [S1] citation codes and stray markdown symbols, make **bold** real, and turn
+// "-"/"*"/"1." lines into a tidy bulleted list — so she reads as clean Bangla, not raw * and # characters.
+function formatAnswer(raw){
+ const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+ const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/__(.+?)__/g,'<strong>$1</strong>');
+ const t=String(raw||'').replace(/\[S\d+\]/g,'').replace(/[`]+/g,'').replace(/^\s*#{1,6}\s*/gm,'').replace(/[ \t]+\n/g,'\n').trim();
+ const lines=t.split(/\n+/).map(l=>l.trim()).filter(Boolean);
+ let html='',inList=false;
+ for(const l of lines){
+  const m=l.match(/^(?:[-*•–]\s+|\d+[.)]\s+)(.*)/);
+  if(m){if(!inList){html+='<ul class="ans">';inList=true}html+='<li>'+inline(m[1])+'</li>'}
+  else{if(inList){html+='</ul>';inList=false}html+='<p>'+inline(l)+'</p>'}
+ }
+ if(inList)html+='</ul>';
+ return html||('<p>'+inline(t)+'</p>');
+}
 async function say(text){
  stopSaying();
  // Shayni's friendliest voice first: OpenAI (the owner's key) → Gemini's natural voice → the phone's own voice.
@@ -321,6 +343,7 @@ function localAi(b,q,mode=null){
    if(!text.trim()){out.className='out';out.textContent=NOT_FOUND;return}
    if(asChat){chatHistory.push({role:'user',content:q},{role:'assistant',content:text});chatHistory=chatHistory.slice(-6)}
    else if(q===lastQ)lastAi=text;
+   out.className='out rich';out.innerHTML=formatAnswer(text);
    // A short answer ending in a question is the AI asking what she meant: her next message completes the question.
    askedBack=where==='cloud'&&!asChat&&text.trim().length<240&&/[?？]\s*$/.test(text.trim())?q:null;
    const secs=(performance.now()-t0)/1000;

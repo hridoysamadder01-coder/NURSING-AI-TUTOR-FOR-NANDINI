@@ -143,6 +143,7 @@ import {rank} from './src/answer-core.js';
 import {savedApiBase,apiUrl} from './src/api-config.js';
 import {paragraphKey,readTranslation,saveTranslation} from './src/translation-cache.js';
 import {sectionText,aiBookIds,subjectsOfBook,licenseShort,PHYSICAL_BN} from './src/library-catalog.js';
+import * as cloud from './src/cloud-ai.js';
 const LOOK={
 fundamentals:{label:'নার্সিংয়ের মৌলিক বিষয়',cover:'NF',emoji:'🩺',tone:'linear-gradient(150deg,#23b59d,#0a5f63)'},
 skills:{label:'নার্সিং দক্ষতা ও ব্যবহারিক কাজ',cover:'NS',emoji:'💉',tone:'linear-gradient(150deg,#ff9a6c,#e4536b)'},
@@ -310,12 +311,17 @@ async function getNative(){
  try{const n=await import('./src/native-translation.bundle.js');if(n.isAvailable())nativeTranslator=n}catch{}
  return nativeTranslator;
 }
+// When the phone's on-device translator is not available (e.g. on the web, or before the APK model loads), translate
+// online with the owner's key (OpenAI first) so "বাংলায় আনো" still works everywhere instead of asking for the APK.
+function onlineTranslateReady(){try{const k=cloud.keys();return Boolean(k.openai||k.gemini||k.groq)&&globalThis.navigator?.onLine!==false}catch{return false}}
+function cloudTranslator(){return onlineTranslateReady()?{prepare:async()=>{},translate:t=>cloud.cloudTranslate(t)}:null}
+async function getTranslator(){return (await getNative())||cloudTranslator()}
 $('stopTranslate').onclick=()=>{token++;working=false;$('stopTranslate').disabled=true;$('stopTranslate').classList.add('hidden');$('translateChapter').disabled=false;$('translateStatus').textContent='অনুবাদ থামানো হয়েছে। তৈরি অংশগুলো সংরক্ষিত আছে।'};
 $('translateChapter').onclick=async()=>{
  if(working){return}
  if(!book)return;
- const translate=await getNative();
- if(!translate){$('translateStatus').textContent='বাংলা অনুবাদ Android APK-তে কাজ করবে। ব্রাউজারে মূল ইংরেজি বই পড়া যাবে; ফোনে নতুন APK ইনস্টল করো।';return}
+ const translate=await getTranslator();
+ if(!translate){$('translateStatus').textContent=(globalThis.navigator?.onLine===false?'এখন নেট নেই। নেট এলে Settings-এ OpenAI/Gemini key দিয়ে বাংলায় আনা যাবে; ':'বাংলায় আনতে Settings-এ একটা online key (OpenAI/Gemini) দাও, নয়তো ফোনের অ্যাপের অনুবাদ লাগবে। ')+'আপাতত মূল ইংরেজি পড়তে পারো।';return}
  if(!remaining.length){$('translateStatus').textContent='✓ এই অধ্যায়ের বাংলা অনুবাদ ইতিমধ্যে সংরক্ষিত আছে।';mode('both');return}
  const myToken=token;
  working=true;$('translateChapter').disabled=true;$('stopTranslate').disabled=false;$('stopTranslate').classList.remove('hidden');
