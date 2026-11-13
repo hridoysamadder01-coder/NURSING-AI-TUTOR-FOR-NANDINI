@@ -313,7 +313,7 @@ async function getNative(){
 }
 // When the phone's on-device translator is not available (e.g. on the web, or before the APK model loads), translate
 // online with the owner's key (OpenAI first) so "বাংলায় আনো" still works everywhere instead of asking for the APK.
-function onlineTranslateReady(){try{const k=cloud.keys();return Boolean(k.openai||k.gemini||k.groq)&&globalThis.navigator?.onLine!==false}catch{return false}}
+function onlineTranslateReady(){try{const k=cloud.keys();return Boolean(k.gemini||k.groq)&&globalThis.navigator?.onLine!==false}catch{return false}}
 function cloudTranslator(){return onlineTranslateReady()?{prepare:async()=>{},translate:t=>cloud.cloudTranslate(t)}:null}
 async function getTranslator(){return (await getNative())||cloudTranslator()}
 $('stopTranslate').onclick=()=>{token++;working=false;$('stopTranslate').disabled=true;$('stopTranslate').classList.add('hidden');$('translateChapter').disabled=false;$('translateStatus').textContent='অনুবাদ থামানো হয়েছে। তৈরি অংশগুলো সংরক্ষিত আছে।'};

@@ -112,13 +112,3 @@ test('OpenAI voice: natural female voice via the owner key; needs a key, maps a 
  serve([['audio/speech',()=>new Response('no',{status:401})]]);
  await assert.rejects(cloud.openaiSpeech('x'),/key_rejected/,'401 → key_rejected');
 });
-
-test('OpenAI answers first when its key is set (online-first, owner preference)',async()=>{
- cloud.setKeys({openai:'sk-ans',gemini:'g',groq:'q'});cloud.setEnabled(true);
- serve([['api.openai.com/v1/chat/completions',body=>{assert.equal(body.model,'gpt-4o-mini');assert.equal(body.stream,true);return sse([groqChunk('OpenAI '),groqChunk('উত্তর'),'[DONE]'])}]]);
- const r=await cloud.generate(msgs);
- assert.equal(r.route.provider,'openai','OpenAI is tried before Gemini/Groq');
- assert.equal(r.text,'OpenAI উত্তর');
- assert.ok(calls[0].url.includes('api.openai.com/v1/chat/completions'));
- assert.equal(calls[0].headers.Authorization,'Bearer sk-ans');
-});

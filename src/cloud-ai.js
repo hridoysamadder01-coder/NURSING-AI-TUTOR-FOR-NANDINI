@@ -5,9 +5,9 @@
 export const KEYS='nandini-cloud-keys',ENABLED='nandini-cloud-on';
 // Each Gemini model has its own free quota, so several of them (plus Groq) give more free answers per day within the rules.
 // Flash-Lite models are first: they think the least, so the first words arrive fastest.
+// The brain is the free tiers: three Gemini models (each with its own free quota) then two on Groq. OpenAI is NOT here —
+// the owner keeps OpenAI for Shayni's voice only, so no paid key is spent on answers.
 export const ROUTE=[
- // OpenAI first when the owner has set its key: Nandini is usually online, so her best answers come from here.
- {id:'openai-gpt-4o-mini',provider:'openai',model:'gpt-4o-mini',label:'OpenAI GPT-4o mini'},
  {id:'gemini-3.5-flash-lite',provider:'gemini',model:'gemini-3.5-flash-lite',label:'Gemini 3.5 Flash-Lite',thinking:'minimal'},
  {id:'gemini-3.1-flash-lite',provider:'gemini',model:'gemini-3.1-flash-lite',label:'Gemini 3.1 Flash-Lite',thinking:'minimal'},
  {id:'gemini-2.5-flash-lite',provider:'gemini',model:'gemini-2.5-flash-lite',label:'Gemini 2.5 Flash-Lite'},
