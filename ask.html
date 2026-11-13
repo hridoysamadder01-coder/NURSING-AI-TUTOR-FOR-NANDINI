@@ -1,8 +1,12 @@
 <!doctype html>
 <html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"><meta name="theme-color" content="#11998a"><meta name="description" content="নন্দিনীর অফলাইন নার্সিং Tutor"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./src/app.css"><title>Tutor · নন্দিনীর Nursing Study</title>
 <style>
-.hero{padding-bottom:20px}.hero h1{margin-top:10px}
-main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
+/* ChatGPT-style full-screen chat: a slim sticky top bar, the conversation fills the rest. */
+.chathead{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 14px 11px;background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;box-shadow:0 3px 14px -10px rgba(15,58,50,.6)}
+.chback{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;text-decoration:none;font-size:21px;line-height:1}
+.chttl b{display:block;font-size:17px;line-height:1.25;font-weight:740}
+.chttl small{display:block;font-size:11.5px;color:rgba(255,255,255,.82);margin-top:1px}
+main{padding:16px 16px calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 #chat{display:flex;flex-direction:column;gap:12px}
 .msg{max-width:92%;border-radius:20px;padding:15px 17px;line-height:1.78;font-size:14.5px;animation:rise .3s ease both}
 .msg.me{align-self:flex-end;background:linear-gradient(135deg,#13a28e,#0b7468);color:#fff;border-bottom-right-radius:6px;max-width:82%}
@@ -64,10 +68,7 @@ main{padding-bottom:calc(var(--tabbar-h) + 104px + env(safe-area-inset-bottom))}
 .aibox .btn{margin-top:8px}
 </style></head>
 <body>
-<header class="hero"><div class="wrap">
-<div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">অফলাইন · সঙ্গে সঙ্গে উত্তর</span></div>
-<h1>🤖 শায়নি · নন্দিনীর Tutor</h1><p>বাংলা বা ইংরেজিতে প্রশ্ন লেখো। উত্তর আসবে ফোনের ভেতর থেকেই, ইন্টারনেট লাগবে না।</p>
-</div></header>
+<header class="chathead"><a class="chback" href="./index.html" aria-label="হোমে ফিরে যাও">←</a><div class="chttl"><b>🤖 শায়নি</b><small>নন্দিনীর Tutor · অফলাইনেও চলে</small></div></header>
 <main>
 <div id="chat" aria-live="polite"></div>
 <p style="text-align:center;margin-top:14px"><button class="clear" id="clearChat" type="button">🗑️ কথোপকথন মুছে দাও</button></p>
