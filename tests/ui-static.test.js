@@ -63,21 +63,21 @@ test('"বিষয় ধরে পড়ি" is subject-first with a source ch
  for(const token of ['id="subjectGrid"','subjectByCode','openSubject','শায়নিকে জিজ্ঞেস করি',"ask.html?q='+encodeURIComponent",'library.html?book='])assert.ok(t.includes(token),'topics.html missing '+token);
 });
 
-test('Scan & Explain reads a page on-device from bundled offline OCR, image never leaves the phone',async()=>{
+test('Scan & Explain reads a page fast online (Gemini vision) or on-device offline, and is honest about the image',async()=>{
  const s=await file('scan.html'),ocr=await file('src/page-ocr.js');
  // Three real steps: pick → read (OCR) → explain.
  for(const id of ['id="readBtn"','id="ocrText"','id="explainBtn"','recognizePage','buildPageMessages'])assert.ok(s.includes(id),'scan.html missing '+id);
- // OCR assets are bundled and loaded locally — never from a CDN — so it works with no internet.
- assert.ok(s.includes('./vendor/tesseract/tesseract.min.js'),'scan must load bundled Tesseract');
+ // Reading the page: fast online with Gemini vision when connected; the bundled on-device OCR (no CDN) when offline.
+ assert.ok(s.includes('cloud.geminiImageText'),'scan reads the page online with Gemini vision when connected');
+ assert.ok(s.includes('./vendor/tesseract/tesseract.min.js'),'scan keeps the bundled on-device OCR for offline');
  assert.ok(ocr.includes("new URL('../vendor/tesseract/',import.meta.url)"),'OCR must use bundled assets');
  for(const t of [ocr,s])assert.doesNotMatch(t,/https?:\/\/(cdn|unpkg|tessdata|cdnjs|jsdelivr)/i,'no remote OCR asset');
- // The image is never sent anywhere; only the (edited) page text can go online, and only on consent.
- assert.ok(s.includes('id="consent"')&&s.includes('consentChk'),'online use needs explicit consent');
- // scan.html itself opens no network connection and builds no upload — the only network path is cloud-ai.js (page text, on consent).
- assert.doesNotMatch(s,/\bfetch\s*\(|FormData|XMLHttpRequest|\.send\s*\(|uploadBytes/,'scan.html must not upload');
- assert.ok(s.includes('শুধু পাতার লেখা')&&s.includes('ছবি')&&s.includes('পাঠানো হবে না'),'privacy wording');
- // Online is the strong path when there IS a connection; the phone's own model is the offline fallback,
- // so Scan still explains with no internet instead of making a call that would fail.
+ // Honest about the image: online reading sends it to Google; offline it stays on the phone. The explanation sends
+ // only the (edited) page text online, and only on consent — never the image.
+ assert.ok(s.includes('Google')&&s.includes('ফোনেই থাকে'),'honest that online reading sends the image, offline keeps it');
+ assert.ok(s.includes('id="consent"')&&s.includes('consentChk'),'online explanation needs explicit consent');
+ assert.ok(s.includes('শুধু পাতার লেখা')&&s.includes('পাঠানো হবে না'),'the explanation sends the page text, not the image');
+ // The explanation is online when connected, and the on-device model is the offline fallback.
  assert.ok(s.includes('cloud.ready()&&online'),'scan prefers online only when actually online');
  assert.ok(s.includes('navigator.onLine'),'scan detects being offline to fall back to the on-device model');
  // The page text goes online only after a one-time, remembered consent.

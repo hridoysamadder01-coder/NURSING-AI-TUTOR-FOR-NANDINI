@@ -169,6 +169,29 @@ export async function transcribe(blob,{signal}={}){
  throw Object.assign(new Error('ears_unavailable'),{tried});
 }
 
+// Fast page reading with Gemini vision when online: reads all the text on a photographed book page in a second or two,
+// far quicker and more accurate than the on-device OCR. The page image is sent to Google only for this step (the
+// on-device reader keeps it on the phone). Returns the page text; throws when no Gemini model could read it.
+const OCR_PROMPT='এই ছবিটা একটা বইয়ের পাতা। পাতায় ঠিক যা লেখা আছে, হুবহু সেটাই লেখো — ইংরেজি ইংরেজিতে, বাংলা বাংলায়। শিরোনাম, অনুচ্ছেদ, তালিকা ও টেবিলের লেখা ধরবে; নিজে থেকে কিছু যোগ, বাদ বা অনুবাদ করবে না। শুধু পাতার লেখা দাও।';
+export async function geminiImageText(blob,{signal}={}){
+ const key=keys().gemini;if(!key)throw new Error('no_key');
+ const b64=await blobBase64(blob),mime=(String(blob.type||'').startsWith('image/')?blob.type:'image/jpeg');
+ const tried=[];
+ for(const route of ROUTE.filter(r=>r.provider==='gemini')){
+  if((cooldown.get(route.id)||0)>now())continue;
+  const ctrl=new AbortController(),abort=()=>ctrl.abort();signal?.addEventListener('abort',abort);const timer=setTimeout(abort,25000);
+  try{
+   const res=await fetch(GEMINI+route.model+':generateContent',{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},
+    body:JSON.stringify({contents:[{role:'user',parts:[{inlineData:{mimeType:mime,data:b64}},{text:OCR_PROMPT}]}],generationConfig:{temperature:0,maxOutputTokens:2000}})});
+   if(!res.ok){const retry=Number(res.headers.get('retry-after'))||0,code=res.status===429?'limit':res.status===401||res.status===403?'key_rejected':'http_'+res.status;
+    if(code==='limit')cooldown.set(route.id,now()+(retry?retry*1000:10*60*1000));tried.push({id:route.id,error:code});continue}
+   const j=await res.json(),text=(j.candidates?.[0]?.content?.parts||[]).filter(p=>typeof p.text==='string').map(p=>p.text).join('').trim();
+   if(text)return text;tried.push({id:route.id,error:'empty'});
+  }catch(e){if(signal?.aborted)throw new Error('stopped');tried.push({id:route.id,error:ctrl.signal.aborted?'timeout':'network'})}
+  finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}
+ }
+ throw Object.assign(new Error('ocr_unavailable'),{tried});
+}
 // Natural Bangla voice for reading answers aloud (Gemini TTS, ai.google.dev/gemini-api/docs/speech-generation).
 // Returns WAV bytes. Tries the Interactions API of the newest TTS model first, then the older generateContent TTS model.
 export const TTS_ROUTE=[{api:'interactions',model:'gemini-3.8-flash-lite-tts'},{api:'interactions',model:'gemini-3.8-flash-tts'},{api:'generate',model:'gemini-2.5-flash-preview-tts'}];

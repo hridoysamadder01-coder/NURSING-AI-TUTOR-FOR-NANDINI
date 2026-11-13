@@ -184,6 +184,8 @@ try{
   const body=JSON.parse(r.postData()||'{}');seen.push({url:r.url(),body,key:r.headers()['x-goog-api-key']});
   const tiny=JSON.stringify(body).includes('শুধু লেখো');
   if(geminiDown)return route.fulfill({status:503,headers:cors,body:'{}'});
+  // Reading a page: a page image sent to Gemini vision to be read (fast online OCR), JSON reply with the page text.
+  if(body.contents?.[0]?.parts?.[0]?.inlineData?.mimeType?.startsWith('image/'))return route.fulfill({status:200,headers:{...cors,'content-type':'application/json'},body:JSON.stringify({candidates:[{content:{parts:[{text:'The nephron filters blood and forms urine.'}]}}]})});
   // Listening: a recording sent to Gemini to be written down (not streamed, JSON reply).
   if(body.contents?.[0]?.parts?.[0]?.inlineData&&!r.url().includes('gemini-3.5-flash-lite'))return route.fulfill({status:200,headers:{...cors,'content-type':'application/json'},body:JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify({transcript:'Osmosis কী?'})}]}}]})});
   if(r.url().includes('gemini-3.5-flash-lite')&&!tiny)return route.fulfill({status:429,headers:{...cors,'retry-after':'60'},body:'{"error":{"code":429}}'});
@@ -289,9 +291,13 @@ try{
  await web.locator('#consentChk').check();await web.locator('#explainBtn').click();
  await web.waitForFunction(()=>/Groq-এর উত্তর|শক্তিশালী উত্তর|দূরে নেয়/.test(document.querySelector('#answer')?.textContent||''),null,{timeout:15000});
  assert.equal(await web.locator('#prov').isVisible(),true);
- const scanReq=JSON.stringify(seen.slice(beforeScan));
+ const after=seen.slice(beforeScan);
+ const scanReq=JSON.stringify(after);
  assert.match(scanReq,/nephron filters blood/,'the page text grounds the online explanation');
- assert.doesNotMatch(scanReq,/data:image|base64|\.png|inlineData/i,'the page image is never sent online');
+ // Net on: the image goes online only to READ the page (Gemini vision OCR). The explanation is grounded on the page
+ // TEXT, never the image — so no model that gets the system prompt is also handed image bytes.
+ assert.ok(after.some(s=>s.body?.contents?.[0]?.parts?.[0]?.inlineData?.mimeType?.startsWith('image/')),'the page is read online by Gemini vision');
+ assert.ok(!after.some(s=>(s.body?.systemInstruction||s.body?.messages)&&JSON.stringify(s.body).match(/inlineData|image\//i)),'the explanation is sent the page text, not the image');
  assert.equal(await web.evaluate(()=>localStorage.getItem('nandini-scan-online-consent')),'yes','consent is remembered for next time');
  await webCtx.close();
  // The wider bookshelf: twelve bundled books; the printed Neuron titles are names only, with nothing to open.

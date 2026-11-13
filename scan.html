@@ -31,7 +31,7 @@
 <body>
 <header class="hero"><div class="wrap">
 <div class="hero-top"><a class="back" href="./index.html">← হোম</a><span class="kicker">পাতার ছবি</span></div>
-<h1>📷 পাতার ছবি বুঝি</h1><p>যেকোনো বইয়ের একটা পাতার ছবি তোলো। অ্যাপ লেখা পড়বে, শায়নি সেই পাতাটা বুঝিয়ে দেবে। ছবিটা শুধু তোমার ফোনেই থাকে।</p>
+<h1>📷 পাতার ছবি বুঝি</h1><p>যেকোনো বইয়ের একটা পাতার ছবি তোলো। অ্যাপ লেখা পড়বে, শায়নি সেই পাতাটা বুঝিয়ে দেবে।</p>
 </div></header>
 <main>
 <section class="card">
@@ -54,7 +54,7 @@
  <div class="soon hidden" id="noOcr"><span class="em">ℹ️</span><div>এই ফোনে অ্যাপ নিজে ছবি থেকে লেখা পড়তে পারছে না। অসুবিধা নেই — পাতাটা দেখে লেখাটা নিচে নিজে টাইপ করে দাও, শায়নি সেটাই বুঝিয়ে দেবে।</div></div>
  <div class="btn-row"><button class="btn" id="readBtn" type="button">📖 ছবি থেকে লেখা পড়ো</button><button class="btn ghost hidden" id="stopRead" type="button">থামাও</button></div>
  <div class="ocrbar hidden" id="ocrbar"><div id="ocrfill"></div></div>
- <p id="readMsg" class="fine" aria-live="polite" style="margin:8px 0 0">বোতামে চাপলে অ্যাপ ফোনেই ছবির লেখা বের করবে (নেট লাগবে না)। লেখা ভুল থাকলে নিচে ঠিক করে নিতে পারবে।</p>
+ <p id="readMsg" class="fine" aria-live="polite" style="margin:8px 0 0">বোতামে চাপলে অ্যাপ ছবির লেখা বের করবে — নেট থাকলে দ্রুত (ছবিটা Google-এ পড়া হয়), নেট না থাকলে ধীরে ফোনেই (ছবি বাইরে যায় না)। লেখা ভুল থাকলে নিচে ঠিক করে নিতে পারবে।</p>
  <div id="ocrOut" class="hidden" style="margin-top:12px">
   <div class="qline" id="qline"><span id="qicon">📝</span><span id="qmsg"></span><span class="conf" id="conf"></span></div>
   <label class="field" for="ocrText">পাতার লেখা (দরকারে ঠিক করে নাও)</label>
@@ -74,7 +74,7 @@
 </section>
 
 <details class="info"><summary>🔒 তোমার ছবি ও লেখা কোথায় যায়?</summary>
-<p>পাতার <b>ছবিটা কখনো ফোনের বাইরে যায় না</b> — কোনো সার্ভার, GitHub বা AI-তে নয়। ছবি থেকে লেখা পড়ার কাজটাও ফোনেই হয়, নেট ছাড়া।</p>
+<p>পাতাটা পড়ার সময়: <b>নেট থাকলে দ্রুত পড়তে ছবিটা Google (Gemini)-এ যায়</b>; নেট না থাকলে ছবি ফোনেই থাকে, বাইরে যায় না। ব্যাখ্যার সময় শুধু পাতার লেখা যায়, ছবি নয়।</p>
 <p>ফোনের ভেতরের AI (একবার নামানো থাকলে) ব্যাখ্যাও নেট ছাড়া ফোনেই করে। সেটা না থাকলে তুমি চাইলে <b>শুধু পাতার লেখাটুকু</b> অনলাইন AI-তে পাঠানো যায় — তার আগে তোমার সম্মতি চাওয়া হবে, নিজে থেকে পাঠানো হয় না।</p>
 </details>
 </main>
@@ -116,10 +116,24 @@ $('readBtn').onclick=async()=>{
  if(!$('pageImg').src){return}
  ocrCtl=new AbortController();
  $('readBtn').disabled=true;$('stopRead').classList.remove('hidden');$('ocrbar').classList.remove('hidden');$('ocrfill').style.width='6%';
- $('readMsg').textContent='ছবির লেখা পড়ছি… (ফোনেই, নেট ছাড়া) এতে কিছু সময় লাগতে পারে।';
+ // Net on? Read the page fast with online Gemini vision (the image goes to Google for this). Offline or if that fails,
+ // the on-device reader keeps the image fully on the phone.
+ const useOnline=cloud.ready()&&cloud.hasKey('gemini');
  try{
-  const r=await recognizePage($('pageImg'),{signal:ocrCtl.signal,onProgress:p=>{$('ocrfill').style.width=Math.round(6+p*94)+'%'}});
-  const quality=readQuality(r);
+  let r=null,viaOnline=false;
+  if(useOnline){
+   $('readMsg').textContent='⚡ নেট দিয়ে দ্রুত পড়ছি… (ছবিটা পড়ার জন্য Google-এ যাচ্ছে)';$('ocrfill').style.width='45%';
+   try{
+    const blob=$('pageFile').files[0]||await (await fetch($('pageImg').src)).blob();
+    const text=await cloud.geminiImageText(blob,{signal:ocrCtl.signal});
+    if(text&&text.trim()){r={text:text.trim(),confidence:96};viaOnline=true}
+   }catch(e){if(e?.message==='stopped')throw new Error('cancelled')}
+  }
+  if(!r){
+   $('readMsg').textContent=useOnline?'নেটে পড়া গেল না, ফোনেই পড়ছি… একটু সময় লাগতে পারে।':'ছবির লেখা পড়ছি… (ফোনেই, নেট ছাড়া) এতে কিছু সময় লাগতে পারে।';
+   r=await recognizePage($('pageImg'),{signal:ocrCtl.signal,onProgress:p=>{$('ocrfill').style.width=Math.round(6+p*94)+'%'}});
+  }
+  const quality=viaOnline?{level:'good',bn:'⚡ নেট দিয়ে দ্রুত পড়া হয়েছে।'}:readQuality(r);
   $('ocrOut').classList.remove('hidden');$('qline').className='qline '+quality.level;
   $('qicon').textContent=quality.level==='good'?'✅':quality.level==='ok'?'📝':'⚠️';
   $('qmsg').textContent=quality.bn;$('conf').classList.remove('hidden');$('conf').textContent='আস্থা '+r.confidence+'%';

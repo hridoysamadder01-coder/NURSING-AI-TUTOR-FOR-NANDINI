@@ -196,9 +196,10 @@ function formatAnswer(raw){
 }
 async function say(text){
  stopSaying();
- // Shayni's friendliest voice first: OpenAI (the owner's key) → Gemini's natural voice → the phone's own voice.
- if(cloud.openaiVoiceReady()){try{const r=await cloud.openaiSpeech(voice.forSpeech(text).slice(0,1500));await playWav(r.wav);return}catch{}}
+ // Free first: Gemini's natural voice. Only if it is unavailable or its free limit is used up does the owner's
+ // paid OpenAI voice step in; offline, the phone's own voice. Keeps the cost to a minimum.
  if(cloud.ready()&&cloud.hasKey('gemini')){try{const r=await cloud.speechAudio(voice.forSpeech(text).slice(0,1500));await playWav(r.wav);return}catch{}}
+ if(cloud.openaiVoiceReady()){try{const r=await cloud.openaiSpeech(voice.forSpeech(text).slice(0,1500));await playWav(r.wav);return}catch{}}
  if(voice.available())return voice.speak(text);
  throw new Error('no_voice');
 }
@@ -434,9 +435,8 @@ $('talk').onclick=async()=>{
  // Audio output must be created inside the tap, before anything is awaited.
  const player=pcmPlayer();
  T.view.hidden=false;T.user.textContent='';T.ai.textContent='';T.engine.textContent='';T.mute.textContent='🔇 মাইক বন্ধ';talkState('connecting');voice.keepAwake(true);
- // With an OpenAI voice key set, talk uses Shayni's natural OpenAI voice: online ears (Gemini/Whisper) hear her,
- // the online AI answers, and OpenAI speaks — no robot phone voice. Gemini and OpenAI both stay in use.
- if(cloud.openaiVoiceReady()&&cloudEars()){player.close();startPhoneTalk();return}
+ // Free first: Gemini Live hears and speaks with no cost. Only when its free limit runs out does the next level
+ // (below) take over, where OpenAI gives the voice instead of a robot one — so cost is kept to a minimum.
  if(cloud.ready()&&cloud.hasKey('gemini')&&navigator.mediaDevices?.getUserMedia){
   try{await startLive(player);return}
   catch(e){player.close();T.ai.textContent=e?.name==='NotAllowedError'?voiceError('mic_denied'):liveError(e?.message);if(!canStepTalk()){talkState('paused');return}}
@@ -512,7 +512,7 @@ function startPhoneTalk(){
  let stopped=false,quiet=0,wake=null,rec=null,earsOff=false;
  const wait=()=>new Promise(r=>{wake=r});
  const online=()=>!earsOff&&cloudEars();
- const label=()=>{T.engine.textContent=online()?('🎧 স্তর ২ · অনলাইন কান + অনলাইন AI'+(cloud.openaiVoiceReady()?' + OpenAI কণ্ঠ 🎙️':'')):'📱 স্তর ৩ · ফোনের কণ্ঠ'+(cloud.ready()?' + অনলাইন AI':' (অফলাইন)')};
+ const label=()=>{T.engine.textContent=online()?'🎧 স্তর ২ · অনলাইন কান + অনলাইন AI':'📱 স্তর ৩ · ফোনের কণ্ঠ'+(cloud.ready()?' + অনলাইন AI':' (অফলাইন)')};
  const hear=async()=>{
   if(online()){
    rec=recordUtterance({onLevel:l=>T.orb.style.setProperty('--lvl',Math.min(1,l*10).toFixed(2))});
@@ -523,10 +523,10 @@ function startPhoneTalk(){
   return voice.listen(t=>{T.user.textContent=t});
  };
  const speak=async text=>{
-  // Online with an OpenAI key → her natural friendly voice; otherwise the phone's own voice (offline), then Gemini.
+  // Free Gemini voice first; OpenAI's voice only if Gemini is unavailable or its free limit is used up; offline, the phone.
+  if(cloud.ready()&&cloud.hasKey('gemini')){try{const r=await cloud.speechAudio(voice.forSpeech(text).slice(0,1500));return await playWav(r.wav)}catch{}}
   if(cloud.openaiVoiceReady()){try{const r=await cloud.openaiSpeech(voice.forSpeech(text).slice(0,1500));return await playWav(r.wav)}catch{}}
   if(voice.available())return voice.speakWait(text);
-  if(cloud.ready()&&cloud.hasKey('gemini')){const r=await cloud.speechAudio(voice.forSpeech(text).slice(0,1500));return playWav(r.wav)}
  };
  talk={muted:false,
   stop(){stopped=true;rec?.stop();voice.stopListening();stopSaying();wake?.()},
