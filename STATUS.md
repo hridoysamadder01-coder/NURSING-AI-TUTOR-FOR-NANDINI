@@ -1,3 +1,17 @@
+# অবস্থা · ১৩ নভেম্বর ২০২৬ — APK তৈরি হয়েছে (এই session-এ, GitHub ছাড়া)
+
+**GitHub Actions কাজ করছে না** (মালিকের অ্যাকাউন্টে পেমেন্ট ফেল → billing hold; repo public করেও run ২-৪ সেকেন্ডে fail)।
+তাই APK **এই cloud environment-এই হাতে build করা হয়েছে** CI-র হুবহু ধাপে: Android SDK 35 + NDK 27.1.12297006 + CMake 3.22.1,
+`prepare-android.mjs` → www (৫০ ফাইল), Capacitor 8, `add-local-llm.mjs` (llama.cpp), `gradlew assembleDebug`।
+- ফল: `app-debug.apk` **~২০.৭ MB**, মালিককে পাঠানো হয়েছে।
+- যাচাই (এই environment-এ): সব arm64 native লাইব্রেরি আছে (`libnandini_llm/libllama/libggml` + CPU variants armv8.0/8.2/8.6),
+  OCR (বাংলা+ইংরেজি), ১২ বই, RECORD_AUDIO permission; **সই `f7e1b16c…` — repo-র fixed debug key-এর সাথে হুবহু মিল**
+  (পুরোনো অ্যাপের উপর বসবে)। `apksigner verify`: Verifies (v2 scheme)।
+- **⛔ আসল ফোনে এখনো চালানো হয়নি।** ইনস্টল, অফলাইন প্রশ্ন (2C), Scan, বড় বই খোলা, বাংলা OCR — সব মালিকের ফোনে দেখা বাকি।
+- নোট: build CI নয়, হাতে করা; CI চালু হলে একই commit থেকে official artifact পাওয়া যাবে।
+
+---
+
 # অবস্থা · ১২ নভেম্বর ২০২৬ (রাত — Milestone 2C)
 
 ## ✅ Milestone 2C: সব মিলিয়ে অফলাইন + কম-দামি ফোনের UX যাচাই, আসল ভুল ঠিক (Issue #2)
